@@ -1,8 +1,21 @@
 (cl:in-package #:parser.packrat.environment)
 
+;;; `path-mixin'
+
+(defclass path-mixin ()
+  ((path-suffix :initarg  :path-suffix
+                :reader   path-suffix
+                :initform '())))
+
+(defmethod path ((environment path-mixin))
+  (append (path-suffix environment)
+          (when-let ((parent (parent environment)))
+            (path parent))))
+
 ;;; `environment'
 
-(defclass environment (print-items:print-items-mixin)
+(defclass environment (path-mixin
+                       print-items:print-items-mixin)
   ((parent   :initarg  :parent
              :reader   parent
              :initform nil)
