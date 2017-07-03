@@ -66,6 +66,17 @@
                                    (:file       "base-grammar")
                                    (:file       "compiler")))
 
+                     (:module     "grammar-sequence"
+                      :pathname   "src/grammar/sequence"
+                      :depends-on ("expression" "grammar" "grammar-base")
+                      :serial     t
+                      :components ((:file       "package")
+                                   (:file       "expressions")
+                                   (:file       "mixins")
+                                   (:file       "environment")
+                                   (:file       "sequence-grammar")
+                                   (:file       "compiler")))
+
                      (:module     "interface"
                       :pathname   "src"
                       :depends-on ("base")
