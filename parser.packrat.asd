@@ -48,4 +48,12 @@
                                    (:file       "macros")
                                    (:file       "environment")))
 
+                     (:module     "interface"
+                      :pathname   "src"
+                      :depends-on ("base")
+                      :serial     t
+                      :components ((:file       "package")
+                                   ; (:file       "protocol")
+                                   (:file       "macros")))
+
                      (:static-file "README.org")))
