@@ -21,4 +21,12 @@
                       :components ((:file       "package")
                                    (:file       "types")))
 
+                     (:module     "environment"
+                      :pathname   "src/environment"
+                      :serial     t
+                      :components ((:file       "package")
+                                   (:file       "protocol")
+                                   (:file       "macros")
+                                   (:file       "environment")))
+
                      (:static-file "README.org")))
