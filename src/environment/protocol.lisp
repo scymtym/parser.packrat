@@ -1,5 +1,12 @@
 (cl:in-package #:parser.packrat.environment)
 
+;; Idea for position/state representation:
+;;
+;; Instead of defining protocol for value-environment,
+;; sequence-environment, etc., make a protocol
+;; (defgeneric state-variable (name environment)
+;; this could traverse ancestors to find the current value.
+
 ;;; Environment lookup protocol
 
 (defgeneric lookup (name environment)
