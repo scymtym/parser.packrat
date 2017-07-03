@@ -21,6 +21,14 @@
                       :components ((:file       "package")
                                    (:file       "types")))
 
+                     (:module     "cache"
+                      :pathname   "src/cache"
+                      :serial     t
+                      :components ((:file       "package")
+                                   (:file       "chunk-cache")
+                                   (:file       "stream-cache")
+                                   (:file       "packrat-cache")))
+
                      (:module     "expression"
                       :pathname   "src/expression"
                       :serial     t
