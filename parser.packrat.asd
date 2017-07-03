@@ -48,6 +48,15 @@
                                    (:file       "macros")
                                    (:file       "environment")))
 
+                     (:module     "grammar"
+                      :pathname   "src/grammar"
+                      :depends-on ("expression")
+                      :components ((:file      "package")
+                                   (:file      "conditions")
+                                   (:file      "protocol")
+                                   (:file      "mixins")
+                                   (:file      "rule")))
+
                      (:module     "interface"
                       :pathname   "src"
                       :depends-on ("base")
