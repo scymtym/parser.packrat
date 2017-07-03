@@ -48,6 +48,13 @@
                                    (:file       "macros")
                                    (:file       "environment")))
 
+                     (:module     "compiler"
+                      :pathname   "src/compiler"
+                      :depends-on ("expression" "environment")
+                      :serial     t
+                      :components ((:file       "package")
+                                   (:file       "protocol" )))
+
                      (:module     "grammar"
                       :pathname   "src/grammar"
                       :depends-on ("expression")
@@ -77,6 +84,25 @@
                                    (:file       "sequence-grammar")
                                    (:file       "compiler")))
 
+                     (:module     "grammar-sexp"
+                      :pathname   "src/grammar/sexp"
+                      :depends-on ("expression"
+                                   "grammar"
+                                   "grammar-base"
+                                   "grammar-sequence")
+                      :serial     t
+                      :components ((:file       "package")
+                                   (:file       "expressions")
+                                   (:file       "sexp-grammar")
+                                   (:file       "compiler")))
+
+                     (:module     "bootstrap"
+                      :pathname   "src/bootstrap"
+                      :depends-on ("expression")
+                      :serial     t
+                      :components ((:file       "package")
+                                   (:file       "bootstrap")))
+
                      (:module     "interface"
                       :pathname   "src"
                       :depends-on ("base")
@@ -85,4 +111,18 @@
                                    ; (:file       "protocol")
                                    (:file       "macros")))
 
-                     (:static-file "README.org")))
+                     (:module     "examples"
+                      :components (; (:static-file "sexp.lisp")
+                                   ; (:static-file "symbol-table.lisp")
+                                   ; (:static-file "left-recursion.lisp")
+                                   ;  (:static-file "function-terminals.lisp")
+                                   (:static-file "lambda-lists")
+                                   (:static-file "lambda-calculus")
+                                   ))
+
+                     (:static-file "README.org"))
+
+  ; :in-order-to      ((test-op (test-op :parser.packrat/tests)))
+  )
+
+; (defsystem :parser.packrat/test)
