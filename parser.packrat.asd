@@ -57,6 +57,15 @@
                                    (:file      "mixins")
                                    (:file      "rule")))
 
+                     (:module     "grammar-base"
+                      :pathname   "src/grammar/base"
+                      :depends-on ("expression" "grammar")
+                      :serial     t
+                      :components ((:file       "package")
+                                   (:file       "expressions")
+                                   (:file       "base-grammar")
+                                   (:file       "compiler")))
+
                      (:module     "interface"
                       :pathname   "src"
                       :depends-on ("base")
