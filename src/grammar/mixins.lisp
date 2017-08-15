@@ -30,3 +30,15 @@
                              &key if-does-not-exist)
   (declare (ignore if-does-not-exist))
   (setf (gethash name (%rules grammar)) new-value))
+
+;;; `meta-grammar-mixin'
+
+(defclass meta-grammar-mixin ()
+  ((meta-grammar    :initarg :meta-grammar
+                    :reader  meta-grammar)
+   (meta-start-rule :initarg :meta-start-rule
+                    :reader  meta-start-rule)))
+
+(defmethod parse-expression ((grammar meta-grammar-mixin) (expression t))
+  (let+ (((&accessors-r/o meta-grammar meta-start-rule) grammar))
+    (parse meta-grammar `(,meta-start-rule) expression)))
