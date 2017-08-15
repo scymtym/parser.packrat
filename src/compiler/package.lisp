@@ -13,4 +13,10 @@
   (:export
    #:compile-expression
    #:compile-rule
-   #:compile-rule-using-environment))
+   #:compile-rule-using-environment)
+
+  ;; Code generation utilities
+  (:export
+   #:maybe-let
+   #:maybe-let*
+   #:maybe-progn))

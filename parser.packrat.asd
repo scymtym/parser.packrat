@@ -53,6 +53,7 @@
                       :depends-on ("expression" "environment")
                       :serial     t
                       :components ((:file       "package")
+                                   (:file       "util")
                                    (:file       "protocol" )))
 
                      (:module     "grammar"
