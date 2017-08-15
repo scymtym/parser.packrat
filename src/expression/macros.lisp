@@ -16,7 +16,10 @@
               `(,initarg (more-conditions:missing-required-initarg ',class-name ,initarg)))))
          ((&flet make-node-initarg (name)
             (let ((initarg (make-keyword name)))
-              `(,initarg (,name node))))))
+              `(,initarg (,name node)))))
+         ((&flet make-required-keyword-argument (name)
+            `(,name (more-conditions:missing-required-initarg
+                     ',class-name ,(make-keyword name))))))
     `(progn
        (defclass ,class-name (expression
                               ,@superclasses)
@@ -33,7 +36,9 @@
            `((defmethod bp:node-initargs ((builder t) (node ,class-name))
                (list ,@(mappend #'make-node-initarg slots)))))
 
-       (defmethod bp:make-node ((builder t)
-                                (kind    (eql ,kind))
-                                &key)
-         (make-instance ',class-name)))))
+       (defmethod bp:make-node
+           ((builder t)
+            (kind    (eql ,kind))
+            &key
+            ,@(mapcar #'make-required-keyword-argument slots))
+         (make-instance ',class-name ,@(mappend (lambda (name) `(,(make-keyword name) ,name)) slots))))))
