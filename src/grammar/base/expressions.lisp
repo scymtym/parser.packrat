@@ -30,6 +30,10 @@
                                  print-items:print-items-mixin)
   ())
 
+(exp:define-expression-class compose (exp:sub-expression-mixin
+                                      print-items:print-items-mixin)
+  ())
+
 ;;; Variables
 
 (defclass variable-reference-mixin ()
@@ -45,7 +49,7 @@
   `((:variable ,(exp:variable object))))
 
 (defmethod bp:node-initargs ((builder t) (node variable-reference-mixin))
-  (list :variable (exp:variable node) :mode (mode node)))
+  (list :variable (exp:variable node) :mode (exp:mode node)))
 
 (defmethod exp:direct-variable-references ((grammar    t)
                                            (expression variable-reference-mixin)
@@ -74,11 +78,17 @@
 (defmethod print-items:print-items append ((object push-expression))
   `((:arrow nil " ←+ " ((:after :variable)))))
 
-(defclass variable-reference (expression
+(defclass variable-reference #+TODO -expression (exp:expression
                               variable-reference-mixin
                               print-items:print-items-mixin)
   ((mode :allocation :class
          :initform :read)))
+
+(defmethod bp:node-kind ((builder t) (node variable-reference))
+  :variable-reference)
+
+(exp:define-expression-class ignored (exp::value-environment-needing-mixin)
+  ())
 
 ;;; Transform
 
@@ -95,40 +105,59 @@
 
 ;;; `rule-invocation'
 
-(defclass rule-invocation (exp:expression
-                           print-items:print-items-mixin)
-  ((rule      :initarg  :rule
-              :reader   rule)
-   (arguments :initarg  :arguments
+(defclass rule-invocation-base (exp:expression
+                                print-items:print-items-mixin)
+  ((arguments :initarg  :arguments
               :type     list
               :accessor arguments
-              :initform '()))
-  (:default-initargs
-   :rule (more-conditions:missing-required-initarg 'rule-invocation :rule)))
+              :initform '())))
 
-(defmethod print-items:print-items append ((object rule-invocation))
-  (let ((rule      (rule object))
-        (arguments (map 'list #'print-items:print-items (arguments object))))
+(defmethod print-items:print-items append ((object rule-invocation-base))
+  (let ((arguments (map 'list #'print-items:print-items (arguments object))))
     `((:open      nil        "(")
-      (:rule      ,rule      "~A"                                     ((:after :open)))
-      (:arguments ,arguments "~{ ~/print-items:format-print-items/~}" ((:after :rule)))
+      (:arguments ,arguments "~{ ~/print-items:format-print-items/~}" ((:after :open)))
       (:close     nil        ")"                                      ((:after :arguments))))))
 
-(defmethod bp:node-initargs ((builder t) (node rule-invocation))
-  (list :rule (rule node)))
-
-(defmethod bp:node-relations ((builder t) (node rule-invocation))
+(defmethod bp:node-relations ((builder t) (node rule-invocation-base))
   '((:argument . *)))
 
 (defmethod bp:node-relation ((builder  t)
                              (relation (eql :argument))
-                             (node     rule-invocation))
+                             (node     rule-invocation-base))
   (values (arguments node)
           (load-time-value (circular-list '(:evaluated? t)))))
 
 (defmethod bp:relate ((builder t)
                       (relation (eql :argument))
-                      (left     rule-invocation)
+                      (left     rule-invocation-base)
                       (right    t)
                       &key)
   (appendf (arguments left) (list right)))
+
+(defclass rule-invocation-expression (rule-invocation-base)
+  ((grammar :initarg  :grammar
+            :reader   grammar
+            :initform nil)
+   (rule    :initarg  :rule
+            :reader   rule))
+  (:default-initargs
+   :rule (more-conditions:missing-required-initarg 'rule-invocation :rule)))
+
+(defmethod print-items:print-items append ((object rule-invocation-expression))
+  `((:rule ,(rule object) "~A" ((:after :open)
+                                (:before :arguments)))))
+
+(defmethod bp:node-kind ((builder t) (node rule-invocation-expression))
+  :rule-invocation)
+
+(defmethod bp:node-initargs ((builder t) (node rule-invocation-expression))
+  (list :rule (rule node)))
+
+(defclass next-rule-invocation-expression (rule-invocation-base)
+  ())
+
+(defmethod print-items:print-items append ((object next-rule-invocation-expression))
+  `((:rule nil "next-rule" ((:after :open) (:before :arguments)))))
+
+(defmethod bp:node-kind ((builder t) (node next-rule-invocation-expression))
+  :next-rule-invocation)

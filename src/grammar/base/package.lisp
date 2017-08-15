@@ -7,6 +7,10 @@
    #:parser.packrat.grammar
    #:parser.packrat.compiler)
 
+  (:import-from #:parser.packrat.expression
+   #:sub-expression
+   #:sub-expressions)
+
   (:local-nicknames
    (#:bp    #:architecture.builder-protocol)
 
@@ -27,10 +31,14 @@
    #:constant-expression
    #:variable-reference
 
-   #:rule-invocation
-
-   #:rule
    #:arguments
+
+   #:rule-invocation-expression
+   #:grammar
+   #:rule
+
+   #:next-rule-invocation-expression
+
    #:set-expression
    #:push-expression
 

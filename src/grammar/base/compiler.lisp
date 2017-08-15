@@ -26,7 +26,7 @@
                                (success-cont function)
                                (failure-cont function))
   (let* ((value     (env:value environment))
-         (expected  (value expression))
+         (expected  (exp:value expression))
          (predicate (typecase expected
                       (string 'equal)
                       (t      'eql))))
@@ -42,7 +42,7 @@
                                (success-cont function)
                                (failure-cont function))
   (compile-expression
-   grammar environment (exp:sub-expression expression)
+   grammar environment (sub-expression expression)
    (lambda (new-environment)
      (declare (ignore new-environment))
      (funcall failure-cont environment))
@@ -66,7 +66,7 @@
                                (expression   or-expression)
                                (success-cont function)
                                (failure-cont function))
-  (let+ ((expressions (exp:sub-expressions expression))
+  (let+ ((expressions (sub-expressions expression))
          (names       (map-into (make-list (length expressions)) #'gensym))
          ((&flet alternative (expression name next-name) ; TODO pass failing environment to next alternative
             `(,name ()
@@ -93,15 +93,14 @@
              grammar environment first
              (lambda (new-environment)
                (if rest
-                   (sub rest new-environment ; (env:environment-at new-environment (env:state-variables/plist environment))
-                        )
+                   (sub rest (env:environment-at new-environment (env:state-variables/plist environment)))
                    (funcall success-cont new-environment)))
              failure-cont))))
-    (sub (exp:sub-expressions expression) environment)))
+    (sub (sub-expressions expression) environment)))
 
-#+TODO (defmethod compile-expression ((grammar      base-grammar)
+(defmethod compile-expression ((grammar      base-grammar)
                                (environment  t)
-                               (expression   exp:compose-expression)
+                               (expression   compose-expression)
                                (success-cont function)
                                (failure-cont function))
   (let+ (((&labels+ sub ((&optional first &rest rest) environment)
@@ -112,7 +111,7 @@
                    (sub rest new-environment)
                    (funcall success-cont new-environment)))
              failure-cont))))
-    (sub (exp:sub-expressions expression) environment)))
+    (sub (sub-expressions expression) environment)))
 
 ;;; Variables
 
@@ -121,20 +120,31 @@
                                (expression   set-expression)
                                (success-cont function)
                                (failure-cont function))
-  (let+ (((&accessors-r/o variable (sub-expressions exp:sub-expression)) expression))
-    (compile-expression
-     grammar environment sub-expressions
-     (lambda (new-environment)
-       `(progn
-          (setf ,variable ,(env:value new-environment))
-          ,(funcall success-cont new-environment)))
-     failure-cont))
+  (let+ (((&accessors-r/o (variable exp:variable) sub-expression) expression))
+    (if (env:lookup variable environment) ; TODO hack. this should not be a set expression in that case
+
+        (compile-expression
+         grammar environment sub-expression
+         (lambda (new-environment)
+           `(if (equal ,variable ,(env:value new-environment))
+                ,(funcall success-cont new-environment)
+                ,(funcall failure-cont environment)))
+         failure-cont)
+
+        (compile-expression
+         grammar environment sub-expression
+         (lambda (new-environment)
+           (setf (env:lookup variable new-environment) t) ; TODO hack
+           `(progn
+              (setf ,variable ,(env:value new-environment))
+              ,(funcall success-cont new-environment)))
+         failure-cont)))
   #+old (let+ ((variable (exp::variable expression))
          ((&with-gensyms success-fun value-var))
          (success-body)
          (sub-body
           (compile-expression
-           grammar environment (exp:sub-expression expression)
+           grammar environment (sub-expression expression)
            (lambda (new-environment)
              (setf success-body (funcall success-cont new-environment))
              `(,success-fun ,(env:value new-environment)))
@@ -149,9 +159,9 @@
                                (expression   push-expression)
                                (success-cont function)
                                (failure-cont function))
-  (let+ (((&accessors-r/o variable (sub-expressions exp:sub-expression)) expression))
+  (let+ (((&accessors-r/o (variable exp:variable) sub-expression) expression))
     (compile-expression
-     grammar environment sub-expressions
+     grammar environment sub-expression
      (lambda (new-environment)
        `(progn
           (push ,(env:value new-environment) ,variable)
@@ -177,7 +187,8 @@
                                (expression   variable-reference)
                                (success-cont function)
                                (failure-cont function))
-  (let ((variable (variable expression)))
+  (let* ((variable (exp:variable expression))
+         (binding  (env:lookup variable environment)))
     ;; TODO check environment
     #+old (funcall success-cont (print (env:environment-carrying
                                         environment variable)))
@@ -186,28 +197,53 @@
                                  :class 'env:value-environment
                                  :state '()))))
 
+(defmethod compile-expression ((grammar      base-grammar)
+                               (environment  t)
+                               (expression   ignored-expression)
+                               (success-cont function)
+                               (failure-cont function))
+  (funcall success-cont environment))
+
 ;;; Transform
 
+;; TODO syntactically, EXPRESSION contains a sub-expression. However,
+;; we do not use the value produced by that sub-expression.
 (defmethod compile-expression ((grammar      base-grammar)
-                               (environment  env:value-environment)
+                               (environment  t)
                                (expression   transform-expression)
                                (success-cont function)
                                (failure-cont function))
-  (let+ (((&accessors-r/o code (sub-expression exp:sub-expression))
-          expression)
-         ((&with-gensyms transformed-value-var)))
+  (let+ (((&accessors-r/o code sub-expression) expression)
+         ((&with-gensyms value-var aborted-var block-name))
+         ((&flet make-value-environment (parent ; &optional path-suffix
+                                         )
+            (env:environment-at parent (list :value value-var)
+                                :class   'env:value-environment
+                                        ; :parent2 environment
+                                :state '()
+                                #+later (when path-suffix
+                                          (list :path-suffix (list path-suffix)))))))
     (compile-expression
      grammar environment sub-expression
      (lambda (new-environment)
-       `(let ((,transformed-value-var
-               (flet ((:fail ()
-                        ,(funcall failure-cont environment)))
-                 (declare (inline :fail)
-                          (ignorable #':fail))
-                 ,@code)))
-          ,(funcall success-cont (env:environment-at
-                                  new-environment
-                                  (list :value transformed-value-var)))))
+       (if t                            ; can-fail?
+           `(let ((,value-var   nil)
+                  (,aborted-var nil))
+              (block ,block-name
+                (flet ((:fail ()
+                         (setf ,aborted-var t)
+                         (return-from ,block-name)))
+                  (declare (inline :fail)
+                           (ignorable #':fail))
+                  (setf ,value-var ,(maybe-progn code))))
+              (if ,aborted-var
+                  ,(funcall failure-cont environment)
+                  ,(funcall success-cont (make-value-environment
+                                          new-environment))))
+           ;; CODE does not cause the match to fail.
+           `(let ((,value-var ,(maybe-progn code)))
+              ,(funcall success-cont (make-value-environment
+                                      new-environment)))))
      failure-cont)))
 
 ;;;
@@ -226,8 +262,6 @@
 
 ;;; Rule invocation
 
-(defvar *cache*)
-
 (defun cached (cache rule &rest state)
   (gethash (list rule state) cache))
 
@@ -244,25 +278,26 @@
 
 (defmethod compile-expression ((grammar      base-grammar)
                                (environment  t)
-                               (expression   rule-invocation)
+                               (expression   rule-invocation-expression)
                                (success-cont function)
                                (failure-cont function))
-  (let+ (((&accessors-r/o #+todo (grammar-name exp:grammar) (rule-name exp:rule) (arguments exp:arguments)) expression)
+  (let+ (((&accessors-r/o #+todo (grammar-name exp:grammar) (rule-name rule #+maybe exp:rule) (arguments arguments #+maybe exp:arguments)) expression)
          (rule               `(load-time-value
-                               (ensure-rule ',rule-name (find-grammar ',(name grammar)))))
+                               (find-rule ',rule-name (find-grammar ',(name grammar))
+                                          :if-does-not-exist :forward-reference)))
          (state-variables    (env:state-variables environment))
          (position-variables (env:position-variables environment))
-         ((&with-gensyms cache-var arguments-var success?-var))
+         ((&with-gensyms arguments-var success?-var))
          ((&flet lookup-and-call/no-arguments ()
             (let ((cache-place #+eventually `(cache:cached
                                               ',rule-name ,@position-variables ,cache-var)
                                `(cached
-                                 ,cache-var ',rule-name ,@position-variables)))
+                                 ,parser.packrat.compiler::+context-var+ ',rule-name ,@position-variables)))
               `(values-list (or ,cache-place
-                    (progn
-                      (format t "~&~V@T~A@~S~%" *depth* ',rule-name (list ,@state-variables))
-                      (let ((*depth* (+ *depth* 2)))
-                       (setf ,cache-place (multiple-value-list (funcall ,rule ,@state-variables))))))))))
+                                (progn
+                                  (format t "~&~V@T~A@~S~%" *depth* ',rule-name (list ,@state-variables))
+                                  (let ((*depth* (+ *depth* 2)))
+                                    (setf ,cache-place (multiple-value-list (funcall ,rule ,parser.packrat.compiler::+context-var+ ,@state-variables))))))))))
          ;; TODO make lookup-and-call/single-argument so we don't have
          ;; cons and copy-list for a single argument, rename {with ->
          ;; multiple}-arguments
@@ -271,7 +306,7 @@
                                               ',rule-name ,@position-variables ,arguments
                                               ,cache-var)
                                `(cached/arguments
-                                 ,cache-var
+                                 ,parser.packrat.compiler::+context-var+
                                  ',rule-name
                                  ,arguments
                                  ,@position-variables)))
@@ -279,7 +314,7 @@
                    (let ((,arguments (copy-list ,arguments)))
                      (format t "~&~V@T~A@~S ~S~%" *depth* ',rule-name (list ,@state-variables) ,arguments)
                      (let ((*depth* (+ *depth* 2)))
-                       (apply ,rule ,@state-variables ,arguments)))))))
+                       (apply ,rule ,parser.packrat.compiler::+context-var+ ,@state-variables ,arguments)))))))
          ((&labels+ argument ((&optional first &rest rest) #+no arguments environment)
             (values
              (if first
@@ -301,7 +336,7 @@
                  '())
              environment)))
          ((&values argument-forms call-environment)
-          (argument arguments #+no nil environment))
+          (argument arguments #+no nil environment)) ; TODO ENVIRONMENT is just passed trough, then bound to CALL-ENVIRONMENT
          (continue-environment #+no (make-instance 'parser.packrat.grammar.sequence::vector-environment
                                                    :parent   call-environment
                                                    :sequence (parser.packrat.grammar.sequence:sequence* environment)
@@ -309,8 +344,7 @@
                                                    :end      (parser.packrat.grammar.sequence:end environment))
                                #+no (env:environment-carrying call-environment 'v)
                                (env:environment-at call-environment :fresh)))
-    `(let ((,cache-var *cache*)         ; TODO do this once per rule. or even better: pass cache as argument
-           ,@(when arguments `((,arguments-var (list ,@argument-forms)))))
+    `(let (,@(when arguments `((,arguments-var (list ,@argument-forms)))))
        ,@(when arguments `((declare (dynamic-extent ,arguments-var))))
        ;; TODO tail calls do not need the receiving part
        (multiple-value-bind (,success?-var
@@ -318,7 +352,7 @@
            ,(if arguments
                 (lookup-and-call/with-arguments arguments-var)
                 (lookup-and-call/no-arguments))
-         (format t "~&~V@T~A@~S -> ~S ~S~%" *depth* ',rule-name (list ,@state-variables)
+         (format t "~&~V@T~A@~S -> ~S ~{~S~^ ~}~%" *depth* ',rule-name (list ,@state-variables)
                  ,success?-var (list ,@(env:position-variables continue-environment)))
          (if ,success?-var
              ,(funcall success-cont continue-environment)
@@ -331,7 +365,7 @@
                                  (expression t)
                                  &key environment)
   (declare (ignore environment))
-  (let+ (((&flet references-with-mode (mode)
+  #+no (let+ (((&flet references-with-mode (mode)
             (exp:variable-references grammar expression
                                      :filter (lambda (node)
                                                (eq (exp::mode node) mode)))))
@@ -344,7 +378,7 @@
                            writes)))
       (error "~@<The assignment~P ~{~A~^, ~} would overwrite rule ~
               parameter.~@:>"
-       (length offenders) offenders))))
+             (length offenders) offenders))))
 
 (defmethod compile-rule :around ((grammar    base-grammar)
                                  (parameters list)
