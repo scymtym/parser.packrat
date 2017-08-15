@@ -1,0 +1,33 @@
+#+OPTIONS: toc:nil num:nil
+
+* Introduction
+
+  This grammar is similar to sequence-based grammars but operates on
+  streams and therefore does not know a sequence length when the parse
+  starts.
+
+  The code generated for rules does not interact with the respective
+  stream directly. Instead it calls two functions, for bounds tests
+  and element access respectively, that are provided at runtime as
+  parameters.
+
+  By default, objects defined in the [[file://../../cache][=parser.packrat.cache=]] module are
+  used to
+
+  1. Interface with the stream
+
+  2. Cache data read from the stream (for random and repeated access)
+
+  3. Provide the bounds test and element access functions mentioned
+     above
+
+* Calling Convention
+
+  The calling convention is an similar to the one for sequence-based
+  grammars but has no length and accepts the bounds test and element
+  access functions:
+  src_lisp[:results output verbatim :exports results]{(print-grammar-calling-convention-lambda-list 'parser.packrat.grammar.stream::stream-grammar)}.
+
+* Optimizations
+
+  There are no specialized optimizations for this grammar.
