@@ -2,11 +2,19 @@
   (:use
    #:cl
    #:alexandria
-   #:let-plus)
+   #:let-plus
+
+   #:parser.packrat.base)
+
+  ;; Parsing protocol
+  (:export
+   #:parse)
 
   ;; Macros
   (:export
    #:defgrammar
+   #:in-grammar
+
    #:defrule
 
    #:match #:ematch #:cmatch))

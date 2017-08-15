@@ -46,11 +46,17 @@
    defined or undefined."
   (check-type name grammar-designator)
 
-  (let ((element-type (singleton-option
-                       'defgrammar :element-type '(not (or null keyword))))
-        (class (singleton-option 'defgrammar :class '(not null)))
-        (use '())
-        (documentation (singleton-option 'defgrammar :documentation 'string)))
+  (let+ (((&flet singleton-option (context name type)
+            (let ((value*))
+              (lambda (&optional (value nil value?))
+                (if value?
+                    (setf value* value)
+                    value*)))))
+         (element-type (singleton-option
+                        'defgrammar :element-type '(not (or null keyword))))
+         (class (singleton-option 'defgrammar :class '(not null)))
+         (use '())
+         (documentation (singleton-option 'defgrammar :documentation 'string)))
     ;; Build and check use list. If used grammars cannot be found,
     ;; still expand, but signal full warnings.
     (dolist (option options)
@@ -58,23 +64,25 @@
         (ecase keyword
           (:element-type (apply element-type value))
           (:class (apply class value))
-          (:use
-           (dolist (used value)
-             (coerce-to-grammar used :if-does-not-exist #'warn))
-           (appendf use value))
+          #+no (:use
+                (dolist (used value)
+                  (coerce-to-grammar used :if-does-not-exist #'warn))
+                (appendf use value))
           (:documentation
            (apply #'documentation value)))))
 
     ;; MAKE-GRAMMAR signals an error at runtime if a used grammar
     ;; cannot be found.
     `(eval-when (:compile-toplevel :load-toplevel :execute)
-       (make-grammar ,(string name)
-                     ,@(when (funcall element-type)
-                         `(:element-type ',(funcall element-type)))
-                     ,@(when (funcall class)
-                         `(:class ',(funcall class)))
-                     :use ',use
-                     :documentation ,(funcall documentation)))))
+       (parser.packrat.grammar:ensure-grammar
+        ',name
+        #+no ,@(when (funcall element-type)
+                 `(:element-type ',(funcall element-type)))
+        ,@(when (funcall class)
+            `(:grammar-class ',(funcall class)))
+                                        ; :use ',use
+                                        ; :documentation ,(funcall documentation)
+        ))))
 
 (defvar *grammar*) ; TODO move this somewhere
 
@@ -84,21 +92,29 @@
      (setf *grammar* (parser.packrat.grammar:find-grammar ',grammar-name))))
 
 (defmacro defrule (name-and-options (&rest parameters)
-                                       expression &optional production)
+                   expression &optional production)
   (let+ (((name &key
-                ((:grammar grammar-name) :test)
+                ((:grammar grammar-name) nil grammar-supplied?)
                 environment)
           (ensure-list name-and-options))
-         (grammar (parser.packrat.grammar:find-grammar grammar-name)) ; TODO grammar-designator
-         (ast     (parser.packrat.bootstrap::bootstrap-parse
-                   (if production
-                       `(:transform ,expression ,production)
-                       expression))))
+         (grammar      (if grammar-supplied?
+                           (parser.packrat.grammar:find-grammar grammar-name) ; TODO grammar-designator
+                           *grammar*))
+         (grammar-name (parser.packrat.grammar:name grammar))
+         (ast          (parser.packrat.bootstrap::bootstrap-parse
+                        (if production
+                            `(:transform ,expression ,production)
+                            expression))))
     (:tree ast)
-    `(setf (parser.packrat.grammar:find-rule ',name (parser.packrat.grammar:find-grammar :test))
-           ,(apply #'parser.packrat.compiler:compile-rule
-                   grammar parameters ast
-                   (when environment (list :environment (eval environment)))))))
+
+    `(parser.packrat.grammar:ensure-rule
+      ',name
+      (parser.packrat.grammar:find-grammar ',grammar-name)
+      :rule-class 'parser.packrat.grammar::rule
+      :expression ',expression
+      :function   ,(apply #'parser.packrat.compiler:compile-rule
+                          grammar parameters ast
+                          (when environment (list :environment (eval environment)))))))
 
 (defmacro define-rule-macro ())
 
@@ -158,7 +174,7 @@
   (let+ (((value &key (grammar (find-symbol (string '#:sexp-grammar)
                                             (find-package '#:parser.packrat.grammar.sexp))))
           (ensure-list value-and-options)))
-    (values value (make-instance grammar))))
+    (values value (make-instance grammar :name :temp))))
 
 (defmacro single-value-match (value-and-options &body clauses)
   (let+ (((&values value grammar)
@@ -170,12 +186,22 @@
                                           `(:transform ,pattern ,body))
                                   clauses)))
          (parsed      (parser.packrat.bootstrap::bootstrap-parse
-                       expression)))
-    `(let ((,value-var ,value))
+                       expression))
+
+         ;; TODO this should be exposed by the compiler
+         ((&flet references-with-mode (mode)
+            (parser.packrat.expression:variable-references grammar parsed
+                                     :filter (lambda (node)
+                                               (eq (parser.packrat.expression:mode node) mode)))))
+         (writes             (references-with-mode :write))
+         (assigned-variables (remove-duplicates writes :key #'parser.packrat.expression:variable))
+         (assigned-names     (mapcar #'parser.packrat.expression:variable assigned-variables)))
+
+    `(let ((,value-var ,value)
+           ,@assigned-names)
        ,(parser.packrat.compiler:compile-expression
          grammar environment parsed
-         #+no #'parser.packrat.environment:value
-         (constantly :match)
+         #'parser.packrat.environment:value
          (lambda (failure-environment)
            (declare (ignore failure-environment))
            'nil)))))
@@ -210,8 +236,8 @@
   ((1 2 3) :match))
 
 #+test (sb-disassem:disassemble-code-component
- (compile nil '(lambda (foo)
-                (declare (optimize (speed 3) (debug 0) (safety 0)))
+  (compile nil '(lambda (foo)
+                 (declare (optimize (speed 3) (debug 0) (safety 0)))
                 (single-value-match foo
                   ((or 1 (vector 1 2)) 2)
                   (3                   4)))))
