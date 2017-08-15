@@ -28,10 +28,13 @@
   (let+ (((&flet references-with-mode (mode)
             (exp:variable-references grammar expression
                                      :filter (lambda (node)
-                                               (eq (exp:mode node) mode)))))
+                                               (and (not (member (exp:variable node) parameters)) ; TODO hack
+                                                    (eq (exp:mode node) mode))))))
          (writes             (references-with-mode :write))
          (assigned-variables (remove-duplicates writes :key #'exp:variable))
          (assigned-names     (mapcar #'exp:variable assigned-variables))
+         (environment        (apply #'env:environment-binding environment
+                                    (mappend #'list parameters (circular-list t))))
          ((&flet make-return-cont (success)
             (lambda (environment)
               `(values ,success ,@(env:position-variables environment))))))
