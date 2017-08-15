@@ -10,6 +10,32 @@
 
 (defgeneric name (grammar))
 
+;;; Dependency protocol
+
+(defgeneric dependencies (thing))
+
+(defgeneric (setf dependencies) (new-value thing))
+
+(defgeneric dependents (thing))
+
+(defgeneric (setf dependents) (new-value thing))
+
+(defgeneric add-dependency (used user))
+
+(defgeneric remove-dependency (used user))
+
+;;; Default behavior
+
+(defmethod add-dependency :before (used user)
+  (when (find used (dependencies user) :test #'eq)
+    (error "~@<~A already depends on ~A.~@:>" user used))
+  (when (find user (dependents used) :test #'eq)
+    (error "~@<~A already is a dependent of ~A.~@:>" user used)))
+
+(defmethod add-dependency (used user)
+  (push used (dependencies user))
+  (push user (dependents used)))
+
 ;;; Grammar protocol
 
 (defgeneric find-rule (name grammar &key if-does-not-exist))

@@ -12,6 +12,14 @@
 (defmethod print-items:print-items append ((object named-mixin))
   `((:name ,(name object))))
 
+;;; `dependencies-mixin'
+
+(defclass dependencies-mixin ()
+  ((dependencies :reader   dependencies
+                 :initform '())))
+
+
+
 ;;; `rule-storage-mixin'
 
 (defclass rule-storage-mixin ()
