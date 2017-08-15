@@ -5,10 +5,11 @@
                                (expression   predicate-expression)
                                (success-cont function)
                                (failure-cont function))
-  (let+ (((&accessors-r/o (sub-expression exp:sub-expression) predicate) expression))
+  (let+ (((&accessors-r/o sub-expression predicate) expression)
+         ((predicate &rest arguments) (ensure-list predicate)))
     (compile-expression grammar environment sub-expression
      (lambda (new-environment)
-       `(if (,predicate ,(env:value new-environment))
+       `(if (,predicate ,(env:value new-environment) ,@arguments)
             ,(funcall success-cont new-environment)
             ,(funcall failure-cont new-environment)))
      failure-cont)))
