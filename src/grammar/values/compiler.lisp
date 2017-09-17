@@ -1,0 +1,30 @@
+(cl:in-package #:parser.packrat.grammar.values)
+
+(defmethod compile-expression ((grammar      t)
+                               (environment  values-environment)
+                               (expression   seq::bounds-test-expression)
+                               (success-cont function)
+                               (failure-cont function))
+  (funcall success-cont environment))
+
+(defmethod compile-expression ((grammar      t)
+                               (environment  values-environment)
+                               (expression   seq::element-access-expression)
+                               (success-cont function)
+                               (failure-cont function))
+  (funcall success-cont environment))
+
+(defmethod compile-expression ((grammar      t)
+                               (environment  values-environment)
+                               (expression   seq::advance-expression)
+                               (success-cont function)
+                               (failure-cont function))
+  (let+ (((&accessors-r/o (amount seq::amount)) expression))
+    (assert (eql 1 amount))
+    (compile-expression
+     grammar environment (exp:sub-expression expression)
+     (lambda (element-environment)
+       (let ((new-environment (env:environment-at environment :next-value
+                                                  :parent element-environment)))
+         (funcall success-cont new-environment)))
+     failure-cont)))

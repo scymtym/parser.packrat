@@ -1,0 +1,19 @@
+#+OPTIONS: toc:nil num:nil
+
+* Introduction
+
+  Currently, there is no grammar but only an environment. This
+  environment allows treating a static sequence of variables as a
+  sequence input for matching or parsing.
+
+  Since the sequence as aspect is completely static, no code or
+  runtime state is needed to handle it. Therefore, the generated code
+  just sequentially processes an ordered set of objects.
+
+* Calling Convention
+
+  # src_lisp[:results output verbatim :exports results]{(print-grammar-calling-convention-lambda-list 'parser.packrat.grammar.values::values-grammar)}.
+
+* Optimizations
+
+  There are no specialized optimizations for this grammar.
