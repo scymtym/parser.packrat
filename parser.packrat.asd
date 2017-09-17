@@ -16,9 +16,9 @@
 
                      "architecture.builder-protocol")
 
-  :components       ((:module     "interface"
-                      :pathname   "src"
-                      :serial     t
-                      :components ((:file       "package")))
+  :components       ((:module     "base"
+                      :pathname   "src/base"
+                      :components ((:file       "package")
+                                   (:file       "types")))
 
                      (:static-file "README.org")))
