@@ -28,7 +28,7 @@
              :reader   end
              :initform (gensym #.(string '#:end))))
   (:documentation
-   "Environment for sequences in the sequence of the `cl:sequence' type."))
+   "Environment for sequences in the sense of the `cl:sequence' type."))
 
 (defmethod print-items:print-items append ((object sequence-environment))
   `((:position ,(position* object) "~A")

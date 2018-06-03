@@ -6,6 +6,9 @@
 
    #:parser.packrat.base)
 
+  (:local-nicknames
+   (#:grammar #:parser.packrat.grammar))
+
   ;; Parsing protocol
   (:export
    #:parse)

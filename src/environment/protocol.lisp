@@ -70,7 +70,8 @@
 ;;; Default behavior
 
 (defmethod environment-binding ((parent t) &rest bindings &key)
-  (let ((environment (make-instance (class-of parent) :parent parent)))
+  (let ((environment (environment-at parent '()) ; (make-instance (class-of parent) :parent parent)
+          ))
     (loop :for (name value) :on bindings :by #'cddr :do
        (setf (lookup name environment) value))
     environment))

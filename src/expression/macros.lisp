@@ -21,8 +21,8 @@
             `(,name (more-conditions:missing-required-initarg
                      ',class-name ,(make-keyword name))))))
     `(progn
-       (defclass ,class-name (expression
-                              ,@superclasses)
+       (defclass ,class-name (,@superclasses
+                              expression)
          ,(map 'list #'make-non-relation-slot slots)
          (:default-initargs
           ,@(mappend #'make-default-initarg slots))

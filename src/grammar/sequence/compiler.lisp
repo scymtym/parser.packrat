@@ -1,85 +1,126 @@
 (cl:in-package #:parser.packrat.grammar.sequence)
 
-;;;
+;;; Bounds test, element access and advance rules for `sequence-environment'
 
-(defmethod compile-bounds-test ((grammar     sequential-grammar-mixin)
-                                (environment sequence-environment)
-                                (in-cont     function)
-                                (out-cont    function))
-  `(if (< ,(position* environment) ,(end environment))
-       ,(funcall in-cont)
-       ,(funcall out-cont)))
-
-(defmethod compile-access ((grammar     sequential-grammar-mixin)
-                           (environment sequence-environment)
-                           (cont        function))
-  (let+ (((&with-gensyms element)))
-    `(let ((,element
-            (locally
-                #+sbcl (declare (optimize (sb-c::insert-array-bounds-checks 0)))
-                (elt ,(sequence* environment) ,(position* environment)))))
-       ,(funcall cont element))))
-
-(defmethod compile-advance ((grammar     sequential-grammar-mixin)
-                            (environment sequence-environment)
-                            (cont        function)
-                            &key
-                            (amount 1)
-                            to)
-  (let ((position (position* environment)))
-    (typecase position
-      (array-index
-       (funcall cont (env:environment-at
-                      environment (list :position (+ position amount)))))
-      (t
-       (let* ((new-environment (env:environment-at environment :fresh))
-              (new-position    (position* new-environment)))
-         `(let ((,new-position ,(or to `(+ ,position ,amount))))
-            ,(funcall cont new-environment)))))))
-
-;;; TODO these are for sequential-grammar-mixin and sequential-environment-mixin and should be separate from the sequence-{grammar,environment}
-
-(defmethod compile-expression ((grammar      sequential-grammar-mixin)
-                               (environment  sequential-environment-mixin)
-                               (expression   exp::value-environment-needing-mixin)
+(defmethod compile-expression ((grammar      t)
+                               (environment  sequence-environment)
+                               (expression   bounds-test-expression)
                                (success-cont function)
                                (failure-cont function))
-  (compile-bounds-test
-   grammar environment
-   (lambda ()
-     (compile-access
-      grammar environment
-      (lambda (value)
-        (compile-expression
-         grammar
-         #+old (env:environment-carrying environment value)
-         (env:environment-at environment (list :value value)
-                             :class 'env:value-environment
-                             :state '())
-         expression
-         (lambda (new-environment)
-           (declare (ignore new-environment))
-           (compile-advance grammar environment success-cont)) ; TODO should make sequence-environment with new-environment as parent
-         (lambda (new-environment)
-           (declare (ignore new-environment))
-           (funcall failure-cont environment))))))
-   (curry failure-cont environment)))
+  `(if (< ,(position* environment) ,(end environment))
+       ,(compile-expression
+         grammar environment (exp:sub-expression expression)
+         success-cont failure-cont)
+       ,(funcall failure-cont environment)))
 
-(defmethod compile-expression :before  ((grammar      t)
-                                        (environment  t)
-                                        (expression   repetition-expression)
-                                        (success-cont function)
-                                        (failure-cont function))
-  (let ((min (min-repetitions expression))
-        (max (max-repetitions expression)))
-    (cond
-      ((and (equal min 1) (equal max 1))
-       (error "~@<In ~A, minimum and maximum repetition count are both
-               1.~@:>"
-              expression))
-      ((equal min 0)
-       (error "~@<In ~A, minimum repetition count is 0.~@:>"
-              expression)))))
+(defmethod compile-expression ((grammar      t)
+                               (environment  sequence-environment)
+                               (expression   element-access-expression)
+                               (success-cont function)
+                               (failure-cont function))
+  (let+ (((&with-gensyms element))
+         (new-environment (env:environment-at environment (list :value element)
+                                              :class 'env:value-environment
+                                              :state '())))
+    `(let ((,element (elt ,(sequence* environment) ,(position* environment))))
+       ,(compile-expression
+         grammar new-environment (exp:sub-expression expression)
+         success-cont failure-cont))))
+
+(defmethod compile-expression ((grammar      t)
+                               (environment  sequence-environment)
+                               (expression   advance-expression)
+                               (success-cont function)
+                               (failure-cont function))
+  (let+ (((&accessors-r/o amount) expression)
+         (position (position* environment)))
+    (compile-expression
+     grammar environment (exp:sub-expression expression)
+     (lambda (element-environment)
+       (declare (ignore element-environment))
+       (typecase position
+         #+no (array-index
+               (let ((new-environment (env:environment-at
+                                       environment (list :position (+ position amount)))))
+                 (funcall success-cont new-environment)))
+         (t
+          (let* ((new-environment (env:environment-at environment :fresh))
+                 (new-position    (position* new-environment)))
+            `(let ((,new-position ,(or nil #+no to `(+ ,position ,amount))))
+               ,(funcall success-cont new-environment))))))
+     failure-cont)))
+
+;;; Bounds test, element access and advance rules for `list-environment'
+
+(defmethod compile-expression ((grammar      t)
+                               (environment  list-environment)
+                               (expression   bounds-test-expression)
+                               (success-cont function)
+                               (failure-cont function))
+  `(if (null ,(tail environment))
+       ,(funcall failure-cont environment)
+       ,(compile-expression
+         grammar environment (exp:sub-expression expression)
+         success-cont failure-cont)))
+
+(defmethod compile-expression ((grammar      t)
+                               (environment  list-environment)
+                               (expression   element-access-expression)
+                               (success-cont function)
+                               (failure-cont function))
+  (let+ (((&with-gensyms element))
+         (new-environment (env:environment-at environment (list :value element)
+                                              :class 'env:value-environment
+                                              :state '())))
+    `(let ((,element (car ,(tail environment))))
+       ,(compile-expression
+         grammar new-environment (exp:sub-expression expression)
+         success-cont failure-cont))))
+
+(defmethod compile-expression ((grammar      t)
+                               (environment  list-environment)
+                               (expression   advance-expression)
+                               (success-cont function)
+                               (failure-cont function))
+  (let* ((amount          (amount expression))
+         (tail            (tail environment))
+         (new-environment (env:environment-at environment :fresh))
+         (new-tail        (tail new-environment)))
+    (compile-expression
+     grammar environment (exp:sub-expression expression)
+     (lambda (element-environment)
+       (declare (ignore element-environment))
+       `(let ((,new-tail ,(or nil #+maybe-later to
+                                  (case amount
+                                    (1 `(cdr ,tail))
+                                    (2 `(cddr ,tail))
+                                    (t `(nthcdr ,amount ,tail))))))
+          ,(funcall success-cont new-environment)))
+     failure-cont)))
+
+;;; Bounds test, element access and advance rules for `vector-environment'
+;;;
+;;; Only element access is different compared to the superclass
+;;; `sequence-environment'.
+
+(defmethod compile-expression ((grammar      sexp-grammar)
+                               (environment  vector-environment)
+                               (expression   element-access-expression)
+                               (success-cont function)
+                               (failure-cont function))
+  (let+ (((&with-gensyms element))
+         (new-environment (env:environment-at environment (list :value element)
+                                              :class 'env:value-environment
+                                              :state '())))
+    `(let ((,element
+             (locally
+                 #+sbcl (declare (optimize (sb-c::insert-array-bounds-checks 0)))
+                 (aref ,(seq:sequence* environment) ,(seq:position* environment)))))
+       ,(compile-expression
+         grammar new-environment (exp:sub-expression expression)
+         success-cont failure-cont))))
+
+;;; Repetition and sequence expressions
 
 ;; TODO (* EXPRESSION 0 1) -> (if C(EXPRESSION) SUCCESS SUCCESS), no labels
 (defmethod compile-expression ((grammar      sequential-grammar-mixin)
@@ -115,14 +156,14 @@
                        ,@(when (and min check?) `(count))))))
             `(labels ((,repeat (,@(env:state-variables recursion-environment)
                                 ,@(when count? '(count)))
-                                        ; (declare (type array-index position)) ; TODO depends on the sequence
+                        ; (declare (type array-index position)) ; TODO depends on the sequence
                         ,@(when count? `((declare (type array-index count))))
                         ,(compile-expression
                           grammar recursion-environment (exp:sub-expression expression)
                           (cond
                             ((not max)
                              #'recurse)
-                            (max=1?     ;TODO
+                            (max=1?     ; TODO
                              (rcurry #'done nil))
                             (t
                              (lambda (new-environment)
@@ -149,15 +190,6 @@
                                (expression   sequence-expression)
                                (success-cont function)
                                (failure-cont function))
-  #+old (let+ (((&labels+ sub ((&optional first &rest rest) environment)
-                  (compile-expression
-                   grammar environment first
-                   (lambda (new-environment)
-                     (if rest
-                         (sub rest new-environment)
-                         (funcall success-cont new-environment)))
-                   failure-cont))))
-          (sub (exp:sub-expressions expression) environment))
   (let+ ((expressions (exp:sub-expressions expression))
          (names       (map-into (make-list (length expressions)) #'gensym))
          ((&labels+ element ((&optional expression &rest rest-expressions)

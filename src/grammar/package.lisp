@@ -20,9 +20,15 @@
   (:export
    #:name)
 
+  ;; Dependency protocol
   (:export
    #:dependencies
    #:dependents)
+
+  ;; Rule protocol
+  (:export
+   #:expression
+   #:rule-function)
 
   ;; Grammar protocol
   (:export
@@ -34,11 +40,6 @@
    #:parse-expression
 
    #:parse)
-
-  ;; Rule protocol
-  (:export
-   #:expression
-   #:rule-function)
 
   ;; Grammar namespace
   (:export

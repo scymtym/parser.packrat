@@ -34,6 +34,14 @@
                                       print-items:print-items-mixin)
   ())
 
+;;; Constant
+
+(exp:define-expression-class constant (print-items:print-items-mixin)
+  (exp:value))
+
+(defmethod print-items:print-items append ((object constant-expression))
+  `((:value ,(exp:value object))))
+
 ;;; Variables
 
 (defclass variable-reference-mixin ()
@@ -94,14 +102,6 @@
 
 (exp:define-expression-class transform (exp:single-sub-expression-mixin)
   (code))
-
-;;; Constant
-
-(exp:define-expression-class constant (print-items:print-items-mixin)
-  (exp:value))
-
-(defmethod print-items:print-items append ((object constant-expression))
-  `((:value ,(exp:value object))))
 
 ;;; `rule-invocation'
 

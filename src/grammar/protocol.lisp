@@ -1,6 +1,6 @@
 ;;;; protocol.lisp --- Protocol provided by the grammar module.
 ;;;;
-;;;; Copyright (C) 2017 Jan Moringen
+;;;; Copyright (C) 2017, 2018 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -11,6 +11,8 @@
 (defgeneric name (grammar))
 
 ;;; Dependency protocol
+;;;
+;;; For querying and managing dependencies between rules. (and grammars?)
 
 (defgeneric dependencies (thing))
 
@@ -36,7 +38,15 @@
   (push used (dependencies user))
   (push user (dependents used)))
 
+;;; Rule protocol
+
+(defgeneric expression (rule))
+
+(defgeneric (setf rule-function) (new-value rule))
+
 ;;; Grammar protocol
+;;;
+;;; Mostly rule creation and acting as a container for rule instances.
 
 (defgeneric find-rule (name grammar &key if-does-not-exist))
 
@@ -52,7 +62,7 @@
   (:documentation
    ""))
 
-(defgeneric parse (grammar expression input)
+(defgeneric parse (grammar expression input) ; TODO separate protocol?
   (:documentation
    "TODO"))
 
@@ -126,12 +136,6 @@
 
 (defmethod parse ((grammar t) (expression function) (input t))
   (funcall expression (make-hash-table :test #'equal) input))
-
-;;; Rule protocol
-
-(defgeneric expression (rule))
-
-(defgeneric (setf rule-function) (new-value rule))
 
 ;;; Grammar namespace
 

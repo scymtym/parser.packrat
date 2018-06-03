@@ -18,8 +18,6 @@
   ((dependencies :reader   dependencies
                  :initform '())))
 
-
-
 ;;; `rule-storage-mixin'
 
 (defclass rule-storage-mixin ()
@@ -42,8 +40,14 @@
 ;;; `meta-grammar-mixin'
 
 (defclass meta-grammar-mixin ()
+  ;; TODO could just a use a meta-grammar-expression. that would
+  ;; allow, among other things a qualified rule invocation, subsuming
+  ;; this.
   ((meta-grammar    :initarg :meta-grammar
-                    :reader  meta-grammar)
+                    :reader  meta-grammar
+                    :documentation
+                    "Stores the grammar according to which rule
+                     expressions for this grammar should be parsed.")
    (meta-start-rule :initarg :meta-start-rule
                     :reader  meta-start-rule)))
 

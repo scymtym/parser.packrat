@@ -7,6 +7,7 @@
   (:local-nicknames
    (#:bp #:architecture.builder-protocol))
 
+  ;; TODO sort protocols
   (:shadow
    #:variable)
 

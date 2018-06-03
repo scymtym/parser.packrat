@@ -2,6 +2,10 @@
 
 ;;; Expression compilation protocol
 
+(defgeneric prepare-expression (grammar expression)
+  (:documentation
+   "A \"source transform\" that prepares EXPRESSION for compilation."))
+
 (defgeneric compile-expression (grammar environment expression
                                 success-cont failure-cont)
   (:documentation
@@ -25,7 +29,9 @@
                                            (environment t)
                                            (expression  t))
   ;; TODO the variable write stuff is too simplistic
-  (let+ (((&flet references-with-mode (mode)
+  (let+ ((expression (prepare-expression grammar environment expression))
+
+         ((&flet references-with-mode (mode)
             (exp:variable-references grammar expression
                                      :filter (lambda (node)
                                                (and (not (member (exp:variable node) parameters)) ; TODO hack
@@ -38,7 +44,7 @@
          ((&flet make-return-cont (success)
             (lambda (environment)
               `(values ,success ,@(env:position-variables environment))))))
-    `(lambda (,@(env:state-variables environment) ,@parameters)
+    `(lambda (,parser.packrat.compiler::+context-var+ ,@(env:state-variables environment) ,@parameters)
        ;; TODO type declarations
        ; (declare (optimize (speed 3) (debug 0) (safety 0)))
        (let (,@assigned-names)

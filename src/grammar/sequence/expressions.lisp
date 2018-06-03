@@ -1,5 +1,23 @@
 (cl:in-package #:parser.packrat.grammar.sequence)
 
+;;; Internal concepts
+
+(exp:define-expression-class bounds-test (exp:single-sub-expression-mixin)
+  ())
+
+(exp:define-expression-class element-access (exp:single-sub-expression-mixin)
+  ())
+
+(defclass #+TODO exp:define-expression-class advance-expression (exp:single-sub-expression-mixin
+                                                                 exp:expression)
+  ((amount :initarg  :amount
+           :type     positive-integer
+           :reader   amount
+           :initform 1)))
+
+(defmethod bp:node-kind ((builder t) (node advance-expression))
+  'advance)
+
 ;;; repetition
 
 (defclass repetition-expression (exp:single-sub-expression-mixin
@@ -65,5 +83,5 @@
                              (node     sequence-expression))
   (let+ (((&values nodes relation-args) (call-next-method)))
     (values nodes (loop :for args :in relation-args
-                     :for i :from 0 :below (length nodes)
-                     :collect (list* :key i args)))))
+                        :for i :from 0 :below (length nodes)
+                        :collect (list* :key i args)))))

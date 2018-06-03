@@ -22,6 +22,10 @@
     (bp:with-builder ('list)
       (bp:walk-nodes* (curry #'visit ()) expression))))
 
+;;; Value protocol
+
+(defgeneric value (expression))
+
 ;;; Variables protocol
 
 ;; TODO remove grammar parameter

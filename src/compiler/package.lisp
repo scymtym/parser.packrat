@@ -13,7 +13,8 @@
   (:export
    #:compile-expression
    #:compile-rule
-   #:compile-rule-using-environment)
+   #:compile-rule-using-environment
+   #:prepare-expression)
 
   ;; Code generation utilities
   (:export
