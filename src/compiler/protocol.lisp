@@ -46,7 +46,8 @@
               `(values ,success ,@(env:position-variables environment))))))
     `(lambda (,parser.packrat.compiler::+context-var+ ,@(env:state-variables environment) ,@parameters)
        ;; TODO type declarations
-       ; (declare (optimize (speed 3) (debug 0) (safety 0)))
+       ;; (declare (optimize (speed 3) (debug 0) (safety 0)))
+       (declare (optimize (speed 1) (debug 1) (safety 1)))
        (let (,@assigned-names)
          ,(compile-expression
            grammar environment expression
