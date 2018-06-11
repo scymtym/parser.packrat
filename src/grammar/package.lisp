@@ -42,7 +42,9 @@
 
    #:parse-expression
 
-   #:parse)
+   #:parse
+
+   #:default-environment)
 
   ;; Grammar namespace
   (:export

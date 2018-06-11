@@ -66,11 +66,13 @@
   (:documentation
    "TODO"))
 
+(defgeneric default-environment (grammar expression)
+  (:documentation
+   "Return a default environment instance for GRAMMAR and expression."))
+
 (defmethod parse-expression ((grammar t) (expression t)) ; TODO hack
   (uiop:symbol-call '#:parser.packrat.bootstrap '#:bootstrap-parse
                     expression))
-
-
 
 ;;; Default behavior
 
@@ -136,6 +138,17 @@
 
 (defmethod parse ((grammar t) (expression function) (input t))
   (funcall expression (make-hash-table :test #'equal) input))
+
+;;; Default method for compiler protocol
+(defmethod c:compile-rule
+    ((grammar    t)
+     (parameters list)
+     (expression t)
+     &key
+     (environment (default-environment grammar expression)))
+  (c:compile-rule-using-environment
+   grammar parameters environment expression))
+
 
 ;;; Grammar namespace
 
