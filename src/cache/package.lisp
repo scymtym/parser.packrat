@@ -2,7 +2,8 @@
   (:use
    #:cl
    #:alexandria
-   #:let-plus)
+   #:let-plus
+   #:more-conditions)
 
   (:shadow
    #:stream)

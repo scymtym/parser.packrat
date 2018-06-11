@@ -1,10 +1,12 @@
 (cl:in-package #:parser.packrat.cache)
 
 (defclass stream-cache ()
-  ((stream :initarg  :stream
+  ((stream :initarg  :stream ; TODO mandatory
            :reader   stream)
    (chunks :reader   chunks
-           :initform (make-chunk-cache 0 10))))
+           :initform (make-chunk-cache 0 10)))
+  (:default-initargs
+   :stream (missing-required-initarg 'stream-cache :stream)))
 
 (defmacro define-make-functions (class make-chunk-function chunk-type)
   `(defmethod make-functions ((cache ,class))
@@ -15,7 +17,6 @@
             (end-seen?       nil)
             ((&flet fill-chunk ()
                (declare (optimize (speed 3) (debug 0) (safety 0)))
-               ; (log:info "~@<Reading ~D at ~D.~@:>" chunk-length length-at-least)
                (let* ((chunk (,make-chunk-function divisor))
                       (read  (read-sequence chunk stream)))
                  (declare (type ,chunk-type chunk))
