@@ -117,13 +117,13 @@
         (apply #'change-class rule rule-class initargs))))
 
 (defmethod parse ((grammar symbol) (expression t) (input t))
-  (let ((grammar (parser.packrat.grammar:find-grammar grammar)))
+  (let ((grammar (find-grammar grammar)))
     (parse grammar expression input)))
 
 (defmethod parse ((grammar t) (expression t) (input t))
   (let* ((expression (parse-expression grammar expression))
                                         ; (exp:var)
-         (code       (parser.packrat.compiler:compile-rule grammar '() expression))
+         (code       (c:compile-rule grammar '() expression))
          (function   (compile nil code)))
     (parse grammar function input)
     #+later-special-case (if (typep expression 'parser.packrat.grammar.base:rule-invocation-expression)

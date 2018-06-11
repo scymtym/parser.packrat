@@ -4,6 +4,9 @@
    #:alexandria
    #:let-plus)
 
+  (:local-nicknames
+   (#:c #:parser.packrat.compiler))
+
   ;; Conditions
   (:export
    #:grammar-condition
