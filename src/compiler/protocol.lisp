@@ -2,7 +2,7 @@
 
 ;;; Expression compilation protocol
 
-(defgeneric prepare-expression (grammar expression)
+(defgeneric prepare-expression (grammar environment expression)
   (:documentation
    "A \"source transform\" that prepares EXPRESSION for compilation."))
 
