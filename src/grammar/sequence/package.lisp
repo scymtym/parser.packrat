@@ -7,12 +7,13 @@
    #:parser.packrat.compiler)
 
   (:local-nicknames
-   (#:bp   #:architecture.builder-protocol)
+   (#:bp      #:architecture.builder-protocol)
 
-   (#:exp  #:parser.packrat.expression)
-   (#:env  #:parser.packrat.environment)
+   (#:exp     #:parser.packrat.expression)
+   (#:env     #:parser.packrat.environment)
 
-   (#:base #:parser.packrat.grammar.base))
+   (#:grammar #:parser.packrat.grammar)
+   (#:base    #:parser.packrat.grammar.base))
 
   ;; Expressions
   (:export

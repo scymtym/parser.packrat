@@ -1,5 +1,30 @@
 (cl:in-package #:parser.packrat.grammar.sequence)
 
+;;; Default for `sequential-environment-mixin'
+
+(defmethod compile-expression ((grammar      t)
+                               (environment  sequential-environment-mixin)
+                               (expression   advance-expression)
+                               (success-cont function)
+                               (failure-cont function))
+  (let+ (((&accessors-r/o amount) expression)
+         (position (position* environment)))
+    (compile-expression
+     grammar environment (exp:sub-expression expression)
+     (lambda (element-environment)
+       (declare (ignore element-environment))
+       (typecase position
+         #+no (array-index
+               (let ((new-environment (env:environment-at
+                                       environment (list :position (+ position amount)))))
+                 (funcall success-cont new-environment)))
+         (t
+          (let* ((new-environment (env:environment-at environment :fresh))
+                 (new-position    (position* new-environment)))
+            `(let ((,new-position ,(or nil #+no to `(+ ,position ,amount))))
+               ,(funcall success-cont new-environment))))))
+     failure-cont)))
+
 ;;; Bounds test, element access and advance rules for `sequence-environment'
 
 (defmethod compile-expression ((grammar      t)
@@ -26,29 +51,6 @@
        ,(compile-expression
          grammar new-environment (exp:sub-expression expression)
          success-cont failure-cont))))
-
-(defmethod compile-expression ((grammar      t)
-                               (environment  sequence-environment)
-                               (expression   advance-expression)
-                               (success-cont function)
-                               (failure-cont function))
-  (let+ (((&accessors-r/o amount) expression)
-         (position (position* environment)))
-    (compile-expression
-     grammar environment (exp:sub-expression expression)
-     (lambda (element-environment)
-       (declare (ignore element-environment))
-       (typecase position
-         #+no (array-index
-               (let ((new-environment (env:environment-at
-                                       environment (list :position (+ position amount)))))
-                 (funcall success-cont new-environment)))
-         (t
-          (let* ((new-environment (env:environment-at environment :fresh))
-                 (new-position    (position* new-environment)))
-            `(let ((,new-position ,(or nil #+no to `(+ ,position ,amount))))
-               ,(funcall success-cont new-environment))))))
-     failure-cont)))
 
 ;;; Bounds test, element access and advance rules for `list-environment'
 
@@ -103,7 +105,7 @@
 ;;; Only element access is different compared to the superclass
 ;;; `sequence-environment'.
 
-(defmethod compile-expression ((grammar      sexp-grammar)
+(defmethod compile-expression ((grammar      t)
                                (environment  vector-environment)
                                (expression   element-access-expression)
                                (success-cont function)
@@ -115,7 +117,7 @@
     `(let ((,element
              (locally
                  #+sbcl (declare (optimize (sb-c::insert-array-bounds-checks 0)))
-                 (aref ,(seq:sequence* environment) ,(seq:position* environment)))))
+                 (aref ,(sequence* environment) ,(position* environment)))))
        ,(compile-expression
          grammar new-environment (exp:sub-expression expression)
          success-cont failure-cont))))
@@ -219,5 +221,5 @@
                          (parameters list)
                          (expression t)
                          &key
-                         (environment (make-instance 'sequence-environment)))
+                         (environment ))
   (compile-rule-using-environment grammar parameters environment expression))
