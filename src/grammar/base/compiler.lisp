@@ -276,8 +276,6 @@
 
 (defvar *depth* 0)
 
-(defconstant parser.packrat.compiler::+context-var+ 'context)
-
 (defmethod compile-expression ((grammar      base-grammar)
                                (environment  t)
                                (expression   rule-invocation-expression)
