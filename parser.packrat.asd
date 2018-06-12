@@ -71,7 +71,9 @@
                       :serial     t
                       :components ((:file       "package")
                                    (:file       "expressions")
+
                                    (:file       "base-grammar")
+
                                    (:file       "compiler")))
 
                      (:module     "grammar-sequence"
@@ -79,10 +81,14 @@
                       :depends-on ("expression" "grammar" "grammar-base")
                       :serial     t
                       :components ((:file       "package")
+
                                    (:file       "expressions")
+
                                    (:file       "mixins")
                                    (:file       "environment")
                                    (:file       "sequence-grammar")
+
+                                   (:file       "prepare")
                                    (:file       "compiler")))
 
                      (:module     "grammar-sexp"
@@ -94,7 +100,10 @@
                       :serial     t
                       :components ((:file       "package")
                                    (:file       "expressions")
+
                                    (:file       "sexp-grammar")
+
+                                   (:file       "prepare")
                                    (:file       "compiler")))
 
                      (:module     "bootstrap"
