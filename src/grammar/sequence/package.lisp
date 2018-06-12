@@ -42,6 +42,12 @@
   (:export
    #:vector-environment)
 
+  ;; Sequence grammar protocol
+  (:export
+   #:sequence-type
+   #:element-type
+   #:index-type)
+
   ;; Mixins
   (:export
    #:sequential-grammar-mixin

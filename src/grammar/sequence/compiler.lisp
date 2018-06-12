@@ -217,7 +217,7 @@
 
 ;;; Rules
 
-(defmethod compile-rule ((grammar    sequence-grammar)
+#+no (defmethod compile-rule ((grammar    sequence-grammar)
                          (parameters list)
                          (expression t)
                          &key

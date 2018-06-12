@@ -1,14 +1,13 @@
 (cl:in-package #:parser.packrat.grammar.sequence)
 
-(defgeneric compile-bounds-test (grammar environment in-cont out-cont)
+(defgeneric sequence-type (grammar)
   (:documentation
-   "TODO"))
+   "Return a type specifier describing the sequences accepted by GRAMMAR."))
 
-(defgeneric compile-access (grammar environment cont)
+(defgeneric element-type (grammar)
   (:documentation
-   "TODO"))
+   "Return a type specifier describing the elements of sequences accepted by GRAMMAR."))
 
-(defgeneric compile-advance (grammar environment cont
-                             &key amount to) ; TODO amount and to seem unused; remove
+(defgeneric index-type (grammar)
   (:documentation
-   "TODO"))
+   "Return a type specified describing the sequence indices used by GRAMMAR."))
