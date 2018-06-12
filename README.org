@@ -1,4 +1,55 @@
 * Introduction
+
+  The ~parser.packrat~ system provides an extensible framework for
+  efficient parsing and pattern matching on different kinds of
+  inputs.
+
+  It is inspired by OMeta, esrap
+
+  Modular grammars
+
+  Support for the following kinds of inputs is built in:
+
+  + sequences
+    + strings
+    + octet vectors
+    + bit vectors
+  + s-expressions
+  + streams
+    + of octects
+    + of characters
+
+* Tutorial
+
+  The fundamental concepts are
+
+  + expressions such as src_lisp[:exports code]{(:seq (or #\a #\b) #\c)}
+  + rules which are named expressions, optionally accepting parameters
+  + grammars which are named collections of rules tied a to a
+    particular kind of input
+
+  Defining a grammar
+
+  #+BEGIN_SRC lisp :exports both
+    (parser.packrat:defgrammar :integers
+      (:class parser.packrat.grammar.string:simple-string-grammar))
+    (parser.packrat:in-grammar :integers)
+  #+END_SRC
+
+  #+BEGIN_SRC lisp :exports both
+    (parser.packrat:defrule digit (base)
+        (:<- char :any)
+      (or (digit-char-p char) (:fail)))
+
+    (parser.packrat:defrule integer (base)
+        (* (:<<- digits (digit base)))
+      digits)
+  #+END_SRC
+
+  #+BEGIN_SRC lisp :exports both
+    (parser.packrat.grammar:parse :integers '(integer 10) "1234")
+  #+END_SRC
+
 * Related Work
 
   + OMeta ::
