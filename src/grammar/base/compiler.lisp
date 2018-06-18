@@ -146,83 +146,61 @@
 
 (defmethod compile-expression ((grammar      base-grammar)
                                (environment  env:value-environment)
-                               (expression   set-expression)
+                               (expression   set-expression) ; TODO have two kinds of expressions for set and unify?
                                (success-cont function)
                                (failure-cont function))
-  (let+ (((&accessors-r/o (variable exp:variable) sub-expression) expression))
-    (if (env:lookup variable environment) ; TODO hack. this should not be a set expression in that case
-
+  (let+ (((&accessors-r/o (variable exp:variable) sub-expression) expression)
+         ((&optional (name variable) . already-bound?)
+          (env:lookup variable environment)))
+    (if already-bound?
         (compile-expression
          grammar environment sub-expression
          (lambda (new-environment)
-           `(if (equal ,variable ,(env:value new-environment))
+           `(if (equal ,name ,(env:value new-environment))
                 ,(funcall success-cont new-environment)
                 ,(funcall failure-cont environment)))
          failure-cont)
-
         (compile-expression
          grammar environment sub-expression
          (lambda (new-environment)
-           (setf (env:lookup variable new-environment) t) ; TODO hack
-           `(progn
-              (setf ,variable ,(env:value new-environment))
-              ,(funcall success-cont new-environment)))
-         failure-cont)))
-  #+old (let+ ((variable (exp::variable expression))
-         ((&with-gensyms success-fun value-var))
-         (success-body)
-         (sub-body
-          (compile-expression
-           grammar environment (sub-expression expression)
-           (lambda (new-environment)
-             (setf success-body (funcall success-cont new-environment))
-             `(,success-fun ,(env:value new-environment)))
-           failure-cont)))
-    `(labels ((,success-fun (,value-var)
-                (setf ,variable ,value-var)
-                ,success-body))
-       ,sub-body)))
+           (setf (env:lookup variable new-environment)
+                 (cons name t))         ; TODO hack
+           (maybe-progn
+            `(setf ,name ,(env:value new-environment))
+            (funcall success-cont new-environment)))
+         failure-cont))))
 
 (defmethod compile-expression ((grammar      base-grammar)
                                (environment  env:value-environment)
                                (expression   push-expression)
                                (success-cont function)
                                (failure-cont function))
-  (let+ (((&accessors-r/o (variable exp:variable) sub-expression) expression))
+  (let+ (((&accessors-r/o (variable exp:variable) sub-expression) expression)
+         ((&optional (name variable) . &ign)
+          (env:lookup variable environment)))
     (compile-expression
      grammar environment sub-expression
      (lambda (new-environment)
-       `(progn
-          (push ,(env:value new-environment) ,variable)
-          ,(funcall success-cont new-environment)))
-     failure-cont))
-  #+old (let+ ((variable (exp::variable expression))
-         ((&with-gensyms success-fun value-var))
-         (success-body)
-         (sub-body
-          (compile-expression
-           grammar environment (exp:sub-expression expression)
-           (lambda (new-environment)
-             (setf success-body (funcall success-cont new-environment))
-             `(,success-fun ,(env:value new-environment)))
-           failure-cont)))
-    `(labels ((,success-fun (,value-var)
-                (push ,value-var ,variable)
-                ,success-body))
-       ,sub-body)))
+       (maybe-progn
+        `(push ,(env:value new-environment) ,name)
+        (funcall success-cont new-environment)))
+     failure-cont)))
 
 (defmethod compile-expression ((grammar      base-grammar)
                                (environment  t)
-                               (expression   variable-reference)
+                               (expression   variable-reference) ; TODO name
                                (success-cont function)
                                (failure-cont function))
-  (let* ((variable (exp:variable expression))
-         (binding  (env:lookup variable environment)))
+  (let+ ((variable (exp:variable expression))
+         ((&optional (name variable) . already-bound?)
+          (env:lookup variable environment)))
+    (unless already-bound?
+      (error "~@<Unbound variable ~S.~@:>" variable))
     ;; TODO check environment
     #+old (funcall success-cont (print (env:environment-carrying
                                         environment variable)))
     (funcall success-cont
-             (env:environment-at environment (list :value variable)
+             (env:environment-at environment (list :value name)
                                  :class 'env:value-environment
                                  :state '()))))
 
