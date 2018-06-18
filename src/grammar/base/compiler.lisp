@@ -345,10 +345,10 @@
                                                    :end      (parser.packrat.grammar.sequence:end environment))
                                #+no (env:environment-carrying call-environment 'v)
                                (env:environment-at call-environment :fresh)))
-    `(let (,@(when arguments `((,arguments-var (list ,@argument-forms)))))
-       ,@(when arguments `((declare (dynamic-extent ,arguments-var))))
-       ;; TODO tail calls do not need the receiving part
-       (multiple-value-bind (,success?-var
+    (maybe-let (when arguments `((,arguments-var (list ,@argument-forms))))
+      (when arguments `(declare (dynamic-extent ,arguments-var)))
+      ;; TODO tail calls do not need the receiving part
+      `(multiple-value-bind (,success?-var
                              ,@(env:position-variables continue-environment))
            ,(if arguments
                 (lookup-and-call/with-arguments arguments-var)
