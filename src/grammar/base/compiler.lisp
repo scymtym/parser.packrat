@@ -69,16 +69,44 @@
                                (failure-cont function))
   (let+ ((expressions (sub-expressions expression))
          (names       (map-into (make-list (length expressions)) #'gensym))
+         ((&flet assignments (expression)
+            (let+ (((&flet references-with-mode (mode) ; TODO duplicated in compile-rule-using-environment
+                      (exp:variable-references grammar expression
+                                               :filter (lambda (node)
+                                                         (and (not (env:lookup (exp:variable node) environment)) ; TODO hack
+                                                              (eq (exp:mode node) mode))))))
+                   (writes             (references-with-mode :write))
+                   (assigned-variables (remove-duplicates writes :key #'exp:variable))
+                   (assigned-names     (mapcar #'exp:variable assigned-variables))
+                   (temporary-names    (mapcar (compose #'gensym #'string) assigned-names)))
+              (when assigned-names
+                (values
+                 (apply #'env:environment-binding environment
+                        (mappend (lambda (variable-name temporary-name)
+                                   (unless (eq (cdr (env:lookup variable-name environment)) :parameter)
+                                     (list variable-name (cons temporary-name nil))))
+                                 assigned-names temporary-names))
+                 assigned-names
+                 temporary-names)))))
          ((&flet alternative (expression name next-name) ; TODO pass failing environment to next alternative
-            `(,name ()
-                ,(compile-expression
-                  grammar environment expression
-                  success-cont
-                  (lambda (failure-environment)
-                    (declare (ignore failure-environment))
-                    (if next-name
-                        `(,next-name)
-                        (funcall failure-cont environment))))))))
+            (let+ (((&values assignment-environment assigned-names temporary-names)
+                    (assignments expression))
+                   (environment (or assignment-environment environment)))
+              `(,name ()
+                  ,(maybe-let
+                    (mapcar #'list temporary-names assigned-names)
+                    (compile-expression
+                     grammar environment expression
+                     (lambda (success-environment)
+                       (maybe-progn
+                        (when assigned-names
+                          `(setf ,@(mappend #'list assigned-names temporary-names)))
+                        (funcall success-cont success-environment)))
+                     (lambda (failure-environment)
+                       (declare (ignore failure-environment))
+                       (if next-name
+                           `(,next-name)
+                           (funcall failure-cont environment))))))))))
 
     `(labels ,(map 'list #'alternative
                    expressions names (append (rest names) '(nil)))
