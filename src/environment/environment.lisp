@@ -27,6 +27,10 @@
     (:depth         ,(depth object)                        " @~D"
      ((:after :binding-count)))))
 
+(defmethod direct-bindings ((environment environment))
+  (when-let ((bindings (%bindings environment)))
+    (hash-table-alist bindings)))
+
 (defmethod lookup ((name t) (environment environment))
   (let+ (((&values value value?) (gethash name (%bindings environment))))
     (if value?

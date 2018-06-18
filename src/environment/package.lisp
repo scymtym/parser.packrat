@@ -6,6 +6,9 @@
 
   ;; Environment lookup protocol
   (:export
+   #:direct-bindings
+   #:bindings
+
    #:lookup) ; also `setf'
 
   ;; Environment hierarchy protocol

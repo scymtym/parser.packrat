@@ -9,6 +9,14 @@
 
 ;;; Environment lookup protocol
 
+(defgeneric direct-bindings (environment)
+  (:documentation
+   "TODO"))
+
+(defgeneric bindings (environment &key include-shadowed?)
+  (:documentation
+   "TODO"))
+
 (defgeneric lookup (name environment)
   (:documentation
    ""))
@@ -16,6 +24,19 @@
 (defgeneric (setf lookup) (new-value name environment)
   (:documentation
    ""))
+
+;;; Default behavior
+
+(defmethod bindings ((environment t) &key include-shadowed?)
+  (let ((direct    (direct-bindings environment))
+        (inherited (when-let ((parent (parent environment)))
+                     (bindings parent :include-shadowed? include-shadowed?))))
+    (append direct
+            (if include-shadowed?
+                inherited
+                (remove-if (lambda+ ((name . &ign))
+                             (find name direct :test #'eq :key #'car))
+                           inherited)))))
 
 ;;; Environment hierarchy protocol
 
