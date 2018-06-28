@@ -213,6 +213,40 @@
 
 ;;; Transform
 
+(defclass value-environment-mixin (env:value-environment)
+  ((actual-class :initarg :actual-class
+                 :reader  actual-class)))
+
+(defmethod env:environment-at ((environment value-environment-mixin)
+                               (position    t)
+                               &rest args &key
+                               (class (actual-class environment))
+                               parent
+                               state)
+  (declare (ignore parent state))
+  (apply #'call-next-method environment position :class class
+         (remove-from-plist args :class)))
+
+(defun add-value (environment value)
+  (if (typep environment 'env:value-environment)
+      (env:environment-at environment (list :value value))
+      (let* ((actual-class (class-of environment))
+             (superclasses (list actual-class
+                                 (find-class 'value-environment-mixin)))
+             (class        (make-instance
+                            'standard-class
+                            :direct-superclasses superclasses
+                            :direct-slots        '())))
+        (change-class environment class
+                      :actual-class actual-class
+                      :value        value))))
+
+#+later (add-value (make-instance 'parser.packrat.grammar.sequence:vector-environment
+                          :position 'pos
+                          :sequence 'seq
+                          :end      'endp)
+           'value)
+
 ;; TODO syntactically, EXPRESSION contains a sub-expression. However,
 ;; we do not use the value produced by that sub-expression.
 (defmethod compile-expression ((grammar      base-grammar)
@@ -221,37 +255,52 @@
                                (success-cont function)
                                (failure-cont function))
   (let+ (((&accessors-r/o code sub-expression) expression)
-         ((&with-gensyms value-var aborted-var block-name))
-         ((&flet make-value-environment (parent ; &optional path-suffix
-                                         )
-            (env:environment-at parent (list :value value-var)
-                                :class   'env:value-environment
+         ((&with-gensyms transform-name value-var aborted-var block-name))
+         #+no ((&flet make-value-environment (parent ; &optional path-suffix
+                                              )
+                 (env:environment-at parent (list :value value-var)
+                                     :class   'env:value-environment
                                         ; :parent2 environment
-                                :state '()
-                                #+later (when path-suffix
-                                          (list :path-suffix (list path-suffix)))))))
-    (compile-expression
-     grammar environment sub-expression
-     (lambda (new-environment)
-       (if t                            ; can-fail?
-           `(let ((,value-var   nil)
-                  (,aborted-var nil))
-              (block ,block-name
-                (flet ((:fail ()
-                         (setf ,aborted-var t)
-                         (return-from ,block-name)))
-                  (declare (inline :fail)
-                           (ignorable #':fail))
-                  (setf ,value-var ,(maybe-progn code))))
-              (if ,aborted-var
-                  ,(funcall failure-cont environment)
-                  ,(funcall success-cont (make-value-environment
-                                          new-environment))))
-           ;; CODE does not cause the match to fail.
-           `(let ((,value-var ,(maybe-progn code)))
-              ,(funcall success-cont (make-value-environment
-                                      new-environment)))))
-     failure-cont)))
+                                     :state '()
+                                     #+later (when path-suffix
+                                               (list :path-suffix (list path-suffix))))))
+         (transform-environment (add-value (env:environment-at environment :fresh)
+                                           value-var))
+
+
+         ((&flet restore-bindings (environment)
+            (loop :for (variable . (name . already-bound?)) :in (env:bindings environment)
+                  :unless (eq variable name)
+                  :collect `(,variable ,name))))
+         ((&flet run-code (environment)
+            (parser.packrat.compiler::maybe-symbol-macrolet
+             (restore-bindings environment)
+             (apply #'maybe-progn code))))
+
+
+         )
+    `(labels ((,transform-name ,(env:state-variables transform-environment)
+                ,(if t                  ; can-fail?
+                     `(let ((,value-var   nil)
+                            (,aborted-var nil))
+                        (block ,block-name
+                          (flet ((:fail ()
+                                   (setf ,aborted-var t)
+                                   (return-from ,block-name)))
+                            (declare (inline :fail)
+                                     (ignorable #':fail))
+                            (setf ,value-var ,(run-code transform-environment))))
+                        (if ,aborted-var
+                            ,(funcall failure-cont environment)
+                            ,(funcall success-cont transform-environment)))
+                     ;; CODE does not cause the match to fail.
+                     `(let ((,value-var ,(run-code transform-environment)))
+                        ,(funcall success-cont transform-environment)))))
+       ,(print (compile-expression
+                grammar environment sub-expression
+                (lambda (new-environment)
+                  `(,transform-name ,@(env:state-variables new-environment)))
+                failure-cont)))))
 
 ;;;
 

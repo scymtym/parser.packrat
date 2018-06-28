@@ -211,9 +211,10 @@
                              (funcall success-cont new-environment)))
                        failure-cont))
                  (element rest-expressions (list* next-name rest-names) next-environment)))))))
-
-    `(labels ,(element expressions names environment)
-       (,(first names) ,@(env:position-variables environment)))))
+    (if expressions
+        `(labels ,(element expressions names environment)
+           (,(first names) ,@(env:position-variables environment)))
+        (funcall success-cont environment))))
 
 ;;; Rules
 

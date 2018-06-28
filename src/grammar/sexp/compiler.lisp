@@ -134,6 +134,30 @@
          ,(funcall failure-cont environment))))
 
 (defmethod compile-expression ((grammar      sexp-grammar)
+                               (environment  seq:list-environment)
+                               (expression   rest-expression)
+                               (success-cont function)
+                               (failure-cont function))
+  (let+ (((&with-gensyms tail-var end-var))
+         (rest-environment (env:environment-at
+                            environment (list :value tail-var)
+                            :class 'env:value-environment
+                            :state '())))
+    `(let ((,tail-var ,(seq:tail environment)))
+       ,(compile-expression
+         grammar rest-environment (exp:sub-expression expression)
+         (lambda (new-environment)
+           (let ((end-environment (env:environment-at
+                                   new-environment (list :tail end-var)
+                                   :class 'seq:list-environment
+                                   :state '())))
+             `(let ((,end-var nil))
+                ,(funcall success-cont end-environment))))
+         (lambda (new-environment)
+           (declare (ignore new-environment))
+           (funcall failure-cont environment))))))
+
+(defmethod compile-expression ((grammar      sexp-grammar)
                                (environment  env:environment)
                                (expression   as-vector-expression)
                                (success-cont function)

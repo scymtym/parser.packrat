@@ -33,7 +33,7 @@
                               &key (grammar nil grammar-supplied?))
   (let* ((grammar-constant    (cond
                                 ((not grammar-supplied?)
-                                 (when (boundp '*grammar*)
+                                 (when (boundp '*grammar*) ; TODO wrong
                                    *grammar*))
                                 ((constantp grammar)
                                  (eval grammar))))
