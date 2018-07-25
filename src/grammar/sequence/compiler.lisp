@@ -143,7 +143,7 @@
                  grammar environment expression
                  success-cont failure-cont)
                 (funcall success-cont environment))))
-         ((&with-gensyms repeat done/check done/no-check)))
+         ((&with-gensyms repeat count done/check done/no-check)))
     (compile-constraint
      min environment
      (lambda (min-new-environment)
@@ -153,15 +153,15 @@
           (let+ ((recursion-environment (env:environment-at environment :fresh)) ; TODO should somehow use max-new-environment as parent
                  ((&flet recurse (environment)
                     `(,repeat
-                      ,@(env:state-variables environment) ,@(when count? `((1+ count))))))
+                      ,@(env:state-variables environment) ,@(when count? `((1+ ,count))))))
                  ((&flet done (environment check?)
                     `(,(if (and min check?) done/check done/no-check)
                        ,@(env:state-variables environment)
-                       ,@(when (and min check?) `(count))))))
+                       ,@(when (and min check?) `(,count))))))
             `(labels ((,repeat (,@(env:state-variables recursion-environment)
-                                ,@(when count? '(count)))
+                                ,@(when count? `(,count)))
                         ; (declare (type array-index position)) ; TODO depends on the sequence
-                        ,@(when count? `((declare (type array-index count))))
+                        ,@(when count? `((declare (type array-index ,count))))
                         ,(compile-expression
                           grammar recursion-environment (exp:sub-expression expression)
                           (cond
@@ -171,7 +171,7 @@
                              (rcurry #'done nil))
                             (t
                              (lambda (new-environment)
-                               `(if (< count ,(env:value max-new-environment)) ; TODO emit a local function for this as well?
+                               `(if (< ,count ,(env:value max-new-environment)) ; TODO emit a local function for this as well?
                                     ,(recurse new-environment)
                                     ,(done new-environment nil)))))
                           (lambda (failure-environment)
@@ -181,10 +181,10 @@
                         ,(funcall success-cont recursion-environment))
                       ,@(when min
                           `((,done/check (,@(env:state-variables recursion-environment)
-                                          count)
+                                          ,count)
                               ; (declare (type array-index position))
-                              (declare (type array-index count))
-                              (if (>= count ,(env:value min-new-environment))
+                              (declare (type array-index ,count))
+                              (if (>= ,count ,(env:value min-new-environment))
                                   (,done/no-check ,@(env:state-variables recursion-environment))
                                   ,(funcall failure-cont recursion-environment))))))
                (,repeat ,@(env:state-variables environment  #+TODO max-new-environment) ,@(when count? '(0)))))))))))
