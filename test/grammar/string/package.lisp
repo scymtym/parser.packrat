@@ -4,6 +4,10 @@
 
    #:fiveam)
 
+  (:import-from #:parser.packrat.grammar.test
+   #:grammar-test
+   #:rules-test)
+
   (:export
    #:run-tests))
 

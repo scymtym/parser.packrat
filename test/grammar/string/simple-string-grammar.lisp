@@ -9,5 +9,5 @@
     (rules-test (grammar)
       '((or (:seq "foo" (* "ba") #\r)
             (:seq "foo" "baz"))
-        "foobar"
-        (t 6)))))
+
+        ("foobar" (t 6))))))

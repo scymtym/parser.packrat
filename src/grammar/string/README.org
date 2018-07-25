@@ -1,3 +1,5 @@
+#+OPTIONS: toc:nil num:nil
+
 * Introduction
 
   This grammar is sequence-based and operates on ~simple-string~
@@ -5,8 +7,20 @@
 
 * Calling Convention
 
+  #+BEGIN_SRC lisp :results silent :exports results
+    (defun grammar-calling-convention-lambda-list (grammar-class)
+      (let* ((class       (c2mop:ensure-finalized (find-class grammar-class)))
+             (prototype   (c2mop:class-prototype class))
+             (environment (parser.packrat.grammar:default-environment prototype nil)))
+        (parser.packrat.environment:state-variables environment)))
+
+    (defun print-grammar-calling-convention-lambda-list (grammar-class)
+      (let ((*print-pretty* nil))
+        (princ (grammar-calling-convention-lambda-list grammar-class))))
+  #+END_SRC
+
   The usual calling convention for sequence-based grammars, that is
-  =(string length position)=.
+  src_lisp[:results output verbatim :exports results]{(print-grammar-calling-convention-lambda-list 'parser.packrat.grammar.string::simple-string-grammar)}.
 
 * Optimizations
 
