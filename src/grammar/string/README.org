@@ -1,5 +1,16 @@
+* Introduction
+
+  This grammar is sequence-based and operates on ~simple-string~
+  inputs.
+
 * Calling Convention
 
-  =(string length position)=
+  The usual calling convention for sequence-based grammars, that is
+  =(string length position)=.
 
 * Optimizations
+
+  + The sequence type and element type are declared.
+
+  + A new expression kind ~string-terminal~ is compiled to a string
+    comparison. (Not sure this is a good optimization in the long run)
