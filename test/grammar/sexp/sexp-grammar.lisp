@@ -16,24 +16,6 @@
       :reader   b
       :initform 2)))
 
-(parser.packrat:defgrammar :test
-  (:class parser.packrat.grammar.sexp::sexp-grammar))
-(parser.packrat:in-grammar :test)
-(parser.packrat:defrule test ()
-    (list a (list b c) (list a b c))
-  a)
-
-(parser.packrat:parse '(test) '((1) (2 3) ((1) 2 3)))
-
-(parser.packrat:defgrammar :test2
-  (:class parser.packrat.grammar.sequence::sequence-grammar))
-(parser.packrat:in-grammar :test2)
-(parser.packrat:defrule test ()
-    (:seq a a)
-  a)
-
-
-
 (test sexp-grammar.smoke
   "Smoke test for `sexp-grammar' grammar class."
 
@@ -71,10 +53,15 @@
         (#(1 :b c d) (nil #(1 :b c d))))
 
       ;; TODO these belong to base-grammar
+      ;; unification test
       '((list x x)
 
         ((1 1) (t   (1 1)))
         ((1 2) (nil (1 2))))
+
+      '((list a (list b c) (list a b c))
+
+        (#1=((1) (2 3) ((1) 2 3)) (t #1#)))
 
       '((:guard x symbolp)
 
