@@ -101,8 +101,8 @@
   ;; For compiling invocations, we need something like
   (:documentation
    "Make a new environment with fresh position variables, taking the
-remaining state variables from this existing environment and
-optionally using yet another environment as parent"))
+    remaining state variables from this existing environment and
+    optionally using yet another environment as parent"))
 
 (defmethod environment-at ((base t) (position (eql :fresh))
                            &rest args &key parent state)
@@ -110,7 +110,7 @@ optionally using yet another environment as parent"))
   (let* ((position (position-variables/plist base))
          (fresh-position
           (loop :for (role variable) :on position :by #'cddr
-             :collect role :collect (gensym (string role)))))
+                :collect role :collect (gensym (string role)))))
     (apply #'environment-at base fresh-position args)))
 
 (defmethod environment-at ((base t) (position t)
