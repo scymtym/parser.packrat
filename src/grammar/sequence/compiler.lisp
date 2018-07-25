@@ -12,18 +12,20 @@
     (compile-expression
      grammar environment (exp:sub-expression expression)
      (lambda (element-environment)
-       (declare (ignore element-environment))
        (typecase position
          #+no (array-index
                (let ((new-environment (env:environment-at
                                        environment (list :position (+ position amount)))))
                  (funcall success-cont new-environment)))
          (t
-          (let* ((new-environment (env:environment-at environment :fresh))
+          (let* ((new-environment (env:environment-at environment :fresh
+                                                      :parent element-environment))
                  (new-position    (position* new-environment)))
             `(let ((,new-position ,(or nil #+no to `(+ ,position ,amount))))
                ,(funcall success-cont new-environment))))))
-     failure-cont)))
+     (lambda (element-environment)
+       (declare (ignore element-environment))
+       (funcall failure-cont environment)))))
 
 ;;; Bounds test, element access and advance rules for `sequence-environment'
 
@@ -84,20 +86,20 @@
                                (expression   advance-expression)
                                (success-cont function)
                                (failure-cont function))
-  (let* ((amount          (amount expression))
-         (tail            (tail environment))
-         (new-environment (env:environment-at environment :fresh))
-         (new-tail        (tail new-environment)))
+  (let* ((amount (amount expression))
+         (tail   (tail environment)))
     (compile-expression
      grammar environment (exp:sub-expression expression)
      (lambda (element-environment)
-       (declare (ignore element-environment))
-       `(let ((,new-tail ,(or nil #+maybe-later to
-                                  (case amount
-                                    (1 `(cdr ,tail))
-                                    (2 `(cddr ,tail))
-                                    (t `(nthcdr ,amount ,tail))))))
-          ,(funcall success-cont new-environment)))
+       (let* ((new-environment (env:environment-at environment :fresh
+                                                   :parent element-environment))
+              (new-tail        (tail new-environment)))
+         `(let ((,new-tail ,(or nil #+maybe-later to
+                                    (case amount
+                                      (1 `(cdr ,tail))
+                                      (2 `(cddr ,tail))
+                                      (t `(nthcdr ,amount ,tail))))))
+            ,(funcall success-cont new-environment))))
      failure-cont)))
 
 ;;; Bounds test, element access and advance rules for `vector-environment'
