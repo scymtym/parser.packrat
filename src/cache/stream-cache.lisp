@@ -1,7 +1,7 @@
 (cl:in-package #:parser.packrat.cache)
 
 (defclass stream-cache ()
-  ((stream :initarg  :stream ; TODO mandatory
+  ((stream :initarg  :stream
            :reader   stream)
    (chunks :reader   chunks
            :initform (make-chunk-cache 0 10)))
@@ -10,22 +10,22 @@
 
 (defmacro define-make-functions (class make-chunk-function chunk-type)
   `(defmethod make-functions ((cache ,class))
-     (let+ (((&accessors-r/o stream chunks) cache)
+     (let* ((stream          (stream cache))
+            (chunks          (chunks cache))
             (divisor         (chunk-cache-divisor chunks))
             (chunk-length    (ash 1 divisor))
             (length-at-least 0)
-            (end-seen?       nil)
-            ((&flet fill-chunk ()
-               (declare (optimize (speed 3) (debug 0) (safety 0)))
-               (let* ((chunk (,make-chunk-function divisor))
-                      (read  (read-sequence chunk stream)))
-                 (declare (type ,chunk-type chunk))
-                 (incf length-at-least read)
-                 (when (< read chunk-length)
-                   (setf end-seen? t))
-                 chunk))))
-       (locally (declare (type input-position length-at-least)
-                         (optimize (speed 3) (debug 0) (safety 0)))
+            (end-seen?       nil))
+       (declare (type input-position length-at-least)
+                (optimize (speed 3) (debug 0) (safety 0)))
+       (flet ((fill-chunk ()
+                (let* ((chunk (,make-chunk-function divisor))
+                       (read  (read-sequence chunk stream)))
+                  (declare (type ,chunk-type chunk))
+                  (incf length-at-least read)
+                  (when (< read chunk-length)
+                    (setf end-seen? t))
+                  chunk)))
          (values
           ;; bounds test
           (lambda (position)
@@ -59,6 +59,12 @@
 (defclass octet-vector-stream-cache (stream-cache)
   ())
 
+(define-make-functions octet-vector-stream-cache
+  make-octet-vector-chunk octet-vector-chunk)
+
+(defun make-octet-vector-stream-cache (stream)
+  (make-instance 'octet-vector-stream-cache :stream stream))
+
 ;;; `string-stream-cache'
 
 (deftype string-chunk ()
@@ -71,4 +77,8 @@
 (defclass string-stream-cache (stream-cache)
   ())
 
-(define-make-functions string-stream-cache make-string-chunk string-chunk)
+(define-make-functions string-stream-cache
+  make-string-chunk string-chunk)
+
+(defun make-string-stream-cache (stream)
+  (make-instance 'string-stream-cache :stream stream))

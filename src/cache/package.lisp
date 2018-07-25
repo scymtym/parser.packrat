@@ -14,6 +14,11 @@
    #:find-chunk
    #:ensure-chunk)
 
+  ;; Stream caches
+  (:export
+   #:make-octet-vector-stream-cache
+   #:make-string-stream-cache)
+
   ;; Packrat cache protocol
   (:export
    #:cached

@@ -2,7 +2,39 @@
 
 ;;; Packrat cache
 ;;;
-;;; TODO explain
+;;; A cache mapping tuples (input position, rule name, rule arguments)
+;;; to parse results. Its purpose is avoiding multiple identical
+;;; applications of rules. This can improve performance and act as the
+;;; foundation of a framework for handling left recursion.
+;;;
+;;; Since reads from and writes to this cache can be a performance
+;;; bottleneck, the implementation tries to be as runtime and memory
+;;; efficient as possible. A two-level scheme maps the tuples
+;;; mentioned above to parse results:
+;;; 1. an array maps the input position to secondary structure
+;;; 2. this structure maps the rule name and arguments to the cached
+;;;    parse results
+;;;
+;;; The interesting part about 1. is not allocating an array of the
+;;; same size as the input upfront while keeping lookup performance
+;;; reasonable. This trade-off is achieved using a "chunk cache".
+;;;
+;;; The difficulty with 2. is the variety of scenarios that have to be
+;;; supported efficiently w.r.t. memory and runtime. To address this
+;;; issue, the secondary structure uses different representation
+;;; depending on the situation:
+;;;
+;;; + If only a mapping from a single rule (optionally with arguments)
+;;;   to the associated parse result has to be represented, a single
+;;;   cons cell is used.
+;;;
+;;; + For a small number of mapping entries, the number of entries and
+;;;   an alist are stored to represent the mapping.
+;;;
+;;; + In the (uncommon) case that more than a few entries have to be
+;;;   stored, a hash-table is used.
+;;;
+;;; Switches between representation happen when entries are added.
 
 ;; TODO compare this against
 ;; singleton-cons ~> small vector with linear probing ~> hash-table
