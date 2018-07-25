@@ -12,3 +12,12 @@
    :sequence-type 'sequence
    :element-type  't
    :index-type    'array-index))
+
+(defmethod grammar:default-environment ((grammar    sequence-grammar)
+                                        (expression t))
+  (make-instance 'sequence-environment))
+
+(defmethod grammar:parse ((grammar    sequence-grammar)
+                          (expression function)
+                          (input      sequence))
+  (funcall expression (make-hash-table :test #'equal) 0 input (length input)))
