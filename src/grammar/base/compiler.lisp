@@ -84,6 +84,11 @@
                  (apply #'env:environment-binding environment
                         (mappend (lambda (variable-name temporary-name)
                                    (unless (eq (cdr (env:lookup variable-name environment)) :parameter)
+                                     ;; (cons temporary-name nil) is required for e.g.
+                                     ;; (or (:guard name symbolp)
+                                     ;;     (:transform thing (error ...)))
+                                     ;; but (cons temporary-name t) is required for other cases, e.g.
+                                     ;; TODO add an example
                                      (list variable-name (cons temporary-name nil))))
                                  assigned-names temporary-names))
                  assigned-names
@@ -146,29 +151,26 @@
 
 (defmethod compile-expression ((grammar      base-grammar)
                                (environment  env:value-environment)
-                               (expression   set-expression) ; TODO have two kinds of expressions for set and unify?
+                               (expression   set-expression) ; TODO have two kinds of expressions for set and unify and rely on preprocessing?
                                (success-cont function)
                                (failure-cont function))
   (let+ (((&accessors-r/o (variable exp:variable) sub-expression) expression)
          ((&optional (name variable) . already-bound?)
           (env:lookup variable environment)))
-    (if already-bound?
-        (compile-expression
-         grammar environment sub-expression
+    (compile-expression
+     grammar environment sub-expression
+     (if already-bound?
          (lambda (new-environment)
            `(if (equal ,name ,(env:value new-environment))
                 ,(funcall success-cont new-environment)
                 ,(funcall failure-cont environment)))
-         failure-cont)
-        (compile-expression
-         grammar environment sub-expression
          (lambda (new-environment)
            (setf (env:lookup variable new-environment)
-                 (cons name t))         ; TODO hack
+                 (cons name t))         ; TODO hack. maybe make a new environment instead?
            (maybe-progn
             `(setf ,name ,(env:value new-environment))
-            (funcall success-cont new-environment)))
-         failure-cont))))
+            (funcall success-cont new-environment))))
+     failure-cont)))
 
 (defmethod compile-expression ((grammar      base-grammar)
                                (environment  env:value-environment)
