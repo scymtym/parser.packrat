@@ -108,6 +108,8 @@
 (defmethod bp:make-node ((builder t) (kind (eql :as-list)) &key)
   (make-instance 'as-list-expression))
 
+;;; `rest-expression'
+
 (defclass rest-expression (exp:expression
                            exp:single-sub-expression-mixin)
   ())
