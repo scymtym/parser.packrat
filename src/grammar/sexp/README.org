@@ -1,0 +1,58 @@
+#+OPTIONS: toc:nil num:nil
+
+* Introduction
+
+  This grammar is for matching and parsing arbitrary Lisp objects and
+  is there primarily object-based.
+
+  However, sequence-based processing can be applied to Lisp objects
+  that of type src_lisp[:exports code]{sequence} (and subtypes such as
+  src_lisp[:exports code]{vector} and src_lisp[:exports
+  code]{list}). Elements of sequences are subject to object-based
+  processing.
+
+  Furthermore, this grammar supports destructuring of objects: an
+  object type is specified together with pairs of readers for
+  obtaining parts of the objects with sub-patterns for the parts.
+
+* Object \leftrightarrow Sequence transitions
+
+  These transitions are accomplished as follows:
+
+  + object \rightarrow sequence ::
+
+       A "cast" expression such as ~(vector SUB-EXPRESSION)~ or ~(list
+       SUB-EXPRESSION)~ is compiled to code that does the following:
+
+    1. Check that the current object is of the respective sequence type
+
+    2. Code for ~SUB-EXPRESSION~ in a sequence environment where the
+       sequence variable is bound to the object and the position is
+       bound to 0.
+
+    3. Check that the position is at the end of the sequence.
+
+  + sequence \rightarrow object ::
+
+       A sequence advance \rightarrow bounds test \rightarrow element access \rightarrow
+       sub-expression is implicitly generated. The code generated for
+       this sequence does the following:
+
+    1. Test current position against sequence bounds. Fail if
+       out-of-bounds, otherwise continue.
+
+    2. Access element, bind variable to result.
+
+    3. Code for sub-expression in object environment with above
+       variable as object.
+
+    4. Increment position.
+
+
+* Calling Convention
+
+  src_lisp[:results output verbatim :exports results]{(print-grammar-calling-convention-lambda-list 'parser.packrat.grammar.sexp::sexp-grammar)}.
+
+* Optimizations
+
+  There are no specialized optimizations for this grammar.
