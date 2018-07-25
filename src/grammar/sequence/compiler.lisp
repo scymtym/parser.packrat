@@ -205,7 +205,7 @@
                 (list*
                  `(,name (,@(env:position-variables environment))
                      ,(compile-expression
-                       grammar (print environment) (print expression)
+                       grammar environment expression
                        (lambda (new-environment)
                          (setf next-environment new-environment)
                          (if next-name
