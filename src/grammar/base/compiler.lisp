@@ -339,9 +339,9 @@
                                (expression   rule-invocation-expression)
                                (success-cont function)
                                (failure-cont function))
-  (let+ (((&accessors-r/o #+todo (grammar-name exp:grammar) (rule-name rule #+maybe exp:rule) (arguments arguments #+maybe exp:arguments)) expression)
+  (let+ (((&accessors-r/o (grammar-name grammar) (rule-name rule) arguments) expression)
          (rule               `(load-time-value
-                               (find-rule ',rule-name (find-grammar ',(name grammar))
+                               (find-rule ',rule-name (find-grammar ',(or grammar-name (name grammar)))
                                           :if-does-not-exist :forward-reference)))
          (state-variables    (env:state-variables environment))
          (position-variables (env:position-variables environment))
@@ -353,7 +353,7 @@
                                  ,parser.packrat.compiler::+context-var+ ',rule-name ,@position-variables)))
               `(values-list (or ,cache-place
                                 (progn
-                                  (format t "~&~V@T~A@~S~%" *depth* ',rule-name (list ,@state-variables))
+                                  (format t "~&~V@T~A ~{~S~^ ~}~%" *depth* ',rule-name (list ,@state-variables))
                                   (let ((*depth* (+ *depth* 2)))
                                     (setf ,cache-place (multiple-value-list (funcall ,rule ,parser.packrat.compiler::+context-var+ ,@state-variables))))))))))
          ;; TODO make lookup-and-call/single-argument so we don't have
@@ -370,7 +370,7 @@
                                  ,@position-variables)))
               `(or ,cache-place
                    (let ((,arguments (copy-list ,arguments)))
-                     (format t "~&~V@T~A@~S ~S~%" *depth* ',rule-name (list ,@state-variables) ,arguments)
+                     (format t "~&~V@T~A ~{~S~^ ~} ~S~%" *depth* ',rule-name (list ,@state-variables) ,arguments)
                      (let ((*depth* (+ *depth* 2)))
                        (apply ,rule ,parser.packrat.compiler::+context-var+ ,@state-variables ,arguments)))))))
          ((&labels+ argument ((&optional first &rest rest) #+no arguments environment)
@@ -410,7 +410,7 @@
            ,(if arguments
                 (lookup-and-call/with-arguments arguments-var)
                 (lookup-and-call/no-arguments))
-         (format t "~&~V@T~A@~S -> ~S ~{~S~^ ~}~%" *depth* ',rule-name (list ,@state-variables)
+         (format t "~&~V@T~A ~{~S~^ ~} -> ~S ~{~S~^ ~}~%" *depth* ',rule-name (list ,@state-variables)
                  ,success?-var (list ,@(env:position-variables continue-environment)))
          (if ,success?-var
              ,(funcall success-cont continue-environment)

@@ -105,9 +105,11 @@
 
 ;;; `rule-invocation'
 
-(defclass rule-invocation-base (exp:expression
+(defclass rule-invocation-base (exp:sub-expression-mixin
                                 print-items:print-items-mixin)
-  ((arguments :initarg  :arguments
+  ((sub-expressions :initarg  :arguments
+                    :accessor arguments)
+   #+no (arguments :initarg  :arguments
               :type     list
               :accessor arguments
               :initform '())))
@@ -119,11 +121,12 @@
       (:close     nil        ")"                                      ((:after :arguments))))))
 
 (defmethod bp:node-relations ((builder t) (node rule-invocation-base))
-  '((:argument . *)))
+  (call-next-method) #+no '((:argument . *)))
 
 (defmethod bp:node-relation ((builder  t)
                              (relation (eql :argument))
                              (node     rule-invocation-base))
+  (break)
   (values (arguments node)
           (load-time-value (circular-list '(:evaluated? t)))))
 
@@ -132,6 +135,7 @@
                       (left     rule-invocation-base)
                       (right    t)
                       &key)
+  (break)
   (appendf (arguments left) (list right)))
 
 (defclass rule-invocation-expression (rule-invocation-base)
