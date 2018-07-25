@@ -4,7 +4,9 @@
                                (environment t)
                                (expression  as-list-expression))
   (let ((sub-expression (prepare-expression grammar
-                                            (c2mop:class-prototype (find-class 'seq:list-environment))
+                                            (c2mop:class-prototype
+                                             (c2mop:ensure-finalized
+                                              (find-class 'seq:list-environment)))
                                             (exp:sub-expression expression))))
     (reinitialize-instance expression :sub-expression sub-expression)))
 
@@ -12,7 +14,9 @@
                                (environment t)
                                (expression  rest-expression))
   (let ((sub-expression (prepare-expression grammar
-                                            (c2mop:class-prototype (find-class 'env:value-environment))
+                                            (c2mop:class-prototype
+                                             (c2mop:ensure-finalized
+                                              (find-class 'env:value-environment)))
                                             (exp:sub-expression expression))))
     (reinitialize-instance expression :sub-expression sub-expression)))
 
@@ -20,6 +24,8 @@
                                (environment t)
                                (expression  as-vector-expression))
   (let ((sub-expression (prepare-expression grammar
-                                            (c2mop:class-prototype (find-class 'seq:vector-environment))
+                                            (c2mop:class-prototype
+                                             (c2mop:ensure-finalized
+                                              (find-class 'seq:vector-environment)))
                                             (exp:sub-expression expression))))
     (reinitialize-instance expression :sub-expression sub-expression)))
