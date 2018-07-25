@@ -10,4 +10,8 @@
       '((or (:seq "foo" (* "ba") #\r)
             (:seq "foo" "baz"))
 
-        ("foobar" (t 6))))))
+        ("foor"     (t   4))
+        ("foobar"   (t   6))
+        ("foobabar" (t   8))
+        ("foobaz"   (t   6))
+        ("foobabaz" (nil 0))))))
