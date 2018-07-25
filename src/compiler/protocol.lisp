@@ -31,18 +31,21 @@
                                            (environment t)
                                            (expression  t))
   ;; TODO the variable write stuff is too simplistic
-  (let+ ((expression (prepare-expression grammar environment expression))
+  (let+ ((environment        (apply #'env:environment-binding environment
+                                    (mappend (lambda (parameter)
+                                               (list parameter (cons parameter :parameter)))
+                                             parameters)))
+         (expression (prepare-expression grammar environment expression))
 
          ((&flet references-with-mode (mode)
             (exp:variable-references grammar expression
                                      :filter (lambda (node)
-                                               (and (not (member (exp:variable node) parameters)) ; TODO hack
+                                               (and (not (env:lookup (exp:variable node) environment)) ; TODO hack
                                                     (eq (exp:mode node) mode))))))
          (writes             (references-with-mode :write))
          (assigned-variables (remove-duplicates writes :key #'exp:variable))
          (assigned-names     (mapcar #'exp:variable assigned-variables))
-         (environment        (apply #'env:environment-binding environment
-                                    (mappend #'list parameters (circular-list t))))
+
          ((&flet make-return-cont (success)
             (lambda (environment)
               `(values ,success ,@(env:position-variables environment))))))
