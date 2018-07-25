@@ -54,7 +54,7 @@
        ;; (declare (optimize (speed 3) (debug 0) (safety 0)))
        (declare (optimize (speed 1) (debug 1) (safety 1)))
        (declare (ignorable ,+context-var+))
-       (let (,@assigned-names)
-         ,(compile-expression
+       ,(maybe-let assigned-names
+          (compile-expression
            grammar environment expression
            (make-return-cont t) (make-return-cont nil))))))
