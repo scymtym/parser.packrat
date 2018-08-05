@@ -8,12 +8,12 @@
   :bug-tracker      "https://github.com/scymtym/parser.packrat/issues"
   :source-control   (:git "https://github.com/scymtym/parser.packrat.git")
 
-  :version          (:read-file-form "version.sexp")
+  :version          (:read-file-form "version-string.sexp")
   :depends-on       ("let-plus"
                      "utilities.print-items"
 
-                     (:version "parser.packrat"       (:read-file-form "version.sexp"))
-                     ; (:version "parser.packrat.cache" (:read-file-form "version.sexp"))
+                     (:version "parser.packrat"       (:read-file-form "version-string.sexp"))
+                     ; (:version "parser.packrat.cache" (:read-file-form "version-string.sexp"))
                      )
 
   :components       ((:module     "grammar-string"
@@ -30,12 +30,12 @@
   :in-order-to      ((test-op (test-op "parser.packrat.grammar.string/test"))))
 
 (defsystem "parser.packrat.grammar.string/test"
-  :version          (:read-file-form "version.sexp")
+  :version          (:read-file-form "version-string.sexp")
   :depends-on       ((:version "fiveam"                        "1.4")
 
-                     (:version "parser.packrat.grammar.string" (:read-file-form "version.sexp"))
+                     (:version "parser.packrat.grammar.string" (:read-file-form "version-string.sexp"))
 
-                     (:version "parser.packrat/test"           (:read-file-form "version.sexp")))
+                     (:version "parser.packrat/test"           (:read-file-form "version-string.sexp")))
 
   :components       ((:module     "grammar-string"
                       :pathname   "test/grammar/string"
