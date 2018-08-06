@@ -139,10 +139,12 @@
                                (expression   repetition-expression)
                                (success-cont function)
                                (failure-cont function))
-  (let+ ((min    (min-repetitions expression)) ; TODO &accessors-r/o (exp:sub-expression expression)
-         (max    (max-repetitions expression))
+  (let+ (((&accessors-r/o (sub-expression exp:sub-expression)
+                          (min            min-repetitions)
+                          (max            max-repetitions))
+          expression)
          (max=1? (and (typep max 'parser.packrat.grammar.base:constant-expression) ; TODO
-                      (equal 1 (exp:value max))))
+                      (eql 1 (exp:value max))))
          (count? (or min (and max (not max=1?))))
          ((&flet compile-constraint (expression environment success-cont)
             (if expression
@@ -171,7 +173,7 @@
                         ; (declare (type array-index position)) ; TODO depends on the sequence
                         ,@(when count? `((declare (type array-index ,count))))
                         ,(compile-expression
-                          grammar recursion-environment (exp:sub-expression expression)
+                          grammar recursion-environment sub-expression
                           (lambda (new-environment)
                             (setf continue-environment (env:environment-at recursion-environment :fresh
                                                                            :parent new-environment))
