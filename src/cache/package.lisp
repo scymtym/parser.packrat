@@ -25,4 +25,4 @@
    #:cached/arguments)
 
   (:documentation
-   "TODO"))
+   "Caches used by code generated from rule expressions."))
