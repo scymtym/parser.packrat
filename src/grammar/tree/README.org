@@ -1,0 +1,38 @@
+#+OPTIONS: toc:nil num:nil
+
+* Introduction
+
+  Currently, there is no grammar but two expressions:
+
+  + src_lisp[:exports code]{children-expression}
+  + src_lisp[:exports code]{ancestors-expression}
+
+  and an environment class src_lisp[:exports
+  code]{generator-environment}. This environment allows treating a
+  generator as a sequence.
+
+  These features can be used to implement XPath-like functionality:
+
+  #+BEGIN_SRC lisp
+    (children  (* (or (<<- result (node foo)) :any)))                 ; ./foo
+    (ancestors (* (or (<<- result (node foo)) :any)))                 ; .//foo
+    (children  (* (or (<<- result (node foo (:bar (or 2 5)))) :any))) ; ./foo[@bar=2 or @bar=5]
+  #+END_SRC
+
+
+** TODO Maybe syntax
+
+   #+BEGIN_SRC lisp
+     (/ PATTERN)  → (children  (* (or PATTERN :any)))
+     (// PATTERN) → (ancestors (* (or PATTERN :any)))
+   #+END_SRC
+
+* Calling Convention
+
+  Same as ~sexp-grammar~:
+
+  src_lisp[:results output verbatim :exports results]{(print-grammar-calling-convention-lambda-list 'parser.packrat.grammar.sexp::sexp-grammar)}.
+
+* Optimizations
+
+  There are no specialized optimizations for this grammar.
