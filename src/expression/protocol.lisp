@@ -3,24 +3,26 @@
 ;;; Traversal protocol
 
 (defun walk-expression (function expression)
-  (flet ((visit (recurse relation relation-args node &rest args)
-           (declare (ignore args))
-           (when (or (not relation) (getf relation-args :evaluated?))
-             (funcall function recurse node))))
-    (bp:with-builder ('list)
-      (bp:walk-nodes* #'visit expression))))
-
-(defun walk-expression/path (function expression)
-  (labels ((visit (path recurse relation relation-args node &rest args)
+  (let ((function (ensure-function function)))
+    (flet ((visit (recurse relation relation-args node &rest args)
              (declare (ignore args))
              (when (or (not relation) (getf relation-args :evaluated?))
-               (let* ((path    (if-let ((key (getf relation-args :key)))
-                                 (list* key path)
-                                 path))
-                      (recurse (rcurry recurse :function (curry #'visit path))))
-                (funcall function path recurse node)))))
-    (bp:with-builder ('list)
-      (bp:walk-nodes* (curry #'visit ()) expression))))
+               (funcall function recurse node))))
+      (bp:with-builder ('list)
+        (bp:walk-nodes* #'visit expression)))))
+
+(defun walk-expression/path (function expression)
+  (let ((function (ensure-function function)))
+    (labels ((visit (path recurse relation relation-args node &rest args)
+               (declare (ignore args))
+               (when (or (not relation) (getf relation-args :evaluated?))
+                 (let* ((path    (if-let ((key (getf relation-args :key)))
+                                   (list* key path)
+                                   path))
+                        (recurse (rcurry recurse :function (curry #'visit path))))
+                   (funcall function path recurse node)))))
+      (bp:with-builder ('list)
+        (bp:walk-nodes* (curry #'visit ()) expression)))))
 
 ;;; Value protocol
 
