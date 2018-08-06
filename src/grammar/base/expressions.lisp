@@ -98,6 +98,11 @@
 (exp:define-expression-class ignored (exp::value-environment-needing-mixin)
   ())
 
+;;; Position
+
+(exp:define-expression-class position ()
+  ())
+
 ;;; Transform
 
 (exp:define-expression-class transform (exp:single-sub-expression-mixin)
