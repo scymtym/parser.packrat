@@ -138,7 +138,9 @@
 (defsystem "parser.packrat/test"
 
   :version    (:read-file-form "version-string.sexp")
-  :depends-on ((:version "fiveam"         "1.4")
+  :depends-on ((:require "sb-cltl2")
+
+               (:version "fiveam"         "1.4")
 
                (:version "parser.packrat" (:read-file-form "version-string.sexp")))
 

@@ -272,6 +272,22 @@
                           :end      'endp)
            'value)
 
+(defun %uses-fail? (expression)
+  (catch 'used
+    (sb-cltl2:macroexpand-all
+     `(macrolet ((:fail ()
+                   (throw 'used t)))
+        ,expression))
+    nil))
+
+(defun %uses-position? (expression)
+  (catch 'used
+    (sb-cltl2:macroexpand-all
+     `(macrolet ((%used () (throw 'used t)))
+        (symbol-macrolet ((cl-user::position (%used)))
+          ,expression)))
+    nil))
+
 ;; TODO syntactically, EXPRESSION contains a sub-expression. However,
 ;; we do not use the value produced by that sub-expression.
 (defmethod compile-expression ((grammar      base-grammar)
@@ -305,7 +321,7 @@
 
          )
     `(labels ((,transform-name ,(env:state-variables transform-environment)
-                ,(if t                  ; can-fail?
+                ,(if (%uses-fail? expression)
                      `(let ((,value-var   nil)
                             (,aborted-var nil))
                         (block ,block-name
