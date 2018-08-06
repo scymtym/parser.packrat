@@ -101,6 +101,7 @@
                       :serial     t
                       :components ((:file       "package")
                                    (:file       "expressions")
+                                   ; (:file        "concrete-syntax")
 
                                    (:file       "sexp-grammar")
 
@@ -169,6 +170,7 @@
                 :pathname   "test/grammar/sexp"
                 :serial     t
                 :components ((:file       "package")
+                             (:file       "concrete-syntax")
                              (:file       "sexp-grammar"))))
 
   :perform    (test-op (operation component)
