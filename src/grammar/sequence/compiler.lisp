@@ -230,14 +230,3 @@
         `(labels ,(element expressions names environment)
            (,(first names) ,@(env:position-variables environment)))
         (funcall success-cont environment))))
-
-;;; Rules
-
-;; TODO could add a compile-rule-using-environment that generates code to ensure that the entire sequence was consumed.
-
-#+no (defmethod compile-rule ((grammar    sequence-grammar)
-                         (parameters list)
-                         (expression t)
-                         &key
-                         (environment ))
-  (compile-rule-using-environment grammar parameters environment expression))
