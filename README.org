@@ -1,32 +1,64 @@
-* Introduction
+#+TITLE: parser.packrat README
+#+AUTHOR: Jan Moringen
+#+EMAIL: jmoringe@techfak.uni-bielefeld.de
+#+LANGUAGE: en
+
+#+SEQ_TODO: TODO STARTED | DONE
+
+#+SETUPFILE: org-html-themes-master/setup/theme-readtheorg-local.setup
+
+* STARTED Introduction
 
   The ~parser.packrat~ system provides an extensible framework for
   efficient parsing and pattern matching on different kinds of
   inputs.
 
-  It is inspired by OMeta, esrap
+  Aspects of this system are inspired by OMeta, [[https://github.com/my2m/optima][optima,]] and [[https://github.com/scymtym/esrap][esrap]].
 
-  Modular grammars
+  Modular/composable grammars
 
   Support for the following kinds of inputs is built in:
 
-  + sequences
-    + strings
-    + octet vectors
-    + bit vectors
-  + s-expressions
-  + streams
-    + of octects
+  + Sequences
+
+    + Lists
+
+    + Vectors
+
+      + of character (i.e. strings)
+
+      + of octets
+
+      + of bit
+
+  + Streams
+
+    + of octets
+
     + of characters
 
-* Tutorial
+  + Objects and structures
+
+  + Trees
+
+* STARTED Tutorial
+
+  #+BEGIN_SRC lisp :exports results :results silent
+    (ql:quickload '(:parser.packrat :parser.packrat.grammar.string))
+  #+END_SRC
 
   The fundamental concepts are
 
-  + expressions such as src_lisp[:exports code]{(:seq (or #\a #\b) #\c)}
-  + rules which are named expressions, optionally accepting parameters
-  + grammars which are named collections of rules tied a to a
-    particular kind of input
+  + /expressions/ such as src_lisp[:exports code]{(:seq (or #\a #\b)
+    #\c)}
+
+  + /rules/ which are named expressions, optionally accepting
+    parameters and optionally transforming the parse result before
+    returning it
+
+  + /grammars/ which are named collections of rules tied to a
+    particular kind of input. Grammars can extend other grammars and
+    rules in one grammar can invoke rules in other grammars.
 
   Defining a grammar
 
@@ -36,19 +68,160 @@
     (parser.packrat:in-grammar :integers)
   #+END_SRC
 
+  #+RESULTS:
+  : #<SIMPLE-STRING-GRAMMAR INTEGERS 0 rules {10036A19A3}>
+
+  Defining rules
+
   #+BEGIN_SRC lisp :exports both
     (parser.packrat:defrule digit (base)
-        (:<- char :any)
-      (or (digit-char-p char) (:fail)))
+        (:<- char)
+      (or (digit-char-p char base) (:fail)))
 
     (parser.packrat:defrule integer (base)
-        (* (:<<- digits (digit base)))
-      digits)
+        (* (:<<- digits (digit base)) 1)
+      (loop :for digit :in digits
+            :for weight = 1 :then (* base weight)
+            :sum (* weight digit)))
   #+END_SRC
 
-  #+BEGIN_SRC lisp :exports both
-    (parser.packrat.grammar:parse :integers '(integer 10) "1234")
+  #+RESULTS:
+  : #<RULE INTEGER {205B9F0B}>
+
+  Applying rules to inputs
+
+  #+BEGIN_SRC lisp :exports both :colnames '("input" "base" "success?" "consumed" "value")
+    (list (list* #1="1234" #2=10 (multiple-value-list (parser.packrat:parse '((integer :integers) #2#) #1#)))
+          (list* #3="bee"  #4=16 (multiple-value-list (parser.packrat:parse '((integer :integers) #4#) #3#))))
   #+END_SRC
+
+  #+RESULTS:
+  | input | base | success? | consumed | value |
+  |-------+------+----------+----------+-------|
+  | 1234  |   10 | T        |        4 |  1234 |
+  | beef  |   16 | T        |        4 | 48879 |
+
+* STARTED Project Organization
+
+  + =src= :: Source code
+
+    + =grammar= :: Grammar protocols
+
+      + =sexp= :: S-expression grammar
+
+  + =test= :: Unit tests
+
+  + =examples= :: Examples
+
+    + =types and programming languages= :: Solutions to some of the
+         exercises of the book, obviously using a parsing- and
+         pattern-matching-heavy style.
+
+  + =documentation= :: Documentation
+
+* STARTED Reference
+
+  #+BEGIN_SRC lisp :exports results :results silent
+    (defun print-expression-ast (expression)
+      (parser.packrat.expression:walk-expression
+       (lambda (recurse node)
+         (let ((kind     (architecture.builder-protocol:node-kind* node))
+               (initargs (architecture.builder-protocol:node-initargs* node)))
+          (case kind
+            ((:compose :transform :set :push)
+             (first (funcall recurse)))
+            (:terminal
+             `',(getf initargs :value))
+            ((:and :or :not)
+             (list* kind (first (funcall recurse))))
+            (:rule-invocation
+             (let* ((rule      (getf initargs :rule))
+                    (reference (format nil "~~[[~(~A~)][~~~:*~(~A~)~~]] ~~" rule)))
+               (list* reference (first (funcall recurse)))))
+            (:as-list
+             (list* 'list (second (first (funcall recurse)))))
+            (t
+             (list* (class-name (class-of node)) (funcall recurse))))))
+       (parser.packrat.bootstrap::bootstrap-parse expression)))
+
+    (defun describe-grammar-class (name)
+      (let* ((class        (find-class name))
+             (meta-grammar (case name
+                             (parser.packrat.grammar.base::base-grammar
+                              (parser.packrat.grammar:find-grammar 'parser.packrat.grammar.base::meta-grammar))
+                             (parser.packrat.grammar.sequence::sequence-grammar
+                              (parser.packrat.grammar:find-grammar 'parser.packrat.grammar.sequence::meta-grammar))
+                             (parser.packrat.grammar.sexp::sexp-grammar
+                              (parser.packrat.grammar:find-grammar 'parser.packrat.grammar.sexp::meta-grammar))))
+             (meta-rules   (parser.packrat.grammar:rules meta-grammar)))
+        (let ((*print-right-margin* most-positive-fixnum))
+          (format t "+ =~(~A~)= Grammar Class~2%~
+                     ~3@T~A~2%~
+                     ~:{~3@T+ <<~(~a~)>> ~~~:*~A ::= ~A~~~2%~}"
+                  name (documentation class t)
+                  (map 'list (lambda (rule)
+                               (list (parser.packrat.grammar:name rule)
+                                     (print-expression-ast
+                                      (parser.packrat.grammar:expression rule))))
+                       (sort meta-rules #'string< :key #'parser.packrat.grammar:name)))))
+      (values))
+  #+END_SRC
+
+  #+BEGIN_SRC lisp :exports results :results output verbatim raw
+    (describe-grammar-class 'parser.packrat.grammar.base::base-grammar)
+
+    (describe-grammar-class 'parser.packrat.grammar.sequence::sequence-grammar)
+
+    (describe-grammar-class 'parser.packrat.grammar.sexp::sexp-grammar)
+  #+END_SRC
+
+  #+RESULTS:
+  + =base-grammar= Grammar Class
+
+     NIL
+
+     + <<anything-expression>> =ANYTHING-EXPRESSION &colon; (OR 'ANY 'ANY)=
+
+     + <<constant-expression>> =CONSTANT-EXPRESSION &colon; (OR (LIST 'QOUTE (ANYTHING-EXPRESSION)) (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)))=
+
+     + <<expression>> =EXPRESSION &colon; (OR (=[[anything-expression][=anything-expression=]] =) (=[[constant-expression][=constant-expression=]] ​=))=
+
+  + =sequence-grammar= Grammar Class
+
+     NIL
+
+     + <<expression>> =EXPRESSION &colon; (OR (=[[anything-expression][=anything-expression=]] ​=) (=[[constant-expression][=constant-expression=]] ​=) (=[[repetition-expression][=repetition-expression=]] ​=) (=[[sequence-expression][=sequence-expression=]] ​=))=
+
+     + <<repetition-expression>> =REPETITION-EXPRESSION &colon; (LIST '* (=[[expression][=expression=]] ​=))=
+
+     + <<sequence-expression>> =SEQUENCE-EXPRESSION &colon; (LIST (OR 'SEQ 'SEQ) (REPETITION-EXPRESSION NIL NIL (=[[expression][=expression=]] ​=)))=
+
+  + =sexp-grammar= Grammar Class
+
+     A grammar class for matching Lisp objects.
+
+      In particular this grammar class adds constructs for matching
+      lists, vectors and structures (including conses).
+
+      Rules defined in grammars of this class operate on objects but can
+      switch to sequence-based processing using the `as-list' and
+      `as-vector' constructs.
+
+     + <<cons-expression>> =CONS-EXPRESSION &colon; ((LIST 'CONS (ANYTHING-EXPRESSION) (ANYTHING-EXPRESSION)) (=[[expression][=expression=]] ​=))=
+
+     + <<expression>> =EXPRESSION &colon; (OR (=[[anything-expression][=anything-expression=]] ​=) (=[[constant-expression][=constant-expression=]] ​=) (=[[repetition-expression][=repetition-expression=]] ​=) (=[[sequence-expression][=sequence-expression=]] ​=) (=[[list-elements-expression][=list-elements-expression=]] ​=) (=[[rest-expression][=rest-expression=]] ​=) (=[[list-expression][=list-expression=]] ​=) (=[[list*-expression][=list*-expression=]] ​=))=
+
+     + <<list*-expression>> =LIST*-EXPRESSION &colon; ((LIST 'LIST* (REPETITION-EXPRESSION NIL NIL (AND (SEQUENCE-EXPRESSION ((ANYTHING-EXPRESSION) (ANYTHING-EXPRESSION))) (ANYTHING-EXPRESSION))) (ANYTHING-EXPRESSION)) (=[[expression][=expression=]] ​=))=
+
+     + <<list-elements-expression>> =LIST-ELEMENTS-EXPRESSION &colon; (LIST 'LIST-ELEMENTS (=[[expression][=expression=]] ​=))=
+
+     + <<list-expression>> =LIST-EXPRESSION &colon; ((LIST 'LIST (REST-EXPRESSION (ANYTHING-EXPRESSION))) (=[[expression][=expression=]] ​=))=
+
+     + <<rest-expression>> =REST-EXPRESSION &colon; (LIST 'REST (=[[expression][=expression=]] ​=))=
+
+     + <<vector*-expression>> =VECTOR*-EXPRESSION &colon; ((LIST 'VECTOR* (REST-EXPRESSION (ANYTHING-EXPRESSION))) (=[[expression][=expression=]] ​=))=
+
+     + <<vector-expression>> =VECTOR-EXPRESSION &colon; ((LIST 'VECTOR (REST-EXPRESSION (ANYTHING-EXPRESSION))) (=[[expression][=expression=]] ​=))=
 
 * Related Work
 
