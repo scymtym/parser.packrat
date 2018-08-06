@@ -11,16 +11,18 @@
    (#:env #:parser.packrat.environment))
 
   (:export
+   #:prepare-expression
    #:compile-expression)
-  
+
   ;; Invocation compilation protocol
   (:export
    #:validate-invocation)
 
+  ;; Rule compilation protocol
   (:export
    #:compile-rule
    #:compile-rule-using-environment
-   #:prepare-expression)
+   #:make-rule-lambda)
 
   ;; Code generation utilities
   (:export

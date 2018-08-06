@@ -64,34 +64,14 @@
 
 ;;; Rules
 
-;; TODO make extension points for type declarations and then get rid of most of this method
-(defmethod compile-rule-using-environment ((grammar     simple-string-grammar)
-                                           (parameters  list)
-                                           (environment seq:vector-environment)
-                                           (expression  t))
-  (let+ ((environment        (apply #'env:environment-binding environment
-                                    (mappend (lambda (parameter)
-                                               (list parameter (cons parameter :parameter)))
-                                             parameters)))
-         (expression (prepare-expression grammar environment expression))
-         ((&flet references-with-mode (mode)
-            (exp:variable-references grammar expression
-                                     :filter (lambda (node)
-                                               (and (not (env:lookup (exp:variable node) environment)) ; TODO hack
-                                                    (eq (exp:mode node) mode))))))
-         (writes             (references-with-mode :write))
-         (assigned-variables (remove-duplicates writes :key #'exp:variable))
-         (assigned-names     (mapcar #'exp:variable assigned-variables))
-
-         ((&flet make-return-cont (success)
-            (lambda (environment)
-              `(values ,success ,@(env:position-variables environment))))))
-    `(lambda (,parser.packrat.compiler::+context-var+ ,@(env:state-variables environment) ,@parameters)
-       (declare ; (optimize (speed 3) (debug 0) (safety 0))
-                (ignorable ,parser.packrat.compiler::+context-var+)
-                (type ,(seq:sequence-type grammar) ,(seq:sequence* environment))
-                (type ,(seq:index-type grammar)    ,(seq:position* environment) ,(seq:end environment)))
-       (let (,@assigned-names)
-         ,(compile-expression
-           grammar environment expression
-           (make-return-cont t) (make-return-cont nil))))))
+;; TODO sequence module could define this method for `sequence-environment'?
+(defmethod make-rule-lambda ((grammar     simple-string-grammar)
+                             (environment seq:vector-environment)
+                             (parameters  t)
+                             (body        t))
+  `(lambda (,parser.packrat.compiler::+context-var+ ,@(env:state-variables environment) ,@parameters)
+     (declare ; (optimize (speed 3) (debug 0) (safety 0))
+              (ignorable ,parser.packrat.compiler::+context-var+)
+              (type ,(seq:sequence-type grammar) ,(seq:sequence* environment))
+              (type ,(seq:index-type grammar)    ,(seq:position* environment) ,(seq:end environment)))
+     ,@body))

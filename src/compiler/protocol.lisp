@@ -35,6 +35,10 @@
   (:documentation
    "TODO"))
 
+(defgeneric make-rule-lambda (grammar environment parameters body)
+  (:documentation
+   "Return a lambda expression for ENVIRONMENT, PARAMETERS and BODY."))
+
 ;;; Default behavior
 
 (defconstant +context-var+ 'context)
@@ -61,13 +65,19 @@
 
          ((&flet make-return-cont (success)
             (lambda (environment)
-              `(values ,success ,@(env:position-variables environment))))))
-    `(lambda (,+context-var+ ,@(env:state-variables environment) ,@parameters)
-       ;; TODO type declarations
-       ;; (declare (optimize (speed 3) (debug 0) (safety 0)))
-       (declare (optimize (speed 1) (debug 1) (safety 1)))
-       (declare (ignorable ,+context-var+))
-       ,(maybe-let assigned-names
-          (compile-expression
-           grammar environment expression
-           (make-return-cont t) (make-return-cont nil))))))
+              `(values ,success ,@(env:position-variables environment)))))
+         (form (maybe-let assigned-names
+                 (compile-expression
+                  grammar environment expression
+                  (make-return-cont t) (make-return-cont nil)))))
+    (make-rule-lambda grammar environment parameters (list form))))
+
+(defmethod make-rule-lambda ((grammar     t)
+                             (environment t)
+                             (parameters  t)
+                             (body        t))
+  `(lambda (,+context-var+ ,@(env:state-variables environment) ,@parameters)
+     ;; (declare (optimize (speed 3) (debug 0) (safety 0)))
+     (declare (optimize (speed 1) (debug 1) (safety 1)))
+     (declare (ignorable ,+context-var+))
+     ,@body))

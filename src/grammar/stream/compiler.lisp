@@ -26,3 +26,21 @@
        ,(compile-expression
          grammar new-environment (exp:sub-expression expression)
          success-cont failure-cont))))
+
+;;; Rules
+
+(defmethod parser.packrat.compiler::make-rule-lambda ((grammar     t)
+                                                      (environment stream-environment)
+                                                      (parameters  t)
+                                                      (body        t))
+  (let+ (((&accessors-r/o (state-variables env:state-variables)
+                          (position-var    seq:position*)
+                          (stream-var      stream*)
+                          check-bounds-function access-function)
+          environment))
+   `(lambda (,parser.packrat.compiler::+context-var+ ,@state-variables ,@parameters)
+      (declare ;; (optimize (speed 3) (debug 0) (safety 0))
+               (ignorable ,parser.packrat.compiler::+context-var+ ,stream-var)
+               (type alexandria:array-index ,position-var)
+               (type function ,check-bounds-function ,access-function))
+      ,@body)))
