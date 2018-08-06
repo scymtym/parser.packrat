@@ -149,6 +149,10 @@
   (c:compile-rule-using-environment
    grammar parameters environment expression))
 
+(defmethod c:validate-invocation ((grammar     t)
+                                  (environment t)
+                                  (invocation  t))
+  (typep environment (class-of (default-environment grammar invocation))))
 
 ;;; Grammar namespace
 

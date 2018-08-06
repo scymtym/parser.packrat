@@ -11,6 +11,19 @@
   (:documentation
    "TODO"))
 
+;;; Invocation compilation protocol
+
+(defgeneric validate-invocation (grammar environment invocation)
+  (:documentation
+   "Return true if INVOCATION is valid for GRAMMAR and environment.
+
+    INVOCATION is a rule invocation expression.
+
+    Methods must return true iff passing the state variables in
+    ENVIRONMENT to the rule invoked by INVOCATION is consistent with
+    the calling convention of GRAMMAR (or the grammar containing the
+    invoked rule)."))
+
 ;;; Rule compilation protocol
 
 (defgeneric compile-rule (grammar parameters expression &key environment)

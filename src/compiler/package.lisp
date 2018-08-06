@@ -11,7 +11,13 @@
    (#:env #:parser.packrat.environment))
 
   (:export
-   #:compile-expression
+   #:compile-expression)
+  
+  ;; Invocation compilation protocol
+  (:export
+   #:validate-invocation)
+
+  (:export
    #:compile-rule
    #:compile-rule-using-environment
    #:prepare-expression)
