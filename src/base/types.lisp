@@ -1,10 +1,15 @@
 (cl:in-package #:parser.packrat.base)
 
 (deftype grammar-designator ()
-  "Things which can be coerced into STRINGs by CL:STRING can designate
-   grammars."
+  "An object naming a grammar.
+
+   Basically things which can be coerced into `string's by the
+   function `cl:string'."
   '(or symbol string))
 
 (deftype rule-designator ()
-  "TODO"
+  "An object naming a rule within a given grammar.
+
+   Basically things which ca be coerced into `string's by the function
+  `cl:string'."
   '(or symbol string))
