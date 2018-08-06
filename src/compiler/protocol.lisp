@@ -68,7 +68,18 @@
 (defgeneric compile-rule-using-environment
     (grammar parameters environment expression)
   (:documentation
-   "TODO"))
+   "Return a lambda expression implementing the behavior of EXPRESSION.
+
+    GRAMMAR specifies the calling convention used by the returned
+    lambda expression and may influence the compilation of EXPRESSION.
+
+    PARAMETERS is a list of names of parameters the resulting rule
+    function should accept.
+
+    ENVIRONMENT may specify the calling convention and is the
+    environment for compiling EXPRESSION in.
+
+    EXPRESSION describes the behavior of the rule."))
 
 (defgeneric make-rule-lambda (grammar environment parameters body)
   (:documentation
