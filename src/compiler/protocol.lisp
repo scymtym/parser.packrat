@@ -65,7 +65,11 @@
 
          ((&flet make-return-cont (success)
             (lambda (environment)
-              `(values ,success ,@(env:position-variables environment)))))
+              (let ((value (when success
+                             (env::value* environment)))) ; TODO hack
+                `(values ,success
+                         ,@(env:position-variables environment)
+                         ,@(when value `(,value)))))))
          (form (maybe-let assigned-names
                  (compile-expression
                   grammar environment expression

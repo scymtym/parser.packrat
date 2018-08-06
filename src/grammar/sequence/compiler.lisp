@@ -18,8 +18,10 @@
                                        environment (list :position (+ position amount)))))
                  (funcall success-cont new-environment)))
          (t
-          (let* ((new-environment (env:environment-at environment :fresh
-                                                      :parent element-environment))
+          (let* ((new-environment (parser.packrat.grammar.base::add-value
+                                   (env:environment-at environment :fresh
+                                                       :parent element-environment)
+                                   (env:value element-environment)))
                  (new-position    (position* new-environment)))
             `(let ((,new-position ,(or nil #+no to `(+ ,position ,amount))))
                ,(funcall success-cont new-environment))))))
@@ -91,8 +93,10 @@
     (compile-expression
      grammar environment (exp:sub-expression expression)
      (lambda (element-environment)
-       (let* ((new-environment (env:environment-at environment :fresh
-                                                   :parent element-environment))
+       (let* ((new-environment (parser.packrat.grammar.base::add-value
+                                (env:environment-at environment :fresh
+                                                    :parent element-environment)
+                                (env:value element-environment)))
               (new-tail        (tail new-environment)))
          `(let ((,new-tail ,(or nil #+maybe-later to
                                     (case amount

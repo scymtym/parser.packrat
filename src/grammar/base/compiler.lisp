@@ -137,17 +137,29 @@
                                (expression   compose-expression)
                                (success-cont function)
                                (failure-cont function))
-  (let+ (((&labels+ sub ((&optional first &rest rest) environment)
-            (compile-expression
-             grammar environment first
-             (lambda (new-environment)
-               (if rest
-                   (sub rest new-environment)
-                   (funcall success-cont new-environment)))
-             failure-cont))))
-    (sub (sub-expressions expression) environment)))
+  (let+ (((&labels+ sub ((&optional first &rest rest) environment first?)
+            (let ((environment* (cond (first?
+                                       environment)
+                                      ((typep environment 'env:value-environment)
+                                       environment)
+                                      (t
+                                       (env:environment-at environment (list :value (env::value* environment))
+                                                           :class 'env:value-environment
+                                                           :state nil)))))
+              (compile-expression
+               grammar environment* first
+               (lambda (new-environment)
+                 (if rest
+                     (sub rest new-environment nil)
+                     (funcall success-cont (env:environment-at environment (env:position-variables/plist environment)
+                                                               :parent new-environment))))
+               failure-cont)))))
+    (sub (sub-expressions expression) environment t)))
 
 ;;; Variables
+
+(defun value* (environment)
+  (env::value* environment))
 
 (defmethod compile-expression ((grammar      base-grammar)
                                (environment  env:value-environment)
@@ -161,7 +173,7 @@
      grammar environment sub-expression
      (if already-bound?
          (lambda (new-environment)
-           `(if (equal ,name ,(env:value new-environment))
+           `(if (equal ,name ,(value* new-environment))
                 ,(funcall success-cont new-environment)
                 ,(funcall failure-cont environment)))
          (lambda (new-environment)
@@ -229,19 +241,22 @@
   (apply #'call-next-method environment position :class class
          (remove-from-plist args :class)))
 
-(defun add-value (environment value)
-  (if (typep environment 'env:value-environment)
-      (env:environment-at environment (list :value value))
-      (let* ((actual-class (class-of environment))
-             (superclasses (list actual-class
-                                 (find-class 'value-environment-mixin)))
-             (class        (make-instance
-                            'standard-class
-                            :direct-superclasses superclasses
-                            :direct-slots        '())))
-        (change-class environment class
-                      :actual-class actual-class
-                      :value        value))))
+;;; TODO if we only use this for rule-invocation in the end, simplify accordingly
+(defun add-value (environment value) ; TODO should be in environment package
+  (cond ((not (typep environment 'env:value-environment))
+         (let* ((actual-class (class-of environment))
+                (superclasses (list actual-class
+                                    (find-class 'value-environment-mixin)))
+                (class        (make-instance 'standard-class
+                                             :direct-superclasses superclasses
+                                             :direct-slots        '())))
+           (change-class environment class
+                         :actual-class actual-class
+                         :value        value)))
+        ((eq (env:value environment) value)
+         environment)
+        (t
+         (env:environment-at environment (list :value value)))))
 
 #+later (add-value (make-instance 'parser.packrat.grammar.sequence:vector-environment
                           :position 'pos

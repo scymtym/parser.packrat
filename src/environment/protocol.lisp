@@ -128,3 +128,15 @@
 ;;; Value environment protocol
 
 (defgeneric value (environment))
+
+(defun value* (environment)
+  (labels ((rec (environment)
+             (if (compute-applicable-methods #'value (list environment))
+                 (let ((value (value environment)))
+                   (when (null value) (break))
+                   value)
+                 (if-let ((parent (parent environment)))
+                   (rec parent)
+                   nil                  ; (break)
+                   ))))
+    (rec environment)))
