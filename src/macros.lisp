@@ -105,8 +105,6 @@
                         (if production
                             `(:transform ,expression ,production)
                             expression))))
-    (:tree ast)
-
     `(grammar:ensure-rule
       ',name
       (grammar:find-grammar ',grammar-name)
