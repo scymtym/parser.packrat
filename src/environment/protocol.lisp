@@ -97,7 +97,7 @@
        (setf (lookup name environment) value))
     environment))
 
-(defgeneric environment-at (base position &key parent state)
+(defgeneric environment-at (base position &key class parent state)
   ;; For compiling invocations, we need something like
   (:documentation
    "Make a new environment with fresh position variables, taking the
@@ -105,12 +105,13 @@
     optionally using yet another environment as parent"))
 
 (defmethod environment-at ((base t) (position (eql :fresh))
-                           &rest args &key parent state)
+                           &rest args &key class parent state)
   (declare (ignore parent state))
+  ;; TODO maybe (assert (or (not class) (eq (class-of base) class)))
   (let* ((position (position-variables/plist base))
          (fresh-position
-          (loop :for (role variable) :on position :by #'cddr
-                :collect role :collect (gensym (string role)))))
+           (loop :for (role variable) :on position :by #'cddr
+                 :collect role :collect (gensym (string role)))))
     (apply #'environment-at base fresh-position args)))
 
 (defmethod environment-at ((base t) (position t)

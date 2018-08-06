@@ -52,9 +52,9 @@
                                     (mappend (lambda (parameter)
                                                (list parameter (cons parameter :parameter)))
                                              parameters)))
-         (expression (prepare-expression grammar environment expression))
+         (expression         (prepare-expression grammar environment expression))
 
-         ((&flet references-with-mode (mode)
+         ((&flet references-with-mode (mode) ; TODO turn this into a function in exp module
             (exp:variable-references grammar expression
                                      :filter (lambda (node)
                                                (and (not (env:lookup (exp:variable node) environment)) ; TODO hack

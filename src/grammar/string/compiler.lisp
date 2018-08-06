@@ -2,41 +2,6 @@
 
 ;;; Expressions
 
-#+no (defmethod compile-expression ((grammar      simple-string-grammar)
-                               (environment  env:value-environment)
-                               (expression   string-terminal-expression)
-                               (success-cont function)
-                               (failure-cont function))
-  ())
-
-#+no (defmethod compile-expression ((grammar      simple-string-grammar)
-                               (environment  env:value-environment)
-                               (expression   base:terminal-expression)
-                               (success-cont function)
-                               (failure-cont function))
-  (let ((value (exp:value expression)))
-    (typecase value
-      (string
-       (let+ ((length (length value))
-              ((&accessors-r/o (sequence seq:sequence*) (start seq:position*))
-               environment)
-              (new-environment-1 (env:environment-at environment :fresh))
-              (end-var-1         (seq:position* new-environment-1)))
-         `(let ((,end-var-1 (+ ,start ,length -1)))
-            ,(compile-expression
-              grammar new-environment-1
-              (lambda (new-environment)
-                (let* ((position         (seq:position* new-environment))
-                       (new-environment  (env:environment-at new-environment :fresh))
-                       (end-var          (seq:position* new-environment)))
-                  `(let ((,end-var (+ 1 ,position)))
-                     (if (%string= ,sequence ,value ,start ,end-var)
-                         ,(funcall success-cont new-environment)
-                         ,(funcall failure-cont environment)))))
-              failure-cont))))
-      (t
-       (call-next-method)))))
-
 (defmethod compile-expression ((grammar      simple-string-grammar)
                                (environment  seq:vector-environment)
                                (expression   string-terminal-expression)

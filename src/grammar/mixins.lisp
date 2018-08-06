@@ -3,9 +3,9 @@
 ;;; `named-mixin'
 
 (defclass named-mixin ()
-  ((name :initarg :name
-         :type    symbol
-         :reader  name))
+  ((%name :initarg :name
+          :type    symbol
+          :reader  name))
   (:default-initargs
    :name (more-conditions:missing-required-initarg 'named-mixin :name)))
 
@@ -49,13 +49,17 @@
   ;; TODO could just a use a meta-grammar-expression. that would
   ;; allow, among other things a qualified rule invocation, subsuming
   ;; this.
-  ((meta-grammar    :initarg :meta-grammar
-                    :reader  meta-grammar
-                    :documentation
-                    "Stores the grammar according to which rule
-                     expressions for this grammar should be parsed.")
-   (meta-start-rule :initarg :meta-start-rule
-                    :reader  meta-start-rule)))
+  ((%meta-grammar    :initarg :meta-grammar
+                     :reader  meta-grammar
+                     :documentation
+                     "Stores the grammar according to which
+                      expressions for this grammar should be parsed.")
+   (%meta-start-rule :initarg :meta-start-rule
+                     :reader  meta-start-rule
+                     :documentation
+                     "Stores the name of the rule according which
+                      expressions for this grammar should be
+                      parsed.")))
 
 (defmethod parse-expression ((grammar meta-grammar-mixin) (expression t))
   (let+ (((&accessors-r/o meta-grammar meta-start-rule) grammar))

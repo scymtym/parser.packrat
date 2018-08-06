@@ -94,17 +94,17 @@
 (defmacro defrule (name-and-options (&rest parameters)
                    expression &optional production)
   (let+ (((name &key
-                ((:grammar grammar-name) nil grammar-supplied?)
+                ((:grammar grammar-name) nil grammar-supplied?) ; TODO call this :in?
                 environment)
           (ensure-list name-and-options))
          (grammar      (if grammar-supplied?
                            (grammar:find-grammar grammar-name) ; TODO grammar-designator
                            *grammar*))
          (grammar-name (grammar:name grammar))
-         (ast          (parser.packrat.bootstrap::bootstrap-parse ; TODO this will be (grammar:parse-expression grammar expression)
-                        (if production
-                            `(:transform ,expression ,production)
-                            expression))))
+         (expression   (if production
+                           `(:transform ,expression ,production)
+                           expression))
+         (ast          (grammar:parse-expression grammar expression)))
     `(grammar:ensure-rule
       ',name
       (grammar:find-grammar ',grammar-name)

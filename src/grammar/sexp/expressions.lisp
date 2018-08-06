@@ -2,12 +2,11 @@
 
 ;;; `structure'
 
-(defclass structure-expression (exp:expression
-                                exp:sub-expression-mixin
+(defclass structure-expression (exp:sub-expression-mixin
                                 exp::value-environment-needing-mixin
+                                exp:expression
                                 print-items:print-items-mixin)
   ((type    :initarg  :type
-            ;; :type type-specifier
             :reader   type*)
    (readers :initarg  :readers
             :type     list
@@ -42,7 +41,7 @@
       (:sub-expression-count nil         ""))))
 
 (defmethod bp:node-kind ((builder t) (node structure-expression))
-  'structure)
+  :structure)
 
 (defmethod bp:node-initargs ((builder t) (node structure-expression))
   (list :readers (readers node)))
@@ -110,12 +109,8 @@
 
 ;;; `rest-expression'
 
-(defclass rest-expression (exp:expression
-                           exp:single-sub-expression-mixin)
+(exp:define-expression-class rest (exp:single-sub-expression-mixin)
   ())
-
-(defmethod bp:node-kind ((builder t) (node rest-expression))
-  :rest)
 
 ;;; `as-vector-expression'
 

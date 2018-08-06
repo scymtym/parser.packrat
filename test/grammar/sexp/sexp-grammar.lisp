@@ -40,34 +40,44 @@
         (1       (nil 1))
         ((1 . 2) (t   (1 . 2))))
 
-      ;; `as-list'
+      ;; `list' is syntactic sugar for
+      ;;
+      ;;   (as-list (seq SUB-EXPRESSIONS))
+      ;;
+      ;; .
       '((list a :b (* 'c))
 
-        ((1 :b c c) (t   (1 :b c c)))
+        ((1 :b c c) (t   (1 :b c c) (1 :b c c)))
+        ((1 :b c d) (nil (1 :b c d))))
+
+      '((list* a :b (list (* 'c)))
+
+        ((1 :b c c) (t   (1 :b c c) (1 :b c c)))
         ((1 :b c d) (nil (1 :b c d))))
 
       ;; `as-vector'
       '((vector a :b (* 'c))
 
-        (#(1 :b c c) (t   #(1 :b c c)))
+        (#(1 :b c c) (t   #(1 :b c c) #(1 :b c c)))
         (#(1 :b c d) (nil #(1 :b c d))))
 
       ;; TODO these belong to base-grammar
       ;; unification test
       '((list x x)
 
-        ((1 1) (t   (1 1)))
+        ((1 1) (t   (1 1) (1 1)))
         ((1 2) (nil (1 2))))
 
       '((list a (list b c) (list a b c))
 
-        (#1=((1) (2 3) ((1) 2 3)) (t #1#)))
+        (#1=((1) (2 3) ((1) 2 3)) (t #1# #1#)))
 
-      '((:guard x symbolp)
-
-        (1 (nil 1)))
-
-      '((:guard x (typep 'symbol))
+      '((:guard symbolp)
 
         (1 (nil 1))
-        (y (t   y))))))
+        (y (t   y y)))
+
+      '((:guard (typep 'symbol))
+
+        (1 (nil 1))
+        (y (t   y y))))))

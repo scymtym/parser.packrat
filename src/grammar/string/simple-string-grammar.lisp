@@ -3,7 +3,7 @@
 (defclass simple-string-grammar (seq:sequence-grammar)
   ()
   (:default-initargs
-   :sequence-type '(and simple-string (not (simple-array nil 1)))
+   :sequence-type '(and simple-string (not (or simple-base-string (simple-array nil 1))))
    :element-type  'character
    :index-type    'array-index))
 

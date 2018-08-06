@@ -66,12 +66,13 @@
     (list expression)))
 
 (defclass variable-write-mixin (variable-reference-mixin
-                                exp::value-environment-needing-mixin)
+                                exp:single-sub-expression-mixin
+                                ; exp::value-environment-needing-mixin
+                                )
   ((mode :allocation :class
          :initform :write)))
 
 (exp:define-expression-class set (variable-write-mixin
-                                  exp:single-sub-expression-mixin
                                   print-items:print-items-mixin)
   ())
 
@@ -79,7 +80,6 @@
   `((:arrow nil " ← " ((:after :variable)))))
 
 (exp:define-expression-class push (variable-write-mixin
-                                   exp:single-sub-expression-mixin
                                    print-items:print-items-mixin)
   ())
 
@@ -121,9 +121,10 @@
 
 (defmethod print-items:print-items append ((object rule-invocation-base))
   (let ((arguments (map 'list #'print-items:print-items (arguments object))))
-    `((:open      nil        "(")
-      (:arguments ,arguments "~{ ~/print-items:format-print-items/~}" ((:after :open)))
-      (:close     nil        ")"                                      ((:after :arguments))))))
+    `((:sub-expression-count nil        nil)
+      (:open                 nil        "(")
+      (:arguments            ,arguments "~{ ~/print-items:format-print-items/~}" ((:after :open)))
+      (:close                nil        ")"                                      ((:after :arguments))))))
 
 (defmethod bp:node-relations ((builder t) (node rule-invocation-base))
   (call-next-method) #+no '((:argument . *)))
@@ -143,7 +144,7 @@
   (break)
   (appendf (arguments left) (list right)))
 
-(defclass rule-invocation-expression (rule-invocation-base)
+(defclass rule-invocation-expression (rule-invocation-base) ; TODO use define-expression-class
   ((grammar :initarg  :grammar
             :reader   grammar
             :initform nil)
@@ -162,11 +163,8 @@
 (defmethod bp:node-initargs ((builder t) (node rule-invocation-expression))
   (list :rule (rule node)))
 
-(defclass next-rule-invocation-expression (rule-invocation-base)
+(exp:define-expression-class next-rule-invocation (rule-invocation-base)
   ())
 
 (defmethod print-items:print-items append ((object next-rule-invocation-expression))
   `((:rule nil "next-rule" ((:after :open) (:before :arguments)))))
-
-(defmethod bp:node-kind ((builder t) (node next-rule-invocation-expression))
-  :next-rule-invocation)

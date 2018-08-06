@@ -83,17 +83,18 @@
                 (values
                  (apply #'env:environment-binding environment
                         (mappend (lambda (variable-name temporary-name)
-                                   (unless (eq (cdr (env:lookup variable-name environment)) :parameter)
-                                     ;; (cons temporary-name nil) is required for e.g.
-                                     ;; (or (:guard name symbolp)
-                                     ;;     (:transform thing (error ...)))
-                                     ;; but (cons temporary-name t) is required for other cases, e.g.
-                                     ;; TODO add an example
-                                     (list variable-name (cons temporary-name nil))))
+                                   (let ((kind (cdr (env:lookup variable-name environment))))
+                                     (unless (eq kind :parameter)
+                                       ;; (cons temporary-name nil) is required for e.g.
+                                       ;; (or (:guard name symbolp)
+                                       ;;     (:transform thing (error ...)))
+                                       ;; but (cons temporary-name t) is required for other cases, e.g.
+                                       ;; TODO add an example
+                                       (list variable-name (cons temporary-name kind)))))
                                  assigned-names temporary-names))
                  assigned-names
                  temporary-names)))))
-         ((&flet alternative (expression name next-name) ; TODO pass failing environment to next alternative
+         ((&flet alternative (expression name next-name) ; TODO pass failing environment to next alternative?
             (let+ (((&values assignment-environment assigned-names temporary-names)
                     (assignments expression))
                    (environment (or assignment-environment environment)))
@@ -106,7 +107,13 @@
                        (maybe-progn
                         (when assigned-names
                           `(setf ,@(mappend #'list assigned-names temporary-names)))
-                        (funcall success-cont success-environment)))
+                        (let ((continue-environment
+                                (apply #'env:environment-binding
+                                       success-environment
+                                       (mappend (lambda (name)
+                                                  (list name nil)) ; TODO use old value, not nil
+                                                assigned-names))))
+                         (funcall success-cont continue-environment))))
                      (lambda (failure-environment)
                        (declare (ignore failure-environment))
                        (if next-name
@@ -127,7 +134,8 @@
              grammar environment first
              (lambda (new-environment)
                (if rest
-                   (sub rest (env:environment-at new-environment (env:state-variables/plist environment)))
+                   (sub rest (env:environment-at environment (env:state-variables/plist environment)
+                                                 :parent new-environment))
                    (funcall success-cont new-environment)))
              failure-cont))))
     (sub (sub-expressions expression) environment)))
@@ -162,7 +170,8 @@
   (env::value* environment))
 
 (defmethod compile-expression ((grammar      base-grammar)
-                               (environment  env:value-environment)
+                               (environment  t ; env:value-environment
+                                )
                                (expression   set-expression) ; TODO have two kinds of expressions for set and unify and rely on preprocessing?
                                (success-cont function)
                                (failure-cont function))
@@ -178,25 +187,29 @@
                 ,(funcall failure-cont environment)))
          (lambda (new-environment)
            (setf (env:lookup variable new-environment)
-                 (cons name t))         ; TODO hack. maybe make a new environment instead?
+                 (cons name t)) ; TODO hack. maybe make a new environment instead?
            (maybe-progn
-            `(setf ,name ,(env:value new-environment))
+            `(setf ,name ,(value* new-environment))
             (funcall success-cont new-environment))))
      failure-cont)))
 
 (defmethod compile-expression ((grammar      base-grammar)
-                               (environment  env:value-environment)
+                               (environment  t ; env:value-environment
+                                )
                                (expression   push-expression)
                                (success-cont function)
                                (failure-cont function))
   (let+ (((&accessors-r/o (variable exp:variable) sub-expression) expression)
-         ((&optional (name variable) . &ign)
+         ((&optional (name variable) . already-bound?)
           (env:lookup variable environment)))
     (compile-expression
      grammar environment sub-expression
      (lambda (new-environment)
+       (unless already-bound?
+         (setf (env:lookup variable new-environment)
+               (cons name t))) ; TODO hack. maybe make a new environment instead?)
        (maybe-progn
-        `(push ,(env:value new-environment) ,name)
+        `(push ,(value* new-environment) ,name)
         (funcall success-cont new-environment)))
      failure-cont)))
 
@@ -296,6 +309,7 @@
                                (success-cont function)
                                (failure-cont function))
   (let+ (((&accessors-r/o code sub-expression) expression)
+         (expression (apply #'maybe-progn code))
          ((&with-gensyms transform-name value-var aborted-var block-name))
          #+no ((&flet make-value-environment (parent ; &optional path-suffix
                                               )
@@ -315,8 +329,10 @@
                   :collect `(,variable ,name))))
          ((&flet run-code (environment)
             (parser.packrat.compiler::maybe-symbol-macrolet
-             (restore-bindings environment)
-             (apply #'maybe-progn code))))
+             (append (when (%uses-position? expression)
+                       (list (list 'cl-user::position (first (env:position-variables environment)))))
+                     (restore-bindings environment))
+             expression)))
 
 
          )
@@ -337,11 +353,11 @@
                      ;; CODE does not cause the match to fail.
                      `(let ((,value-var ,(run-code transform-environment)))
                         ,(funcall success-cont transform-environment)))))
-       ,(print (compile-expression
-                grammar environment sub-expression
-                (lambda (new-environment)
-                  `(,transform-name ,@(env:state-variables new-environment)))
-                failure-cont)))))
+       ,(compile-expression
+         grammar environment sub-expression
+         (lambda (new-environment)
+           `(,transform-name ,@(env:state-variables new-environment)))
+         failure-cont))))
 
 ;;;
 
@@ -373,45 +389,49 @@
 
 (defvar *depth* 0)
 
-(defmethod compile-expression ((grammar      base-grammar)
+(defvar *debug-stream* *standard-output*)
+
+(defun d (format-control &rest format-arguments)
+  (when-let ((stream *debug-stream*))
+    (apply #'format stream format-control format-arguments)))
+
+;; TODO make lookup-and-call/single-argument so we don't have
+;; cons and copy-list for a single argument, rename {with ->
+;; multiple}-arguments
+;; TODO include grammar name in cache key?
+(defun emit-call (rule-var state-variables arguments-var)
+  `(,(if arguments-var 'apply 'funcall)
+    ,rule-var ,parser.packrat.compiler::+context-var+ ,@state-variables
+    ,@(when arguments-var `(,arguments-var))))
+
+(defun emit-lookup-and-call
+    (rule-name rule-var position-variables state-variables arguments-var)
+  (let ((cache-place #+eventually `(cache:cached
+                                    ',rule-name ,@position-variables ,cache-var)
+                     `(cached
+                       (context-cache ,parser.packrat.compiler::+context-var+) ',rule-name
+                       ,@position-variables
+                       ,@(when arguments-var `(,arguments-var)))))
+    `(values-list
+      (or ,cache-place
+          ,(maybe-let (when arguments-var `((,arguments-var (copy-list ,arguments-var))))
+             `(d "~&~V@T~A ~{~S~^ ~}~%" *depth* ',rule-name (list ,@state-variables)
+                 ,@(when arguments-var `(,arguments-var)))
+             `(let ((*depth* (+ *depth* 2)))
+                (setf ,cache-place
+                      (multiple-value-list
+                       ,(emit-call rule-var state-variables arguments-var)))))))))
+
+(defmethod compile-expression ((grammar      base-grammar) ; TODO (grammar t)?
                                (environment  t)
                                (expression   rule-invocation-expression)
                                (success-cont function)
                                (failure-cont function))
   (let+ (((&accessors-r/o (grammar-name grammar) (rule-name rule) arguments) expression)
-         (rule               `(load-time-value
-                               (find-rule ',rule-name (find-grammar ',(or grammar-name (name grammar)))
-                                          :if-does-not-exist :forward-reference)))
+         (grammar-name       (or grammar-name (name grammar)))
          (state-variables    (env:state-variables environment))
          (position-variables (env:position-variables environment))
-         ((&with-gensyms arguments-var success?-var))
-         ((&flet lookup-and-call/no-arguments ()
-            (let ((cache-place #+eventually `(cache:cached
-                                              ',rule-name ,@position-variables ,cache-var)
-                               `(cached
-                                 ,parser.packrat.compiler::+context-var+ ',rule-name ,@position-variables)))
-              `(values-list (or ,cache-place
-                                (progn
-                                  (format t "~&~V@T~A ~{~S~^ ~}~%" *depth* ',rule-name (list ,@state-variables))
-                                  (let ((*depth* (+ *depth* 2)))
-                                    (setf ,cache-place (multiple-value-list (funcall ,rule ,parser.packrat.compiler::+context-var+ ,@state-variables))))))))))
-         ;; TODO make lookup-and-call/single-argument so we don't have
-         ;; cons and copy-list for a single argument, rename {with ->
-         ;; multiple}-arguments
-         ((&flet lookup-and-call/with-arguments (arguments)
-            (let ((cache-place #+eventually `(cache:cached/arguments
-                                              ',rule-name ,@position-variables ,arguments
-                                              ,cache-var)
-                               `(cached/arguments
-                                 ,parser.packrat.compiler::+context-var+
-                                 ',rule-name
-                                 ,arguments
-                                 ,@position-variables)))
-              `(or ,cache-place
-                   (let ((,arguments (copy-list ,arguments)))
-                     (format t "~&~V@T~A ~{~S~^ ~} ~S~%" *depth* ',rule-name (list ,@state-variables) ,arguments)
-                     (let ((*depth* (+ *depth* 2)))
-                       (apply ,rule ,parser.packrat.compiler::+context-var+ ,@state-variables ,arguments)))))))
+         ((&with-gensyms grammar-var rule-var arguments-var success?-var value-var))
          ((&labels+ argument ((&optional first &rest rest) #+no arguments environment)
             (values
              (if first
@@ -434,23 +454,84 @@
              environment)))
          ((&values argument-forms call-environment)
           (argument arguments #+no nil environment)) ; TODO ENVIRONMENT is just passed trough, then bound to CALL-ENVIRONMENT
-         (continue-environment #+no (make-instance 'parser.packrat.grammar.sequence::vector-environment
-                                                   :parent   call-environment
-                                                   :sequence (parser.packrat.grammar.sequence:sequence* environment)
-                                                   :position 'k-p
-                                                   :end      (parser.packrat.grammar.sequence:end environment))
-                               #+no (env:environment-carrying call-environment 'v)
-                               (env:environment-at call-environment :fresh)))
-    (maybe-let (when arguments `((,arguments-var (list ,@argument-forms))))
+         (continue-environment (add-value (env:environment-at call-environment :fresh) value-var)))
+    (maybe-let* `((,grammar-var (load-time-value
+                                 (find-grammar ',grammar-name)))
+                  (,rule-var    (if (eq (context-grammar ,parser.packrat.compiler::+context-var+)
+                                        ,grammar-var)
+                                    (load-time-value
+                                     (find-rule ',rule-name (find-grammar ',grammar-name)
+                                                :if-does-not-exist :forward-reference))
+                                    (find-rule ',rule-name (context-grammar ,parser.packrat.compiler::+context-var+))))
+                  ,@(when arguments
+                      `((,arguments-var (list ,@argument-forms)))))
       (when arguments `(declare (dynamic-extent ,arguments-var)))
       ;; TODO tail calls do not need the receiving part
       `(multiple-value-bind (,success?-var
-                             ,@(env:position-variables continue-environment))
-           ,(if arguments
-                (lookup-and-call/with-arguments arguments-var)
-                (lookup-and-call/no-arguments))
-         (format t "~&~V@T~A ~{~S~^ ~} -> ~S ~{~S~^ ~}~%" *depth* ',rule-name (list ,@state-variables)
-                 ,success?-var (list ,@(env:position-variables continue-environment)))
+                             ,@(env:position-variables continue-environment)
+                             ,@(unless (member value-var (env:position-variables continue-environment))
+                                 `(,value-var)))
+           ,(emit-lookup-and-call
+             rule-name rule-var position-variables state-variables
+             (when arguments arguments-var))
+         (d "~&~V@T~A ~{~S~^ ~} -> ~S ~{~S~^ ~} ~S~%"
+            *depth* ',rule-name (list ,@state-variables)
+            ,success?-var (list ,@(env:position-variables continue-environment)) ,value-var)
+         (if ,success?-var
+             ,(funcall success-cont continue-environment)
+             ,(funcall failure-cont continue-environment))))))
+
+(defmethod compile-expression ((grammar      base-grammar)
+                               (environment  t)
+                               (expression   next-rule-invocation-expression)
+                               (success-cont function)
+                               (failure-cont function))
+  (let+ (((&accessors-r/o arguments) expression)
+         (grammar-name       (name grammar))
+         (rule-name          'current-rule)
+         (state-variables    (env:state-variables environment))
+         (position-variables (env:position-variables environment))
+         ((&with-gensyms rule-var arguments-var success?-var value-var))
+         ((&labels+ argument ((&optional first &rest rest) #+no arguments environment)
+            (values
+             (if first
+                 (let ((new-e ))
+                   (list*
+                    (compile-expression
+                     grammar environment first
+                     (lambda (new-environment)
+                       (setf new-e new-environment)
+                       (env:value new-environment)
+                       #+no `(let ((,arguments-var (cons ,(env:value new-environment)
+                                                         ,arguments)))
+                               (declare (dynamic-extent ,arguments-var))
+                               ))
+                     failure-cont)
+                    (argument rest #+no arguments-var new-e)))
+                                        ; (values (lookup-and-call arguments) environment)
+
+                 '())
+             environment)))
+         ((&values argument-forms call-environment)
+          (argument arguments #+no nil environment)) ; TODO ENVIRONMENT is just passed trough, then bound to CALL-ENVIRONMENT
+         (continue-environment (add-value (env:environment-at call-environment :fresh) value-var)))
+
+    (maybe-let `((,rule-var (load-time-value
+                             (find-rule ',rule-name (find-grammar ',grammar-name)
+                                        :if-does-not-exist :forward-reference)))
+                 ,@(when arguments `((,arguments-var (list ,@argument-forms)))))
+      (when arguments `(declare (dynamic-extent ,arguments-var)))
+      ;; TODO tail calls do not need the receiving part
+      `(multiple-value-bind (,success?-var
+                             ,@(env:position-variables continue-environment)
+                             ,@(unless (member value-var (env:position-variables continue-environment))
+                                 `(,value-var)))
+           ,(emit-lookup-and-call
+             rule-name rule-var
+             position-variables state-variables (when arguments arguments-var))
+         (d "~&~V@T~A ~{~S~^ ~} -> ~S ~{~S~^ ~} ~S~%"
+            *depth* ',rule-name (list ,@state-variables)
+            ,success?-var (list ,@(env:position-variables continue-environment)) ,value-var)
          (if ,success?-var
              ,(funcall success-cont continue-environment)
              ,(funcall failure-cont continue-environment))))))

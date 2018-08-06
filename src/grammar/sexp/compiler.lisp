@@ -59,13 +59,13 @@
              failure-cont))
          ,(funcall failure-cont environment))))
 
-(defmethod compile-expression ((grammar      sexp-grammar)
+(defmethod compile-expression ((grammar      t)
                                (environment  env:environment)
                                (expression   structure-expression)
                                (success-cont function)
                                (failure-cont function))
   (let+ (((&accessors-r/o (type type*) readers sub-expressions) expression)
-         (readers   (mapcar #'ensure-list readers))
+         (readers   (mapcar #'ensure-list readers)) ; TODO should not happen here
          (slot-vars (map 'list (compose #'gensym #'string #'first) readers))
          (value     (env:value environment))
          ((&labels+ slot ((&optional ((first-reader &rest first-args) '(nil)) &rest rest-readers)
@@ -76,7 +76,7 @@
                       (cond
                         ((not first-args)
                          (list value))
-                        ((find :x first-args)
+                        ((find :x first-args) ; TODO temp hack
                          (substitute value :x first-args))
                         (t
                          (list* value first-args)))))
@@ -106,7 +106,7 @@
 ;;; Casts
 
 ;; TODO similar to following method
-(defmethod compile-expression ((grammar      sexp-grammar)
+(defmethod compile-expression ((grammar      t)
                                (environment  env:environment)
                                (expression   as-list-expression)
                                (success-cont function)

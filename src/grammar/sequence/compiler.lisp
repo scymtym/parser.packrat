@@ -29,7 +29,10 @@
        (declare (ignore element-environment))
        (funcall failure-cont environment)))))
 
-;;; Bounds test, element access and advance rules for `sequence-environment'
+;;; Bounds test, element access rules for `sequence-environment'
+;;;
+;;; The method for advance-expression is inherited from
+;;; `sequential-environment-mixin'
 
 (defmethod compile-expression ((grammar      t)
                                (environment  sequence-environment)
@@ -131,7 +134,7 @@
 ;;; Repetition and sequence expressions
 
 ;; TODO (* EXPRESSION 0 1) -> (if C(EXPRESSION) SUCCESS SUCCESS), no labels
-(defmethod compile-expression ((grammar      sequential-grammar-mixin)
+(defmethod compile-expression ((grammar      t)
                                (environment  sequential-environment-mixin)
                                (expression   repetition-expression)
                                (success-cont function)
@@ -147,7 +150,8 @@
                  grammar environment expression
                  success-cont failure-cont)
                 (funcall success-cont environment))))
-         ((&with-gensyms repeat count done/check done/no-check)))
+         ((&with-gensyms repeat count done/check done/no-check))
+         (continue-environment))
     (compile-constraint
      min environment
      (lambda (min-new-environment)
@@ -156,44 +160,47 @@
         (lambda (max-new-environment)
           (let+ ((recursion-environment (env:environment-at environment :fresh)) ; TODO should somehow use max-new-environment as parent
                  ((&flet recurse (environment)
-                    `(,repeat
-                      ,@(env:state-variables environment) ,@(when count? `((1+ ,count))))))
+                    `(,repeat ,@(env:position-variables environment)
+                              ,@(when count? `((1+ ,count))))))
                  ((&flet done (environment check?)
                     `(,(if (and min check?) done/check done/no-check)
-                       ,@(env:state-variables environment)
+                       ,@(env:position-variables environment)
                        ,@(when (and min check?) `(,count))))))
-            `(labels ((,repeat (,@(env:state-variables recursion-environment)
+            `(labels ((,repeat (,@(env:position-variables recursion-environment)
                                 ,@(when count? `(,count)))
                         ; (declare (type array-index position)) ; TODO depends on the sequence
                         ,@(when count? `((declare (type array-index ,count))))
                         ,(compile-expression
                           grammar recursion-environment (exp:sub-expression expression)
-                          (cond
-                            ((not max)
-                             #'recurse)
-                            (max=1?     ; TODO
-                             (rcurry #'done nil))
-                            (t
-                             (lambda (new-environment)
-                               `(if (< ,count ,(env:value max-new-environment)) ; TODO emit a local function for this as well?
+                          (lambda (new-environment)
+                            (setf continue-environment (env:environment-at recursion-environment :fresh
+                                                                           :parent new-environment))
+                            (cond
+                              ((not max)
+                               (recurse new-environment))
+                              (max=1?    ; TODO
+                               (done new-environment nil))
+                              (t
+                               ;; TODO avoid emitting (1+ count) here and in RECURSE
+                               `(if (< (1+ ,count) ,(env:value max-new-environment)) ; TODO emit a local function for this as well?
                                     ,(recurse new-environment)
                                     ,(done new-environment nil)))))
                           (lambda (failure-environment)
                             (declare (ignore failure-environment))
                             (done recursion-environment t))))
-                      (,done/no-check (,@(env:state-variables recursion-environment))
-                        ,(funcall success-cont recursion-environment))
+                      (,done/no-check (,@(env:position-variables continue-environment))
+                        ,(funcall success-cont continue-environment))
                       ,@(when min
-                          `((,done/check (,@(env:state-variables recursion-environment)
+                          `((,done/check (,@(env:position-variables continue-environment)
                                           ,count)
                               ; (declare (type array-index position))
                               (declare (type array-index ,count))
                               (if (>= ,count ,(env:value min-new-environment))
-                                  (,done/no-check ,@(env:state-variables recursion-environment))
-                                  ,(funcall failure-cont recursion-environment))))))
-               (,repeat ,@(env:state-variables environment  #+TODO max-new-environment) ,@(when count? '(0)))))))))))
+                                  (,done/no-check ,@(env:position-variables continue-environment))
+                                  ,(funcall failure-cont continue-environment))))))
+               (,repeat ,@(env:position-variables environment  #+TODO max-new-environment) ,@(when count? '(0)))))))))))
 
-(defmethod compile-expression ((grammar      sequential-grammar-mixin)
+(defmethod compile-expression ((grammar      t)
                                (environment  sequential-environment-mixin)
                                (expression   sequence-expression)
                                (success-cont function)
@@ -204,7 +211,7 @@
                              (&optional name next-name &rest rest-names)
                              environment)
             (when expression
-              (let ((environment      (env:environment-at environment :fresh))
+              (let ((environment      (env:environment-at environment :fresh)) ; TODO is this environment necessary?
                     (next-environment))
                 (list*
                  `(,name (,@(env:position-variables environment))
@@ -223,6 +230,8 @@
         (funcall success-cont environment))))
 
 ;;; Rules
+
+;; TODO could add a compile-rule-using-environment that generates code to ensure that the entire sequence was consumed.
 
 #+no (defmethod compile-rule ((grammar    sequence-grammar)
                          (parameters list)

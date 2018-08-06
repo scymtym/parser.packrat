@@ -1,16 +1,18 @@
 (cl:in-package #:parser.packrat.grammar.stream)
 
+;;; Expressions
+
 (defmethod compile-expression ((grammar      t)
                                (environment  stream-environment)
                                (expression   seq::bounds-test-expression)
                                (success-cont function)
                                (failure-cont function))
   (let+ (((&accessors-r/o (position seq:position*) check-bounds-function) environment))
-   `(if (funcall ,check-bounds-function ,position)
-        ,(compile-expression
-          grammar environment (exp:sub-expression expression)
-          success-cont failure-cont)
-        ,(funcall failure-cont environment))))
+    `(if (funcall ,check-bounds-function ,position)
+         ,(compile-expression
+           grammar environment (exp:sub-expression expression)
+           success-cont failure-cont)
+         ,(funcall failure-cont environment))))
 
 (defmethod compile-expression ((grammar      t)
                                (environment  stream-environment)
@@ -23,6 +25,7 @@
                                               :class 'env:value-environment
                                               :state '())))
     `(let ((,element (funcall ,access-function ,position)))
+       (declare (type  #+TODO (element-type environment) character ,element))
        ,(compile-expression
          grammar new-environment (exp:sub-expression expression)
          success-cont failure-cont))))
