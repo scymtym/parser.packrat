@@ -9,7 +9,25 @@
 (defgeneric compile-expression (grammar environment expression
                                 success-cont failure-cont)
   (:documentation
-   "TODO"))
+   "Return code implementing the semantics of EXPRESSION.
+
+    GRAMMAR is the grammar in the context of which the code will be
+    evaluated.
+
+    ENVIRONMENT describes the lexical and static aspects of the
+    processed input and bound variables.
+
+    EXPRESSION is the abstract syntax node that should be compiled.
+
+    SUCCESS-CONT is a function that should be called with an
+    environment representing the state after EXPRESSION has succeeded
+    as the sole argument to obtain the code that should be executed if
+    EXPRESSION succeeds.
+
+    FAILURE-CONT is a function that should be called with an
+    environment representing the state after EXPRESSION has succeeded
+    as the sole argument to obtain the code that should be executed if
+    EXPRESSION succeeds."))
 
 ;;; Invocation compilation protocol
 
