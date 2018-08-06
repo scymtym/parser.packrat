@@ -35,7 +35,10 @@
 
   ;; Grammar protocol
   (:export
-   #:find-rule
+   #:rules
+   #:rules/alist
+
+   #:find-rule                      ; also `setf'
 
    #:ensure-rule
    #:ensure-rule-using-rule

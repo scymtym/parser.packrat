@@ -21,11 +21,17 @@
 ;;; `rule-storage-mixin'
 
 (defclass rule-storage-mixin ()
-  ((rules :reader   %rules
-          :initform (make-hash-table :test #'eq))))
+  ((%rules :reader   %rules
+           :initform (make-hash-table :test #'eq))))
 
 (defmethod print-items:print-items append ((object rule-storage-mixin))
   `((:rule-count ,(hash-table-count (%rules object)) " ~D rule~:P" ((:after :name)))))
+
+(defmethod rules ((grammar rule-storage-mixin))
+  (hash-table-values (%rules grammar)))
+
+(defmethod rules/alist ((grammar rule-storage-mixin))
+  (hash-table-alist (%rules grammar)))
 
 (defmethod find-rule ((name symbol) (grammar rule-storage-mixin)
                       &key if-does-not-exist)

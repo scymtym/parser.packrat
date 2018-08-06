@@ -48,6 +48,10 @@
 ;;;
 ;;; Mostly rule creation and acting as a container for rule instances.
 
+(defgeneric rules (grammar))
+
+(defgeneric rules/alist (grammar))
+
 (defgeneric find-rule (name grammar &key if-does-not-exist))
 
 (defgeneric (setf find-rule) (new-value name grammar
