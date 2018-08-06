@@ -20,4 +20,5 @@
 (defmethod grammar:parse ((grammar    sequence-grammar)
                           (expression function)
                           (input      sequence))
-  (funcall expression (make-hash-table :test #'equal) 0 input (length input)))
+  (let ((context (grammar::make-context grammar expression input)))
+    (funcall expression context 0 input (length input))))

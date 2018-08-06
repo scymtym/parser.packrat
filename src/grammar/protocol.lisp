@@ -140,8 +140,14 @@
 #+no (defmethod parse ((grammar t) (expression cons) (input t))
        (find-rule expression grammar input))
 
+(defmethod make-context ((grammar t) (expression t) (input t))
+  (make-hash-table :test #'equal))
+
 (defmethod parse ((grammar t) (expression function) (input t))
-  (funcall expression (make-hash-table :test #'equal) input))
+  (let ((context (make-context grammar expression input)))
+    (funcall expression context input)))
+
+;;; Compilation
 
 ;;; Default method for compiler protocol
 (defmethod c:compile-rule
