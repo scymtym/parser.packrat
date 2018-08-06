@@ -46,7 +46,24 @@
 
 (defgeneric compile-rule (grammar parameters expression &key environment)
   (:documentation
-   "TODO"))
+   "Return a lambda expression implementing the behavior of EXPRESSION.
+
+    The body of the lambda expression is obtained by (via
+    `compile-rule-using-environment') applying `compile-expression' to
+    GRAMMAR, ENVIRONMENT and EXPRESSION.
+
+    GRAMMAR specifies the calling convention used by the returned
+    lambda expression and may influence the compilation of EXPRESSION.
+
+    PARAMETERS is a list of names of parameters the resulting rule
+    function should accept.
+
+    EXPRESSION describes the behavior of the rule.
+
+    ENVIRONMENT, if supplied, may specify the calling convention and
+    is the environment for compiling EXPRESSION in. If not supplied,
+    the result of calling `parser.packrat.grammar:default-environment'
+    on GRAMMAR and EXPRESSION is used by default."))
 
 (defgeneric compile-rule-using-environment
     (grammar parameters environment expression)
