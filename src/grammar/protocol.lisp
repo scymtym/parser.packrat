@@ -52,10 +52,10 @@
 
 (defgeneric rules/alist (grammar))
 
-(defgeneric find-rule (name grammar &key if-does-not-exist))
+(defgeneric find-rule (name grammar &key recursive? if-does-not-exist)) ; TODO could also add find-direct-rule instead of recursive
 
 (defgeneric (setf find-rule) (new-value name grammar
-                              &key if-does-not-exist))
+                              &key recursive? if-does-not-exist))
 
 (defgeneric ensure-rule (name grammar &key rule-class &allow-other-keys))
 
@@ -94,10 +94,12 @@
      value)))
 
 (defmethod find-rule :around ((name t) (grammar t)
-                              &key (if-does-not-exist #'error))
+                              &key (recursive? t) (if-does-not-exist #'error))
   (let ((if-does-not-exist (coerce-rule-if-does-not-exist
                             if-does-not-exist name)))
-    (or (call-next-method)
+    (or (call-next-method name grammar
+                          :recursive?        recursive?
+                          :if-does-not-exist nil)
         (more-conditions:error-behavior-restart-case
             (if-does-not-exist
              (rule-missing-error :grammar grammar :rule name)
@@ -106,7 +108,7 @@
             (setf (find-rule name grammar) value))))))
 
 (defmethod ensure-rule ((name t) (grammar t) &rest args &key &allow-other-keys)
-  (let ((rule (find-rule name grammar :if-does-not-exist nil)))
+  (let ((rule (find-rule name grammar :recursive? nil :if-does-not-exist nil)))
     (apply #'ensure-rule-using-rule rule name grammar args)))
 
 (defmethod ensure-rule-using-rule ((rule null) (name t) (grammar t)
@@ -191,17 +193,24 @@
   (let ((grammar (find-grammar name :if-does-not-exist nil)))
     (apply #'ensure-grammar-using-grammar grammar name args)))
 
-(defmethod ensure-grammar-using-grammar ((grammar null) (name t)
-                                         &rest args
-                                         &key grammar-class &allow-other-keys)
-  (setf (find-grammar name)
-        (apply #'make-instance grammar-class :name name
-               (remove-from-plist args :grammar-class))))
+(flet ((resolve-used (names)
+         (map 'list #'find-grammar names)))
 
-(defmethod ensure-grammar-using-grammar ((grammar t) (name t)
-                                         &rest args
-                                         &key grammar-class &allow-other-keys)
-  (let ((initargs (list* :name name (remove-from-plist args :grammar-class))))
-    (if (typep grammar grammar-class)
-        (apply #'reinitialize-instance grammar initargs)
-        (apply #'change-class grammar grammar-class initargs))))
+  (defmethod ensure-grammar-using-grammar ((grammar null) (name t)
+                                           &rest args
+                                           &key grammar-class use
+                                           &allow-other-keys)
+    (setf (find-grammar name)
+          (apply #'make-instance grammar-class
+                 :name name
+                 :use  (resolve-used use)
+                 (remove-from-plist args :grammar-class :use))))
+
+  (defmethod ensure-grammar-using-grammar ((grammar t) (name t)
+                                           &rest args
+                                           &key grammar-class use
+                                           &allow-other-keys)
+    (let ((initargs (list* :name name
+                           :use  (resolve-used use)
+                           (remove-from-plist args :grammar-class :use))))
+      (apply #'change-class grammar grammar-class initargs))))

@@ -64,10 +64,10 @@
         (ecase keyword
           (:element-type (apply element-type value))
           (:class (apply class value))
-          #+no (:use
-                (dolist (used value)
-                  (coerce-to-grammar used :if-does-not-exist #'warn))
-                (appendf use value))
+          (:use
+           (dolist (used value)
+             (grammar:find-grammar used :if-does-not-exist #'warn)) ; TODO ensure?
+           (appendf use value))
           (:documentation
            (apply #'documentation value)))))
 
@@ -80,7 +80,7 @@
                  `(:element-type ',(funcall element-type)))
         ,@(when (funcall class)
             `(:grammar-class ',(funcall class)))
-                                        ; :use ',use
+        :use ',use
                                         ; :documentation ,(funcall documentation)
         ))))
 

@@ -34,13 +34,13 @@
   (hash-table-alist (%rules grammar)))
 
 (defmethod find-rule ((name symbol) (grammar rule-storage-mixin)
-                      &key if-does-not-exist)
-  (declare (ignore if-does-not-exist))
+                      &key recursive? if-does-not-exist)
+  (declare (ignore recursive? if-does-not-exist))
   (gethash name (%rules grammar)))
 
 (defmethod (setf find-rule) ((new-value t) (name symbol) (grammar rule-storage-mixin)
-                             &key if-does-not-exist)
-  (declare (ignore if-does-not-exist))
+                             &key recursive? if-does-not-exist)
+  (declare (ignore recursive? if-does-not-exist))
   (setf (gethash name (%rules grammar)) new-value))
 
 ;;; `meta-grammar-mixin'
