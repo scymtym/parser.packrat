@@ -121,7 +121,7 @@
 
 (defmethod print-items:print-items append ((object rule-invocation-base))
   (let ((arguments (map 'list #'print-items:print-items (arguments object))))
-    `((:sub-expression-count nil        nil)
+    `((:sub-expression-count nil        "")
       (:open                 nil        "(")
       (:arguments            ,arguments "~{ ~/print-items:format-print-items/~}" ((:after :open)))
       (:close                nil        ")"                                      ((:after :arguments))))))
