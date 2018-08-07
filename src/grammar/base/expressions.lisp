@@ -1,10 +1,12 @@
 (cl:in-package #:parser.packrat.grammar.base)
 
-;; TODO print-items
 (exp:define-expression-class predicate (exp:single-sub-expression-mixin
                                         exp::value-environment-needing-mixin
                                         print-items:print-items-mixin)
   (predicate))
+
+(defmethod print-items:print-items append ((object predicate-expression))
+  `((:predicate ,(ensure-list (predicate object)) "(~{~A~^ ~})")))
 
 (exp:define-expression-class anything (exp::value-environment-needing-mixin)
   ())
