@@ -239,13 +239,6 @@
   (let ((environment (add-value environment (first (env:position-variables environment)))))
     (funcall success-cont environment)))
 
-(defmethod compile-expression ((grammar      base-grammar)
-                               (environment  t)
-                               (expression   ignored-expression)
-                               (success-cont function)
-                               (failure-cont function))
-  (funcall success-cont environment))
-
 ;;; Transform
 
 (defclass value-environment-mixin (env:value-environment)

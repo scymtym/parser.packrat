@@ -96,9 +96,6 @@
 (defmethod bp:node-kind ((builder t) (node variable-reference))
   :variable-reference)
 
-(exp:define-expression-class ignored (exp::value-environment-needing-mixin)
-  ())
-
 ;;; Position
 
 (exp:define-expression-class position ()

@@ -105,6 +105,11 @@
 
 ;;; Casts
 
+(defvar *just-test-bounds*
+  (make-instance 'seq::bounds-test-expression
+                 :sub-expression (make-instance 'seq:sequence-expression
+                                                :sub-expressions '())))
+
 ;; TODO similar to following method
 (defmethod compile-expression ((grammar      t)
                                (environment  env:environment)
@@ -126,8 +131,7 @@
            grammar list-environment (sub-expression expression)
            (lambda (new-environment)
              (compile-expression
-              grammar new-environment (make-instance 'seq::bounds-test-expression
-                                                     :sub-expression (make-instance 'base::ignored-expression))
+              grammar new-environment *just-test-bounds*
               (curry #'call-with-value-environment failure-cont)
               (curry #'call-with-value-environment success-cont)))
            (curry #'call-with-value-environment failure-cont))
@@ -186,8 +190,7 @@
              ;; VALUE.
              (lambda (new-environment)
                (compile-expression
-                grammar new-environment (make-instance 'seq::bounds-test-expression
-                                                       :sub-expression (make-instance 'base::ignored-expression))
+                grammar new-environment *just-test-bounds*
                 (curry #'call-with-value-environment failure-cont)
                 (curry #'call-with-value-environment success-cont)))
              (lambda (new-environment)

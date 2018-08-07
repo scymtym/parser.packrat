@@ -2,6 +2,11 @@
 
 ;;; Expressions
 
+(defvar *just-test-bounds*
+  (make-instance 'seq::bounds-test-expression
+                 :sub-expression (make-instance 'seq:sequence-expression
+                                                :sub-expressions '())))
+
 (defmethod compile-expression ((grammar      simple-string-grammar)
                                (environment  seq:vector-environment)
                                (expression   string-terminal-expression)
@@ -15,8 +20,7 @@
          (end-1-var         (seq:position* end-1-environment)))
     `(let ((,end-1-var (+ ,start ,value-length -1)))
        ,(compile-expression
-         grammar end-1-environment (make-instance 'seq::bounds-test-expression ; TODO make an exclusive slot or separate bounds test to avoid -1 shenanigans
-                                                  :sub-expression (make-instance 'base::ignored-expression))
+         grammar end-1-environment *just-test-bounds* ; TODO make an exclusive slot or separate bounds test to avoid -1 shenanigans
          (lambda (end-1-environment)
            (let* ((end-1-var       (seq:position* end-1-environment))
                   (end-environment (env:environment-at end-1-environment :fresh))
