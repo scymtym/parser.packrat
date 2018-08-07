@@ -113,11 +113,7 @@
 (defclass rule-invocation-base (exp:sub-expression-mixin
                                 print-items:print-items-mixin)
   ((sub-expressions :initarg  :arguments
-                    :accessor arguments)
-   #+no (arguments :initarg  :arguments
-              :type     list
-              :accessor arguments
-              :initform '())))
+                    :accessor arguments)))
 
 (defmethod print-items:print-items append ((object rule-invocation-base))
   (let ((arguments (map 'list #'print-items:print-items (arguments object))))
@@ -125,24 +121,6 @@
       (:open                 nil        "(")
       (:arguments            ,arguments "~{ ~/print-items:format-print-items/~}" ((:after :open)))
       (:close                nil        ")"                                      ((:after :arguments))))))
-
-(defmethod bp:node-relations ((builder t) (node rule-invocation-base))
-  (call-next-method) #+no '((:argument . *)))
-
-(defmethod bp:node-relation ((builder  t)
-                             (relation (eql :argument))
-                             (node     rule-invocation-base))
-  (break)
-  (values (arguments node)
-          (load-time-value (circular-list '(:evaluated? t)))))
-
-(defmethod bp:relate ((builder t)
-                      (relation (eql :argument))
-                      (left     rule-invocation-base)
-                      (right    t)
-                      &key)
-  (break)
-  (appendf (arguments left) (list right)))
 
 (defclass rule-invocation-expression (rule-invocation-base) ; TODO use define-expression-class
   ((grammar :initarg  :grammar
