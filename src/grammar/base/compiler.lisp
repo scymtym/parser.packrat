@@ -336,7 +336,7 @@
 
 
          )
-    `(labels ((,transform-name ,(env:state-variables transform-environment)
+    `(labels ((,transform-name ,(env:position-variables transform-environment)
                 ,(if (%uses-fail? expression)
                      `(let ((,value-var   nil)
                             (,aborted-var nil))
@@ -356,7 +356,7 @@
        ,(compile-expression
          grammar environment sub-expression
          (lambda (new-environment)
-           `(,transform-name ,@(env:state-variables new-environment)))
+           `(,transform-name ,@(env:position-variables new-environment)))
          failure-cont))))
 
 ;;;
