@@ -538,26 +538,6 @@
 
 ;;; Rule
 
-(defmethod compile-rule :before ((grammar    base-grammar)
-                                 (parameters list)
-                                 (expression t)
-                                 &key environment)
-  (declare (ignore environment))
-  #+no (let+ (((&flet references-with-mode (mode)
-            (exp:variable-references grammar expression
-                                     :filter (lambda (node)
-                                               (eq (exp::mode node) mode)))))
-         #+not-needed? (reads  (references-with-mode :read))
-         (writes (references-with-mode :write)))
-    (when-let ((offenders (remove-if
-                           (lambda (expression)
-                             (not (find (exp:variable expression) parameters
-                                        :test #'eq)))
-                           writes)))
-      (error "~@<The assignment~P ~{~A~^, ~} would overwrite rule ~
-              parameter.~@:>"
-             (length offenders) offenders))))
-
 (defmethod compile-rule :around ((grammar    base-grammar)
                                  (parameters list)
                                  (expression t)
