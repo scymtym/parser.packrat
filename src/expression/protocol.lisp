@@ -32,11 +32,20 @@
 
 (defgeneric direct-variable-references (expression &key filter)
   (:documentation
-   "TODO"))
+   "Return a list of variable references in EXPRESSION.
+
+    If EXPRESSION is a variable reference expression, a one-element
+    list consisting of EXPRESSION is returned. Otherwise the empty
+    list is returned."))
 
 (defgeneric variable-references (expression &key filter)
   (:documentation
-   "TODO"))
+   "Return a list of variable references in ancestors of EXPRESSION.
+
+    Elements of the returned list are variable reference expressions.
+
+    If EXPRESSION is a variable reference expression, a one-element
+    list consisting of EXPRESSION is returned."))
 
 ;;; Default behavior
 
