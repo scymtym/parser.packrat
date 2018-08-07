@@ -61,8 +61,7 @@
 (defmethod bp:node-initargs ((builder t) (node variable-reference-mixin))
   (list :variable (exp:variable node) :mode (exp:mode node)))
 
-(defmethod exp:direct-variable-references ((grammar    t)
-                                           (expression variable-reference-mixin)
+(defmethod exp:direct-variable-references ((expression variable-reference-mixin)
                                            &key filter)
   (when (or (not filter) (funcall filter expression))
     (list expression)))

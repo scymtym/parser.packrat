@@ -30,27 +30,25 @@
 
 ;;; Variables protocol
 
-;; TODO remove grammar parameter
-(defgeneric direct-variable-references (grammar expression &key filter)
+(defgeneric direct-variable-references (expression &key filter)
   (:documentation
    "TODO"))
 
-(defgeneric variable-references (grammar expression &key filter)
+(defgeneric variable-references (expression &key filter)
   (:documentation
    "TODO"))
 
 ;;; Default behavior
 
-(defmethod direct-variable-references ((grammar t) (expression t) &key filter)
+(defmethod direct-variable-references ((expression t) &key filter)
   (declare (ignore filter))
   '())
 
-(defmethod variable-references ((grammar t) (expression t) &key filter)
+(defmethod variable-references ((expression t) &key filter)
   (let+ ((references '())
          ((&flet collect (recurse expression)
             (appendf references
-                     (direct-variable-references
-                      grammar expression :filter filter))
+                     (direct-variable-references expression :filter filter))
             (funcall recurse))))
     (walk-expression #'collect expression)
     references))

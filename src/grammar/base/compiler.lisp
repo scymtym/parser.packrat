@@ -71,10 +71,10 @@
          (names       (map-into (make-list (length expressions)) #'gensym))
          ((&flet assignments (expression)
             (let+ (((&flet references-with-mode (mode) ; TODO duplicated in compile-rule-using-environment
-                      (exp:variable-references grammar expression
-                                               :filter (lambda (node)
-                                                         (and (not (env:lookup (exp:variable node) environment)) ; TODO hack
-                                                              (eq (exp:mode node) mode))))))
+                      (exp:variable-references
+                       expression :filter (lambda (node)
+                                            (and (not (env:lookup (exp:variable node) environment)) ; TODO hack
+                                                 (eq (exp:mode node) mode))))))
                    (writes             (references-with-mode :write))
                    (assigned-variables (remove-duplicates writes :key #'exp:variable))
                    (assigned-names     (mapcar #'exp:variable assigned-variables))
