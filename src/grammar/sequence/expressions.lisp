@@ -32,7 +32,7 @@
 
 (defmethod bp:node-kind ((builder t)
                          (node    repetition-expression))
-  'repetition)
+  :repetition)
 
 (defmethod bp:node-relations ((builder t)
                               (node    repetition-expression))
