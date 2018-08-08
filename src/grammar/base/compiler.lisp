@@ -224,9 +224,6 @@
           (env:lookup variable environment)))
     (unless already-bound?
       (error "~@<Unbound variable ~S.~@:>" variable))
-    ;; TODO check environment
-    #+old (funcall success-cont (print (env:environment-carrying
-                                        environment variable)))
     (funcall success-cont
              (env:environment-at environment (list :value name)
                                  :class 'env:value-environment
