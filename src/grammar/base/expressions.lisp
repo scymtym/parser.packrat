@@ -120,24 +120,16 @@
       (:arguments            ,arguments "~{ ~/print-items:format-print-items/~}" ((:after :open)))
       (:close                nil        ")"                                      ((:after :arguments))))))
 
-(defclass rule-invocation-expression (rule-invocation-base) ; TODO use define-expression-class
+(exp:define-expression-class rule-invocation (rule-invocation-base)
   ((grammar :initarg  :grammar
             :reader   grammar
             :initform nil)
    (rule    :initarg  :rule
-            :reader   rule))
-  (:default-initargs
-   :rule (more-conditions:missing-required-initarg 'rule-invocation :rule)))
+            :reader   rule)))
 
 (defmethod print-items:print-items append ((object rule-invocation-expression))
   `((:rule ,(rule object) "~A" ((:after :open)
                                 (:before :arguments)))))
-
-(defmethod bp:node-kind ((builder t) (node rule-invocation-expression))
-  :rule-invocation)
-
-(defmethod bp:node-initargs ((builder t) (node rule-invocation-expression))
-  (list :rule (rule node)))
 
 (exp:define-expression-class next-rule-invocation (rule-invocation-base)
   ())

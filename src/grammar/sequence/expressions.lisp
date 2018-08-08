@@ -8,15 +8,11 @@
 (exp:define-expression-class element-access (exp:single-sub-expression-mixin)
   ())
 
-(defclass #+TODO exp:define-expression-class advance-expression (exp:single-sub-expression-mixin
-                                                                 exp:expression)
+(exp:define-expression-class advance (exp:single-sub-expression-mixin)
   ((amount :initarg  :amount
            :type     positive-integer
            :reader   amount
            :initform 1)))
-
-(defmethod bp:node-kind ((builder t) (node advance-expression))
-  'advance)
 
 ;;; repetition
 
@@ -47,8 +43,6 @@
                              (relation (eql :min-repetitions))
                              (node     repetition-expression))
   (values (min-repetitions node) '(:evaluated? t)))
-
-
 
 (defmethod bp:node-relation ((builder  t)
                              (relation (eql :max-repetitions))

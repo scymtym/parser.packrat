@@ -88,9 +88,8 @@
 
 ;;; `as-list-expression'
 
-(defclass as-list-expression (exp:expression
-                              cast-expression-mixin
-                              exp::value-environment-needing-mixin)
+(exp:define-expression-class as-list (cast-expression-mixin
+                                      exp::value-environment-needing-mixin)
   ((target-type :allocation :class
                 :initform 'list))
   (:documentation
@@ -101,12 +100,6 @@
 
     TODO"))
 
-(defmethod bp:node-kind ((builder t) (node as-list-expression))
-  :as-list)
-
-(defmethod bp:make-node ((builder t) (kind (eql :as-list)) &key)
-  (make-instance 'as-list-expression))
-
 ;;; `rest-expression'
 
 (exp:define-expression-class rest (exp:single-sub-expression-mixin)
@@ -114,9 +107,8 @@
 
 ;;; `as-vector-expression'
 
-(defclass as-vector-expression (exp:expression
-                                cast-expression-mixin
-                                exp::value-environment-needing-mixin)
+(exp:define-expression-class as-vector (cast-expression-mixin
+                                        exp::value-environment-needing-mixin)
   ((target-type :allocation :class
                 :initform 'vector))
   (:documentation
@@ -126,9 +118,3 @@
     combinators such as `seq' and `*'.
 
     TODO"))
-
-(defmethod bp:node-kind ((builder t) (node as-vector-expression))
-  :as-vector)
-
-(defmethod bp:make-node ((builder t) (kind (eql :as-vector)) &key)
-  (make-instance 'as-vector-expression))
