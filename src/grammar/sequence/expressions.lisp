@@ -17,6 +17,7 @@
 ;;; repetition
 
 (defclass repetition-expression (exp:single-sub-expression-mixin
+                                 exp:expression
                                  print-items:print-items-mixin)
   ((min-repetitions :initarg  :min-repetitions
                     :reader   min-repetitions
