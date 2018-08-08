@@ -386,6 +386,20 @@
   (when-let ((stream *debug-stream*))
     (apply #'format stream format-control format-arguments)))
 
+(defun emit-find-grammar-and-rule (grammar grammar-name rule-name
+                                   context-var grammar-var rule-var)
+  (if grammar-name
+      `((,rule-var (find-rule ',rule-name (find-grammar ',grammar-name)
+                              :if-does-not-exist :forward-reference)))
+      (let ((grammar-name (name grammar)))
+        `((,grammar-var (load-time-value
+                         (find-grammar ',grammar-name)))
+          (,rule-var    (if (eq (context-grammar ,context-var) ,grammar-var)
+                            (load-time-value
+                             (find-rule ',rule-name (find-grammar ',grammar-name)
+                                        :if-does-not-exist :forward-reference))
+                            (find-rule ',rule-name (context-grammar ,context-var))))))))
+
 ;; TODO make lookup-and-call/single-argument so we don't have
 ;; cons and copy-list for a single argument, rename {with ->
 ;; multiple}-arguments
@@ -419,7 +433,6 @@
                                (success-cont function)
                                (failure-cont function))
   (let+ (((&accessors-r/o (grammar-name grammar) (rule-name rule) arguments) expression)
-         (grammar-name       (or grammar-name (name grammar)))
          (state-variables    (env:state-variables environment))
          (position-variables (env:position-variables environment))
          ((&with-gensyms grammar-var rule-var arguments-var success?-var value-var))
@@ -446,14 +459,9 @@
          ((&values argument-forms call-environment)
           (argument arguments #+no nil environment)) ; TODO ENVIRONMENT is just passed trough, then bound to CALL-ENVIRONMENT
          (continue-environment (add-value (env:environment-at call-environment :fresh) value-var)))
-    (maybe-let* `((,grammar-var (load-time-value
-                                 (find-grammar ',grammar-name)))
-                  (,rule-var    (if (eq (context-grammar ,parser.packrat.compiler::+context-var+)
-                                        ,grammar-var)
-                                    (load-time-value
-                                     (find-rule ',rule-name (find-grammar ',grammar-name)
-                                                :if-does-not-exist :forward-reference))
-                                    (find-rule ',rule-name (context-grammar ,parser.packrat.compiler::+context-var+))))
+    (maybe-let* `(,@(emit-find-grammar-and-rule
+                     grammar grammar-name rule-name
+                     parser.packrat.compiler::+context-var+ grammar-var rule-var)
                   ,@(when arguments
                       `((,arguments-var (list ,@argument-forms)))))
       (when arguments `(declare (dynamic-extent ,arguments-var)))
