@@ -7,10 +7,10 @@
   (:local-nicknames
    (#:bp #:architecture.builder-protocol))
 
-  ;; TODO sort protocols
   (:shadow
    #:variable)
 
+  ;; Traversal protocol
   (:export
    #:walk-expression)
 
@@ -26,7 +26,7 @@
   (:export
    #:value)
 
-  ;; Variable protocol
+  ;; Variables protocol
   (:export
    #:variable
    #:mode
@@ -34,15 +34,11 @@
    #:direct-variable-references
    #:variable-references)
 
-  ;; Rule invocation protocol
-  (:export
-   #:grammar
-   #:rule
-   #:arguments)
-
+  ;; Classes
   (:export
    #:expression)
 
+  ;; Mixins
   (:export
    #:sub-expression-mixin
    #:single-sub-expression-mixin)
