@@ -29,7 +29,6 @@
    #:or-expression
 
    #:constant-expression
-   #:variable-reference
 
    #:arguments
 
@@ -39,6 +38,7 @@
 
    #:next-rule-invocation-expression
 
+   #:variable-reference-expression
    #:set-expression
    #:push-expression
 

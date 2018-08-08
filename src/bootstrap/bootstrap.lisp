@@ -43,7 +43,7 @@
          ((&labels symbol (expression context)
             (case context
               ((:invoke :repetition-constraint :structure-type)
-               (make-instance 'base:variable-reference :variable expression))
+               (make-instance 'base:variable-reference-expression :variable expression))
               (t
                (make-instance 'base:set-expression
                               :sub-expression (make-instance 'base:anything-expression)

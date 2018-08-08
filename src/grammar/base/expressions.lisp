@@ -87,14 +87,10 @@
 (defmethod print-items:print-items append ((object push-expression))
   `((:arrow nil " ←+ " ((:after :variable)))))
 
-(defclass variable-reference #+TODO -expression (exp:expression
-                              variable-reference-mixin
-                              print-items:print-items-mixin)
+(exp:define-expression-class variable-reference (variable-reference-mixin
+                                                 print-items:print-items-mixin)
   ((mode :allocation :class
          :initform :read)))
-
-(defmethod bp:node-kind ((builder t) (node variable-reference))
-  :variable-reference)
 
 ;;; Position
 

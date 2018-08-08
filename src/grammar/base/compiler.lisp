@@ -216,7 +216,7 @@
 
 (defmethod compile-expression ((grammar      base-grammar)
                                (environment  t)
-                               (expression   variable-reference) ; TODO name
+                               (expression   variable-reference-expression)
                                (success-cont function)
                                (failure-cont function))
   (let+ ((variable (exp:variable expression))
