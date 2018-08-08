@@ -39,6 +39,7 @@
    #:next-rule-invocation-expression
 
    #:variable-reference-expression
+   #:variable-same-expression
    #:set-expression
    #:push-expression
 

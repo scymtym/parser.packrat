@@ -92,6 +92,14 @@
   ((mode :allocation :class
          :initform :read)))
 
+(exp:define-expression-class variable-same (variable-write-mixin
+                                            print-items:print-items-mixin)
+  ((mode :allocation :class
+         :initform :same)))
+
+(defmethod print-items:print-items append ((object variable-same-expression))
+  `((:relation nil " ≡" ((:after :variable)))))
+
 ;;; Position
 
 (exp:define-expression-class position ()
