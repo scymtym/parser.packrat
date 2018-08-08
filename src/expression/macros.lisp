@@ -47,6 +47,7 @@
                                      (initform  nil initform-supplied?)
                                      allocation
                                      &allow-other-keys))
+            (declare (ignore initform))
             (unless (or initform-supplied? (eq allocation :class))
               `(,name)))))
     `(progn
