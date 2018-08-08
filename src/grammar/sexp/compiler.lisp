@@ -51,32 +51,44 @@
                  :sub-expression (make-instance 'seq:sequence-expression
                                                 :sub-expressions '())))
 
-;; TODO similar to following method
-(defmethod compile-expression ((grammar      t)
-                               (environment  env:environment)
-                               (expression   as-list-expression)
-                               (success-cont function)
-                               (failure-cont function))
+(defun compile-cast-expression
+    (grammar environment expression success-cont failure-cont
+     environment-class state &optional bindings)
   (let+ ((value (env:value environment))
          ((&flet call-with-value-environment (cont parent-environment)
             (funcall cont (env:environment-at
                            parent-environment (list :value value)
                            :class 'env:value-environment
                            :state '()))))
-         (list-environment (env:environment-at
-                            environment (list :tail value)
-                            :class 'seq:list-environment
-                            :state '())))
+         (sequence-environment (env:environment-at
+                                environment state
+                                :class environment-class
+                                :state '())))
     `(if (typep ,value ',(target-type expression))
-         ,(compile-expression
-           grammar list-environment (sub-expression expression)
-           (lambda (new-environment)
-             (compile-expression
-              grammar new-environment *just-test-bounds*
-              (curry #'call-with-value-environment failure-cont)
-              (curry #'call-with-value-environment success-cont)))
-           (curry #'call-with-value-environment failure-cont))
+         ,(maybe-let bindings
+            (compile-expression
+             grammar sequence-environment (sub-expression expression)
+             ;; If the sub-expression succeeds, ensure that the entire
+             ;; sequence has been consumed by compiling a
+             ;; `bounds-test-expression' that is expected to fail. In
+             ;; any case, continue with a new `value-environment' for
+             ;; VALUE.
+             (lambda (new-environment)
+               (compile-expression
+                grammar new-environment *just-test-bounds*
+                (curry #'call-with-value-environment failure-cont)
+                (curry #'call-with-value-environment success-cont)))
+             (curry #'call-with-value-environment failure-cont)))
          ,(funcall failure-cont environment))))
+
+(defmethod compile-expression ((grammar      t)
+                               (environment  env:environment)
+                               (expression   as-list-expression)
+                               (success-cont function)
+                               (failure-cont function))
+  (compile-cast-expression
+   grammar environment expression success-cont failure-cont
+   'seq:list-environment (list :tail (env:value environment))))
 
 (defmethod compile-expression ((grammar      sexp-grammar)
                                (environment  seq:list-environment)
@@ -108,32 +120,11 @@
                                (success-cont function)
                                (failure-cont function))
   (let+ ((value (env:value environment))
-         ((&flet call-with-value-environment (cont parent-environment)
-            (funcall cont (env:environment-at
-                           parent-environment (list :value value)
-                           :class 'env:value-environment
-                           :state '()))))
-         ((&with-gensyms end-var))
-         (vector-environment (env:environment-at
-                              environment (list :sequence value
-                                                :position 0
-                                                :end      end-var)
-                              :class 'seq:vector-environment
-                              :state '())))
-    `(if (typep ,value ',(target-type expression))
-         (let ((,end-var (length ,value)))
-           ,(compile-expression
-             grammar vector-environment (sub-expression expression)
-             ;; If the sub-expression succeeds, ensure that the entire
-             ;; vector has been consumed by compiling a
-             ;; `bounds-test-expression' that is expected to fail. In
-             ;; any case, continue with a new `value-environment' for
-             ;; VALUE.
-             (lambda (new-environment)
-               (compile-expression
-                grammar new-environment *just-test-bounds*
-                (curry #'call-with-value-environment failure-cont)
-                (curry #'call-with-value-environment success-cont)))
-             (lambda (new-environment)
-               (call-with-value-environment failure-cont new-environment))))
-         ,(funcall failure-cont environment))))
+         ((&with-gensyms end-var)))
+    (compile-cast-expression
+     grammar environment expression success-cont failure-cont
+     'seq:vector-environment
+     (list :sequence value
+           :position 0
+           :end      end-var)
+     `((,end-var (length ,value))))))
