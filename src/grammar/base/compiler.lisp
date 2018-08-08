@@ -151,6 +151,7 @@
                                       ((typep environment 'env:value-environment)
                                        environment)
                                       (t
+                                       (assert (env::value* environment))
                                        (env:environment-at environment (list :value (env::value* environment))
                                                            :class 'env:value-environment
                                                            :state nil)))))

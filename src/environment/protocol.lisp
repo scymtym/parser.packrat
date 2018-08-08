@@ -106,7 +106,7 @@
 
 (defmethod environment-at ((base t) (position (eql :fresh))
                            &rest args &key class parent state)
-  (declare (ignore parent state))
+  (declare (ignore class parent state))
   ;; TODO maybe (assert (or (not class) (eq (class-of base) class)))
   (let* ((position (position-variables/plist base))
          (fresh-position
@@ -136,8 +136,6 @@
                  (let ((value (value environment)))
                    (when (null value) (break))
                    value)
-                 (if-let ((parent (parent environment)))
-                   (rec parent)
-                   nil                  ; (break)
-                   ))))
+                 (when-let ((parent (parent environment)))
+                   (rec parent)))))
     (rec environment)))

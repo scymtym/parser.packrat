@@ -4,7 +4,8 @@
                         rule-storage-mixin
                         print-items:print-items-mixin)
   ((use :initarg :use
-        :reader  use))) ; TODO mixin for dependencies
+        :reader  use
+        :initform '()))) ; TODO mixin for dependencies
 
 (defmethod find-rule ((name symbol) (grammar base-grammar)
                       &key recursive? if-does-not-exist)
