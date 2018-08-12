@@ -51,6 +51,6 @@
                                  grammar expression-constant)))
          (free-variables      (when (and grammar expression/parsed)
                                 (parser.packrat.expression:variable-references
-                                 grammar expression/parsed))))
+                                 expression/parsed))))
     (print (list grammar expression-constant expression/parsed free-variables))
     whole))
