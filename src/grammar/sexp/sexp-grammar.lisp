@@ -2,6 +2,9 @@
 
 (defclass sexp-grammar (parser.packrat.grammar.base:base-grammar)
   ()
+  (:default-initargs
+   :meta-grammar    'meta-grammar
+   :meta-start-rule 'base::expression)
   (:documentation
    "A grammar class for matching Lisp objects.
 

@@ -2,6 +2,7 @@
 
 (defclass base-grammar (named-mixin
                         rule-storage-mixin
+                        parser.packrat.grammar::meta-grammar-mixin
                         print-items:print-items-mixin)
   ((use :initarg :use
         :reader  use

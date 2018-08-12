@@ -11,6 +11,8 @@
         (base:anything-expression)
         (base:constant-expression)
 
+        (base::transform-expression)
+
         (seq:repetition-expression)
         (seq:sequence-expression)
 
@@ -29,7 +31,7 @@
 (parser.packrat:defrule structure-expression ()
     (list 'structure
           (:<- type (base::expression))
-          (* (list (:<<- readers)
+          (* (list (:<<- readers) ; TODO must be a function name
                    (:<<- sub-expressions (base::expression)))))
   (bp:node* (:structure)
     (1 :type           type)
@@ -59,7 +61,7 @@
 
 (define-macro-rule list-expression
     (list* 'list element-expressions)
-  `(list-elements (seq ,@element-expressions)))
+  `(list-elements (:seq ,@element-expressions)))
 
 (define-macro-rule list*-expression
     (list 'list* (* (and (:seq :any :any) (:<<- element-expressions :any))) last)

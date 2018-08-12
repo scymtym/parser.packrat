@@ -156,6 +156,7 @@
                 :pathname   "test/grammar/base"
                 :serial     t
                 :components ((:file       "package")
+                             (:file       "concrete-syntax")
                              (:file       "base-grammar")))
 
                (:module     "grammar-sequence"

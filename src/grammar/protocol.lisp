@@ -129,18 +129,17 @@
     (parse grammar expression input)))
 
 (defmethod parse ((grammar t) (expression t) (input t))
-  (let* ((expression (parse-expression grammar expression))
-                                        ; (exp:var)
+  (parse grammar (parse-expression grammar expression) input))
+
+(defmethod parse ((grammar t) (expression parser.packrat.expression:expression) (input t))
+  (let* (; (exp:var)
          (code       (c:compile-rule grammar '() expression))
          (function   (compile nil code)))
     (parse grammar function input)
     #+later-special-case (if (typep expression 'parser.packrat.grammar.base:rule-invocation-expression)
                              (find-rule
                               (parser.packrat.grammar.base:rule expression)
-                              grammar ))))
-
-#+no (defmethod parse ((grammar t) (expression cons) (input t))
-       (find-rule expression grammar input))
+                              grammar))))
 
 (defmethod make-context ((grammar t) (expression t) (input t))
   (make-hash-table :test #'equal))

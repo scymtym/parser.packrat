@@ -45,6 +45,14 @@
 
 ;;; `meta-grammar-mixin'
 
+(defun make-meta-expression (meta-grammar-name meta-start-rule-name)
+  (let ((invoke-expression-class
+          (find-symbol (string '#:rule-invocation-expression)
+                       (find-package '#:parser.packrat.grammar.base))))
+    (make-instance invoke-expression-class
+                   :grammar meta-grammar-name
+                   :rule    meta-start-rule-name)))
+
 (defclass meta-grammar-mixin ()
   ;; TODO could just a use a meta-grammar-expression. that would
   ;; allow, among other things a qualified rule invocation, subsuming
@@ -61,6 +69,16 @@
                       expressions for this grammar should be
                       parsed.")))
 
+(defvar *bootstrapping* t)
+
 (defmethod parse-expression ((grammar meta-grammar-mixin) (expression t))
-  (let+ (((&accessors-r/o meta-grammar meta-start-rule) grammar))
-    (parse meta-grammar `(,meta-start-rule) expression)))
+  (if *bootstrapping*
+      (call-next-method)
+      (let+ (((&accessors-r/o meta-grammar meta-start-rule) grammar)
+             (meta-expression (make-meta-expression
+                               meta-grammar meta-start-rule))
+             ((&values success? &ign result)
+              (parse meta-grammar meta-expression expression)))
+        (if success?
+            result
+            (error "Failed to parse expression")))))

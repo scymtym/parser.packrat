@@ -19,6 +19,7 @@
 
             (list a b)
             (list* a b)
+            (list* a (rest b))
           
             (vector a b)
             (vector* a b)
