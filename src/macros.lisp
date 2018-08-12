@@ -92,7 +92,7 @@
      (setf *grammar* (grammar:find-grammar ',grammar-name))))
 
 (defmacro defrule (name-and-options (&rest parameters)
-                   expression &optional production)
+                   expression &rest production)
   (let+ (((name &key
                 ((:grammar grammar-name) nil grammar-supplied?) ; TODO call this :in?
                 environment)
@@ -102,7 +102,7 @@
                            *grammar*))
          (grammar-name (grammar:name grammar))
          (expression   (if production
-                           `(:transform ,expression ,production)
+                           `(:transform ,expression ,@production)
                            expression))
          (ast          (grammar:parse-expression grammar expression)))
     `(grammar:ensure-rule
