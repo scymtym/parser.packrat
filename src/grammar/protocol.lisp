@@ -175,9 +175,9 @@
       (more-conditions:error-behavior-restart-case
           (if-does-not-exist
            (grammar-missing-error :grammar name)
-           :warning-condition 'grammar-missing-warning)
+           :warning-condition grammar-missing-warning)
         (store-value (value)
-                     (setf (find-grammar name) value)))))
+          (setf (find-grammar name) value)))))
 
 (defun (setf find-grammar) (new-value name)
   (setf (gethash name *grammars*) new-value))
