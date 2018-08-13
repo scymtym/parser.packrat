@@ -386,6 +386,14 @@
   (when-let ((stream *debug-stream*))
     (apply #'format stream format-control format-arguments)))
 
+(defun d-call (rule-name state arguments)
+  (d "~&~V@T~A [~{~S~^ ~}] ~@[(~{~S~^ ~})~]~%"
+     *depth* rule-name state arguments))
+
+(defun d-return (rule-name old-state arguments success? new-state value)
+  (d "~&~V@T~A [~{~S~^ ~}] ~@[(~{~S~^ ~})~] -> ~:[FAIL~;SUCC~] [~{~S~^ ~}] ~S~%"
+     *depth* rule-name old-state arguments success? new-state value))
+
 (defun emit-find-grammar-and-rule (grammar grammar-name rule-name
                                    context-var grammar-var rule-var)
   (if grammar-name
@@ -420,8 +428,7 @@
     `(values-list
       (or ,cache-place
           ,(maybe-let (when arguments-var `((,arguments-var (copy-list ,arguments-var))))
-             `(d "~&~V@T~A ~{~S~^ ~}~%" *depth* ',rule-name (list ,@state-variables)
-                 ,@(when arguments-var `(,arguments-var)))
+             `(d-call ',rule-name (list ,@state-variables) ,(or arguments-var ''()))
              `(let ((*depth* (+ *depth* 2)))
                 (setf ,cache-place
                       (multiple-value-list
@@ -473,9 +480,8 @@
            ,(emit-lookup-and-call
              rule-name rule-var position-variables state-variables
              (when arguments arguments-var))
-         (d "~&~V@T~A ~{~S~^ ~} -> ~S ~{~S~^ ~} ~S~%"
-            *depth* ',rule-name (list ,@state-variables)
-            ,success?-var (list ,@(env:position-variables continue-environment)) ,value-var)
+         (d-return ',rule-name (list ,@state-variables) ,(if arguments arguments-var ''())
+                   ,success?-var (list ,@(env:position-variables continue-environment)) ,value-var)
          (if ,success?-var
              ,(funcall success-cont continue-environment)
              ,(funcall failure-cont continue-environment))))))
