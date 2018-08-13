@@ -127,9 +127,13 @@
 (exp:define-expression-class rule-invocation (rule-invocation-base)
   ((grammar :initarg  :grammar
             :reader   grammar
-            :initform nil)
+            :initform nil
+            :documentation
+            "Name of the grammar ")
    (rule    :initarg  :rule
-            :reader   rule)))
+            :reader   rule
+            :documentation
+            "Name of the rule")))
 
 (defmethod print-items:print-items append ((object rule-invocation-expression))
   `((:rule ,(rule object) "~A" ((:after :open)
