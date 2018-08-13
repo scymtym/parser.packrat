@@ -63,8 +63,10 @@
                        (list* :key reader '(:evaluated? t)))
                (readers node))))
 
-(defmethod bp:make-node ((builder t) (kind (eql :structure)) &key)
-  (make-instance 'structure-expression :type 'dummy))
+(defmethod bp:make-node ((builder t) (kind (eql :structure)) &key readers)
+  (make-instance 'structure-expression
+                 :readers readers
+                 :type    (make-instance 'base:constant-expression :value 'dummy))) ; TODO hack
 
 (defmethod bp:relate ((builder  t)
                       (relation (eql :type))
