@@ -6,7 +6,10 @@
   (predicate))
 
 (defmethod print-items:print-items append ((object predicate-expression))
-  `((:predicate ,(ensure-list (predicate object)) "(~{~A~^ ~})")))
+  `((:open      nil                               "(")
+    (:predicate ,(ensure-list (predicate object)) "~{~A~^ ~} " ((:after  :open)
+                                                                (:before :sub-expression)))
+    (:close     nil                                ")"         ((:after  :sub-expression)))))
 
 (exp:define-expression-class anything (exp::value-environment-needing-mixin)
   ())
@@ -78,14 +81,14 @@
   ())
 
 (defmethod print-items:print-items append ((object set-expression))
-  `((:arrow nil " ← " ((:after :variable)))))
+  `((:arrow nil " ← " ((:after :variable) (:before :sub-expression)))))
 
 (exp:define-expression-class push (variable-write-mixin
                                    print-items:print-items-mixin)
   ())
 
 (defmethod print-items:print-items append ((object push-expression))
-  `((:arrow nil " ←+ " ((:after :variable)))))
+  `((:arrow nil " ←+ " ((:after :variable) (:before :sub-expression)))))
 
 (exp:define-expression-class variable-reference (variable-reference-mixin
                                                  print-items:print-items-mixin)
@@ -98,7 +101,7 @@
          :initform :same)))
 
 (defmethod print-items:print-items append ((object variable-same-expression))
-  `((:relation nil " ≡" ((:after :variable)))))
+  `((:relation nil " ≡" ((:after :variable) (:before :sub-expression)))))
 
 ;;; Position
 
