@@ -164,6 +164,7 @@
                 :pathname   "test/grammar/sequence"
                 :serial     t
                 :components ((:file       "package")
+                             (:file       "concrete-syntax")
                              (:file       "sequence-grammar")))
 
                (:module     "grammar-sexp"
