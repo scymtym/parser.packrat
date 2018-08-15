@@ -164,10 +164,6 @@
                                 :sub-expression (rec sub-expression)
                                 :variable       variable)))
 
-              ;; const
-              ((cons (eql const))
-               (make-instance 'base:constant-expression :value (second expression)))
-
               ;; transform
               ((cons (eql :transform))
                (destructuring-bind (sub-expression &body code) (rest expression)
@@ -189,41 +185,3 @@
                                 :grammar   grammar
                                 :arguments (map-rec arguments :invoke))))))))
     (rec expression)))
-
-(defparameter *bootstrap-meta-grammar*
-  `(or ;; anything
-       'any
-
-       ;; terminal
-       ;; any
-
-       ;; Combinators
-       (or ;; not
-           (list 'not 'expression)
-           ;; and
-           (list 'and (* 'expression))
-           ;; or
-           (list 'or (* 'expression 1))
-           ;; *
-           (list '* 'expression (? (seq 'expression (? 'expression))))
-           ;; seq
-           (list 'seq (* 'expression)))
-       ;;
-       (list '>> (<- amount 'positive-integer) 'expression)
-       (list '<< (<- amount 'positive-integer) 'expression)
-
-       ;; Variables
-       (or (list '<-  (<- name 'symbol) 'expression)
-           (list '<<- (<- name 'symbol) 'expression)
-           'symbol) ; variable-reference
-
-       ;; rule-invocation
-       (list (<- name 'symbol) (* (<<- arguments 'expression)))))
-
-(defun bootstrap ()
-  (let+ ((bootstrap-grammar        *bootstrap-meta-grammar*)
-         (bootstrap-grammar/parsed (bootstrap-parse bootstrap-grammar)))
-    (parser.packrat.compiler:compile-rule
-     (make-instance 'parser.packrat.grammar.sexp::sexp-grammar)
-     ()
-     bootstrap-grammar/parsed)))
