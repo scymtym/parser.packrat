@@ -15,7 +15,9 @@
         (sequence-expression)
 
         (?-expression)
-        (+-expression)))
+        (+-expression)
+
+        (bounds-expression)))
 
 (parser.packrat:defrule repetition-expression ()
     (list '* (:<- sub-expression (base::expression))
@@ -46,3 +48,8 @@
 (define-macro-rule +-expression
     (list '+ expression)
   `(* ,expression 1))
+
+(define-macro-rule bounds-expression
+    (list* 'bounds (list (:guard start symbolp) (:guard end symbolp))
+           expressions)
+  `(:seq (<- ,start :position) ,@expressions (<- ,end :position)))

@@ -29,5 +29,7 @@
                       
             (parser.packrat.grammar.sequence::? 1)
 
-            (+ 1)))))
+            (+ 1)
+
+            (parser.packrat.grammar.sequence::bounds (start end) 1)))))
 
