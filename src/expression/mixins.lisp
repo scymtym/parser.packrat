@@ -41,8 +41,7 @@
 
 (defmethod print-items:print-items append ((object single-sub-expression-mixin))
   (let ((sub-items (print-items:print-items (sub-expression object))))
-    (when (length= 1 sub-items)
-      sub-items)))
+    `((:sub-expression ,sub-items "~/print-items:format-print-items/"))))
 
 (defmethod bp:node-relations ((builder t)
                               (node    single-sub-expression-mixin))
