@@ -16,11 +16,38 @@
                          :meta-grammar    'parser.packrat.grammar.base::meta-grammar
                          :meta-start-rule 'parser.packrat.grammar.base::expression)
     (mapc (lambda (expression)
-            (finishes (parser.packrat.grammar:parse-expression grammar expression)))
+            (let ((parser.packrat.grammar::*bootstrapping* nil))
+              (finishes (print (parser.packrat.grammar:parse-expression grammar expression)))))
 
-          '((or 1 2)
+          '(;; constant
+            1
+            :foo
+            'foo
 
+            ;;
+            name
+            (:<- name)
+            (:<- name 1)
 
+            (:<<- name)
+            (:<<- name 1)
+
+            ;;
+            (not 1)
+
+            (and)
+            (and 1)
+            (and1 2)
+
+            (or)
+            (or 1)
+            (or 1 2)
+
+            (:compose)
+            (:compose 1)
+            (:compose 1 2)
+
+            ;; rule-invocation-expression
             (foo)
             (foo 1)
             (foo 1 2)
@@ -28,6 +55,9 @@
             ((foo bar) 1)
             ((foo bar) 1 2)
 
+            ;; next-rule-invocation-expression
             (:next-rule)
             (:next-rule 1)
-            (:next-rule 1 2)))))
+            (:next-rule 1 2)
+
+            (and (:<- foo (not 1)) 'bar)))))
