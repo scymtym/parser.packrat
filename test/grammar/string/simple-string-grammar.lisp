@@ -5,7 +5,8 @@
 (test simple-string-grammar.smoke
   "Smoke test for the `simple-string-grammar' grammar class."
 
-  (grammar-test (grammar 'parser.packrat.grammar.string:simple-string-grammar :name :test)
+  (grammar-test (grammar 'parser.packrat.grammar.string:simple-string-grammar
+                         :name (gensym))
 
     (parser.packrat.grammar:ensure-rule
      'foo grammar
