@@ -149,6 +149,7 @@
                                    (:static-file "lambda-calculus")
                                    ))
 
+                     (:static-file "version-string.sexp")
                      (:static-file "README.org"))
 
   :in-order-to      ((test-op (test-op "parser.packrat/test"))))
