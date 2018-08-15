@@ -17,7 +17,7 @@
                          :meta-start-rule 'parser.packrat.grammar.base::expression)
     (mapc (lambda (expression)
             (let ((parser.packrat.grammar::*bootstrapping* nil))
-              (finishes (print (parser.packrat.grammar:parse-expression grammar expression)))))
+              (finishes (parser.packrat.grammar:parse-expression grammar expression))))
 
           '(;; constant
             1
