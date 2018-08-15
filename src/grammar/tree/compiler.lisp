@@ -86,9 +86,11 @@
 ;;; Runtime support
 
 (unless (assoc 'ancestors parser.packrat.bootstrap::*primitives*)
-  (push (cons 'ancestors (lambda (expression recurse)
-                           (let+ (((&ign sub-expression) expression)
-                                  (sub-expression (funcall recurse sub-expression)))
-                             (make-instance 'ancestors-expression
-                                            :sub-expression sub-expression))))
+  (push (cons '(cons (eql ancestors))
+              (lambda (expression context recurse)
+                (declare (ignore context))
+                (let+ (((&ign sub-expression) expression)
+                       (sub-expression (funcall recurse sub-expression)))
+                  (make-instance 'ancestors-expression
+                                 :sub-expression sub-expression))))
         parser.packrat.bootstrap::*primitives*))
