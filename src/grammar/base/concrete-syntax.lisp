@@ -15,6 +15,7 @@
         (constant-expression)
 
         (set-expression)
+        (push-expression)
 
         (not-expression)
         (and-expression)
@@ -25,6 +26,8 @@
 
         (rule-invocation-expression)
         (next-rule-invocation-expression)))
+
+;;; Predicate and anything
 
 (parser.packrat:defrule function-name-or-partial-application ()
     (or (:guard name symbolp)
@@ -42,7 +45,9 @@
     (or ':any 'any)
   (bp:node* (:anything)))
 
-(parser.packrat:defrule constant-expression ()
+;;; Constant
+
+(parser.packrat:defrule constant-expression () ; TODO either constant or terminal
     (or (list 'quote value)
         (:<- value (:guard (typep '(not (or cons (and symbol (not keyword))))))))
   (bp:node* (:terminal :value value)))
@@ -55,9 +60,15 @@
 (parser.packrat:defrule set-expression ()
     (or (:<- variable (variable-name))
         (list (or :<- '<-) (:<- variable (variable-name))
-              (* (:<- sub-expression (sub-exression)) 0 1)))
+              (* (:<- sub-expression (expression)) 0 1)))
   (bp:node* (:set :variable variable)
-    (bp:? :sub-expression (or sub-expression (make-instance 'anything-expression)))))
+    (1 :sub-expression (or sub-expression (make-instance 'anything-expression)))))
+
+(parser.packrat:defrule push-expression ()
+    (list (or :<<- '<<-) (:<- variable (variable-name))
+          (* (:<- sub-expression (expression)) 0 1))
+  (bp:node* (:push :variable variable)
+    (1 :sub-expression (or sub-expression (make-instance 'anything-expression)))))
 
 ;;; Combinators
 
