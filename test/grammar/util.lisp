@@ -7,8 +7,12 @@
 (cl:in-package #:parser.packrat.grammar.test)
 
 (defun call-as-grammar-test (thunk grammar-class grammar-initargs)
-  (let ((grammar (apply #'make-instance grammar-class grammar-initargs)))
-    (funcall thunk grammar)))
+  (let* ((grammar (apply #'make-instance grammar-class grammar-initargs))
+         (name    (parser.packrat.grammar:name grammar)))
+    (setf (parser.packrat.grammar:find-grammar name) grammar)
+    (unwind-protect
+         (funcall thunk grammar)
+      (setf (parser.packrat.grammar:find-grammar name) nil))))
 
 (defmacro grammar-test ((grammar-var grammar-class &rest grammar-initargs)
                         &body body)
