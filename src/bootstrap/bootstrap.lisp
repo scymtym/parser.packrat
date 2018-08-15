@@ -29,7 +29,11 @@
 
     (bounds  . ,(lambda (expression)
                   (let+ ((((start end) &rest expressions) (rest expression)))
-                    `(:seq (<- ,start :position) ,@expressions (<- ,end :position)))))))
+                    `(:seq (<- ,start :position) ,@expressions (<- ,end :position)))))
+
+    (value   . ,(lambda (expression)
+                  (let+ ((((object) expression) (rest expression)))
+                    `(and ,object ,expression))))))
 
 (defparameter *primitives*
   (flet ((constant-ish (expression context)

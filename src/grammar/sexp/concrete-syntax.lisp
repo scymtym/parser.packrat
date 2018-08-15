@@ -26,7 +26,10 @@
         (list*-expression)
         (vector-expression)
         (vector*-expression)
-        (cons-expression)))
+
+        (cons-expression)
+
+        (value-expression)))
 
 (parser.packrat:defrule structure-expression ()
     (list 'structure
@@ -53,6 +56,8 @@
   (bp:node* (:as-vector)
     (1 :sub-expression elements-expression)))
 
+;;; Syntactic sugar
+
 (defmacro define-macro-rule (name expression expansion)
   `(parser.packrat:defrule ,name ()
        (:compose (:transform ,expression ,expansion)
@@ -75,6 +80,15 @@
     (list* 'vector* element-expressions)
   `(vector-elements (:seq ,@element-expressions)))
 
+;;;
+
 (define-macro-rule cons-expression
     (list 'cons car-expression cdr-expression)
   `(structure consp (car ,car-expression) (cdr ,cdr-expression)))
+
+;;;
+
+(define-macro-rule value-expression
+    (list 'value (list (:guard value symbolp)
+          (:<- expression (base::expression))))
+  `(and (<- ,value) ,expression))

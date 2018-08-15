@@ -21,7 +21,8 @@
 
   (grammar-test (grammar 'parser.packrat.grammar.sexp:sexp-grammar :name :test)
     (rules-test (grammar)
-      ;;
+
+      ;; `structure'
       (let ((instance-1 (make-instance 'klass :a 1 :b 2))
             (instance-2 (make-instance 'klass :a 1 :b 3)))
         `((structure 'klass (a 1) (b 2))

@@ -14,15 +14,16 @@
   (grammar-test (grammar 'parser.packrat.grammar.sexp::sexp-grammar :name :test)
     (mapc (lambda (expression)
             (finishes (parser.packrat.grammar:parse-expression grammar expression)))
-          
+
           '((structure symbol (name symbol-name))
 
             (list a b)
             (list* a b)
             (list* a (rest b))
-          
+
             (vector a b)
             (vector* a b)
-          
-            (cons a b)))))
 
+            (cons a b)
+
+            (parser.packrat.grammar.sexp::value (a) b)))))
