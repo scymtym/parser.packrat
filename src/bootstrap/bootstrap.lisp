@@ -32,19 +32,35 @@
                     `(:seq (<- ,start :position) ,@expressions (<- ,end :position)))))))
 
 (defparameter *primitives*
-  '())
+  (flet ((constant-ish (expression context)
+           (case context
+             ((:invoke :repetition-constraint :structure-type)
+              (make-instance 'base:constant-expression :value expression))
+             (t
+              (make-instance 'base:terminal-expression :value expression)))))
 
-(defun bootstrap-parse (expression)
-  (let+ (((&labels map-rec (expressions &optional context)
-            (map 'list (rcurry #'rec context) expressions)))
-         ((&labels combinator (class sub-expressions)
-            (make-instance class :sub-expressions (map-rec sub-expressions))))
-         ((&labels maybe-combinator (class sub-expressions)
-            (case (length sub-expressions)
-              (0 (error "not implemented"))
-              (1 (rec (first sub-expressions)))
-              (t (combinator class sub-expressions)))))
-         ((&labels symbol (expression context)
+    `(;; predicate
+      ((cons (member guard :guard))
+       . ,(lambda (expression context recurse)
+            (declare (ignore context))
+            (destructuring-bind (sub-expression predicate)
+                (if (length= 2 expression)
+                    (list* :any (rest expression))
+                    (rest expression))
+              (make-instance 'base:predicate-expression
+                             :sub-expression (funcall recurse sub-expression)
+                             :predicate      predicate))))
+
+      ;; anything
+      ((member any :any)
+       . ,(lambda (expression context recurse)
+            (declare (ignore expression context recurse))
+            (make-instance 'base:anything-expression)))
+
+      ;; terminal
+      ((and symbol (not (or keyword (member :any :position))))
+       . ,(lambda (expression context recurse)
+            (declare (ignore recurse))
             (case context
               ((:invoke :repetition-constraint :structure-type)
                (make-instance 'base:variable-reference-expression :variable expression))
@@ -52,53 +68,73 @@
                (make-instance 'base:set-expression
                               :sub-expression (make-instance 'base:anything-expression)
                               :variable       expression)))))
-         ((&labels constant-ish (expression context)
-            (case context
-              ((:invoke :repetition-constraint :structure-type)
-               (make-instance 'base:constant-expression :value expression))
-              (t
-               (make-instance 'base:terminal-expression :value expression)))))
+
+      ((cons (eql quote))
+       . ,(lambda (expression context recurse)
+            (declare (ignore recurse))
+            (constant-ish (second expression) context)))
+
+      ((not (or cons (member :any :position) (and symbol (not keyword))))
+       . ,(lambda (expression context recurse)
+            (declare (ignore recurse))
+            (constant-ish expression context)))
+
+      ;; combinators
+      ((cons (eql not))
+       . ,(lambda (expression context recurse)
+            (declare (ignore context))
+            (make-instance 'base:not-expression
+                           :sub-expression (funcall recurse (second expression)))))
+      ((cons (eql or))
+       . ,(lambda (expression context recurse)
+            (declare (ignore context))
+            (make-instance 'base:or-expression
+                           :sub-expressions (map 'list recurse (rest expression)))))
+      ((cons (eql and))
+       . ,(lambda (expression context recurse)
+            (declare (ignore context))
+            (make-instance 'base:and-expression
+                           :sub-expressions (map 'list recurse (rest expression)))))
+      ((cons (eql :compose))
+       . ,(lambda (expression context recurse)
+            (declare (ignore context))
+            (make-instance 'base::compose-expression
+                           :sub-expressions (map 'list recurse (rest expression)))))
+
+      ;; structure
+      ((cons (eql structure))
+       . ,(lambda (expression context recurse)
+            (declare (ignore context))
+            (destructuring-bind (type &rest sub-expressions) (rest expression)
+              (make-instance 'parser.packrat.grammar.sexp::structure-expression
+                             :sub-expressions (map 'list (compose recurse #'second)
+                                                   sub-expressions)
+                             :readers         (map 'list #'first sub-expressions)
+                             :type            (funcall recurse type :structure-type))))))))
+
+(defun bootstrap-parse (expression)
+  (let+ (((&labels map-rec (expressions &optional context)
+            (map 'list (rcurry #'rec context) expressions)))
+         ((&labels combinator (class sub-expressions)
+            (make-instance class :sub-expressions (map-rec sub-expressions))))
          ((&labels rec (expression &optional context)
             (when (consp expression)
               ;; "macros"
               (when-let ((expander (assoc-value *macros* (car expression) :test #'eq)))
-                (return-from rec (rec (funcall expander expression))))
-              ;; "primitives"
-              (when-let ((expander (assoc-value *primitives* (car expression) :test #'eq)))
-                (return-from rec (funcall expander expression (rcurry #'rec context)))))
+                (return-from rec
+                  (rec (funcall expander expression)))))
+            ;; "primitives"
+            (when-let ((expander (cdr (find expression *primitives*
+                                            :test #'typep :key #'car))))
+              (return-from rec
+                (funcall expander expression context
+                         (lambda (expression &optional (context context))
+                           (rec expression context)))))
 
             (etypecase expression
-              ;; ((cons (member ? :?) (cons t null))
-              ;;  (rec `(* ,(second expression) nil (const 1))))
-              ;;
-              ;; ((cons (eql list))
-              ;;  (rec `(list-elements (seq ,@(rest expression)))))
-              ;;
-              ;; ((cons (eql list*))
-              ;;  (let ((rest (rest expression)))
-              ;;    (rec `(list-elements (seq ,@(butlast rest) (rest ,(lastcar rest)))))))
-              ;;
-              ;; ((cons (eql vector))
-              ;;  (rec `(vector-elements (seq ,@(rest expression)))))
-              ;; ((cons (eql vector*))
-              ;;  (break "vector* is not implemented")
-              ;;  (rec `(vector-elements (seq ,@(rest expression)))))
-              ;;
-              ;; ((cons (eql cons))
-              ;;  (let+ (((car cdr) (rest expression)))
-              ;;    (rec `(structure 'cons (car ,car) (cdr ,cdr)))))
-
               ;; magic variables
               ((eql :position)
                (make-instance 'parser.packrat.grammar.base::position-expression))
-
-              ;; structure
-              ((cons (eql structure))
-               (destructuring-bind (type &rest sub-expressions) (rest expression)
-                 (make-instance 'parser.packrat.grammar.sexp::structure-expression
-                                :sub-expressions (map-rec (mapcar #'second sub-expressions))
-                                :readers         (mapcar #'first sub-expressions)
-                                :type            (rec type :structure-type))))
 
               ;; value as sequence
               ((cons (eql vector-elements))
@@ -111,38 +147,7 @@
                (make-instance 'parser.packrat.grammar.sexp::rest-expression
                               :sub-expression (rec (second expression))))
 
-              ;; predicate
-              ((cons (member guard :guard))
-               (destructuring-bind (sub-expression predicate)
-                   (if (length= 2 expression)
-                       (list* :any (rest expression))
-                       (rest expression))
-                 (make-instance 'base:predicate-expression
-                                :sub-expression (rec sub-expression)
-                                :predicate      predicate)))
-
-              ;; anything
-              ((member any :any)
-               (make-instance 'base:anything-expression))
-              ;; terminal
-              ((and symbol (not keyword))
-               (symbol expression context))
-              ((cons (eql quote))
-               (constant-ish (second expression) context))
-              ((not (or cons
-                        (and symbol (not keyword))))
-               (constant-ish expression context))
-
-              ;; combinators
-              ((cons (eql not))
-               (make-instance 'base:not-expression
-                              :sub-expression (rec (second expression))))
-              ((cons (eql or))
-               (maybe-combinator 'base:or-expression (rest expression)))
-              ((cons (eql and))
-               (maybe-combinator 'base:and-expression (rest expression)))
-              ((cons (eql :compose))
-               (maybe-combinator 'base::compose-expression (rest expression)))
+              ;; Sequences
               ((cons (eql *))
                (let+ (((sub &optional min max) (rest expression)))
                  (make-instance 'seq:repetition-expression
