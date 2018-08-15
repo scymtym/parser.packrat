@@ -3,7 +3,11 @@
 (defparameter *macros*
   `((?       . ,(lambda (expression)
                   (assert (length= 2 expression))
-                  `(* ,(second expression) nil (const 1))))
+                  `(* ,(second expression) nil 1)))
+
+    (+       . ,(lambda (expression)
+                  (assert (length= 2 expression))
+                  `(* ,(second expression) 1)))
 
     (list    . ,(lambda (expression)
                   `(list-elements (seq ,@(rest expression)))))
