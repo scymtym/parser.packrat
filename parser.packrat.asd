@@ -101,7 +101,6 @@
                       :serial     t
                       :components ((:file       "package")
                                    (:file       "expressions")
-                                   ; (:file        "concrete-syntax")
 
                                    (:file       "sexp-grammar")
 
@@ -122,6 +121,24 @@
                       :components ((:file       "package")
                                    ; (:file       "protocol")
                                    (:file       "macros")))
+
+                     (:module     "grammar-base-concrete-syntax"
+                      :pathname   "src/grammar/base"
+                      :depends-on ("interface")
+                      :components ((:file       "concrete-syntax")))
+
+                     (:module     "grammar-sequence-concrete-syntax"
+                      :pathname   "src/grammar/sequence"
+                      :depends-on ("interface"
+                                   "grammar-base-concrete-syntax")
+                      :components ((:file       "concrete-syntax")))
+
+                     (:module     "grammar-sexp-concrete-syntax"
+                      :pathname   "src/grammar/sexp"
+                      :depends-on ("interface"
+                                   "grammar-base-concrete-syntax"
+                                   "grammar-sequence-concrete-syntax")
+                      :components ((:file       "concrete-syntax")))
 
                      (:module     "examples"
                       :components (; (:static-file "sexp.lisp")
