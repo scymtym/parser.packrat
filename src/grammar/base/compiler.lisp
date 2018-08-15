@@ -380,19 +380,44 @@
 
 (defvar *depth* 0)
 
+(defvar *old-state* nil)
+
 (defvar *debug-stream* *standard-output*)
 
 (defun d (format-control &rest format-arguments)
   (when-let ((stream *debug-stream*))
     (apply #'format stream format-control format-arguments)))
 
-(defun d-call (rule-name state arguments)
-  (d "~&~V@T~A [~{~S~^ ~}] ~@[(~{~S~^ ~})~]~%"
-     *depth* rule-name state arguments))
+(defun d-call (rule-name position state arguments)
+  (let ((state (unless (equalp state *old-state*)
+                 state))
+        (*print-level* 2))
+    (d "~&~V@T~A [~{~S~^ ~}] ~@[(~{~S~^ ~})~]~%"
+       *depth* rule-name (append position state) arguments)))
 
-(defun d-return (rule-name old-state arguments success? new-state value)
-  (d "~&~V@T~A [~{~S~^ ~}] ~@[(~{~S~^ ~})~] -> ~:[FAIL~;SUCC~] [~{~S~^ ~}] ~S~%"
-     *depth* rule-name old-state arguments success? new-state value))
+(defun emit-d-call (rule-name position-variables state-variables arguments-var)
+  (let ((state-variables (remove-if (rcurry #'member position-variables)
+                                    state-variables)))
+    `(d-call ',rule-name (list ,@position-variables) (list ,@state-variables)
+             ,(or arguments-var ''()))))
+
+(defun d-return (rule-name old-position old-state arguments
+                 success? new-position value)
+  (let ((old-state (unless (equalp old-state *old-state*)
+                     old-state))
+        (*print-level* 2))
+    (d "~&~V@T~A [~{~S~^ ~}] ~@[(~{~S~^ ~})~] -> ~:[FAIL~;SUCC~] [~{~S~^ ~}] ~S~%"
+       *depth* rule-name (append old-position old-state)
+       arguments
+       success? new-position value)))
+
+(defun emit-d-return (rule-name position-variables state-variables arguments-var
+                      success?-var new-position-variables value-var)
+  (let ((state-variables (remove-if (rcurry #'member position-variables)
+                                    state-variables)))
+    `(d-return ',rule-name (list ,@position-variables) (list ,@state-variables)
+               ,(or arguments-var ''())
+               ,success?-var (list ,@new-position-variables) ,value-var)))
 
 (defun emit-find-grammar-and-rule (grammar grammar-name rule-name
                                    context-var grammar-var rule-var)
@@ -428,8 +453,9 @@
     `(values-list
       (or ,cache-place
           ,(maybe-let (when arguments-var `((,arguments-var (copy-list ,arguments-var))))
-             `(d-call ',rule-name (list ,@state-variables) ,(or arguments-var ''()))
-             `(let ((*depth* (+ *depth* 2)))
+             (emit-d-call rule-name position-variables state-variables arguments-var)
+             `(let ((*depth* (+ *depth* 2))
+                    (*old-state* (list ,@ (remove-if (rcurry #'member position-variables) state-variables))))
                 (setf ,cache-place
                       (multiple-value-list
                        ,(emit-call rule-var state-variables arguments-var)))))))))
@@ -480,8 +506,8 @@
            ,(emit-lookup-and-call
              rule-name rule-var position-variables state-variables
              (when arguments arguments-var))
-         (d-return ',rule-name (list ,@state-variables) ,(if arguments arguments-var ''())
-                   ,success?-var (list ,@(env:position-variables continue-environment)) ,value-var)
+         ,(emit-d-return rule-name position-variables state-variables (when arguments arguments-var)
+                         success?-var (env:position-variables continue-environment) value-var)
          (if ,success?-var
              ,(funcall success-cont continue-environment)
              ,(funcall failure-cont continue-environment))))))
