@@ -9,7 +9,9 @@
   :source-control   (:git "https://github.com/scymtym/parser.packrat.git")
 
   :version          (:read-file-form "version-string.sexp")
-  :depends-on       ("closer-mop"
+  :depends-on       ((:require "sb-cltl2")
+
+                     "closer-mop"
                      "alexandria"
                      "let-plus"
                      "more-conditions"
