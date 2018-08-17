@@ -128,10 +128,19 @@
          (let ((kind     (architecture.builder-protocol:node-kind* node))
                (initargs (architecture.builder-protocol:node-initargs* node)))
           (case kind
-            ((:compose :transform :set :push)
+            ((:compose)
+             (first (first (funcall recurse))))
+            ((:transform :compose :set :push)
              (first (funcall recurse)))
-            (:terminal
-             `',(getf initargs :value))
+            (:anything
+             "«anything»")
+            ((:terminal :constant)
+             (let ((value (getf initargs :value)))
+               (typecase value
+                 ((and symbol (not keyword)) `',value)
+                 (t                          value))))
+            ((:predicate)
+             (list :guard (first (funcall recurse)) (getf initargs :predicate)))
             ((:and :or :not)
              (list* kind (first (funcall recurse))))
             (:rule-invocation
@@ -140,6 +149,18 @@
                (list* reference (first (funcall recurse)))))
             (:as-list
              (list* 'list (second (first (funcall recurse)))))
+            (:repetition
+             (destructuring-bind (min max sub) (funcall recurse)
+               (cond ((and (eql min 0) (eql max 1))
+                       (list '? sub))
+                     ((and (eql min 1) (null max))
+                       (list '+ sub))
+                     ((null min)
+                       (list '* sub))
+                     ((null max)
+                       (list '* sub min))
+                     (t
+                       (list '* sub min max)))))
             (t
              (list* (class-name (class-of node)) (funcall recurse))))))
        (parser.packrat.bootstrap:parse expression)))
@@ -180,48 +201,90 @@
 
      NIL
 
-     + <<anything-expression>> =ANYTHING-EXPRESSION &colon; (OR 'ANY 'ANY)=
+     + <<and-expression>> ~AND-EXPRESSION ::= (LIST 'AND (REPETITION-EXPRESSION NIL NIL (~[[expression][~expression~]] ~)))~
 
-     + <<constant-expression>> =CONSTANT-EXPRESSION &colon; (OR (LIST 'QOUTE (ANYTHING-EXPRESSION)) (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)))=
+     + <<anything-expression>> ~ANYTHING-EXPRESSION ::= (OR 'ANY 'ANY)~
 
-     + <<expression>> =EXPRESSION &colon; (OR (=[[anything-expression][=anything-expression=]] =) (=[[constant-expression][=constant-expression=]] ​=))=
+     + <<compose-expression>> ~COMPOSE-EXPRESSION ::= (LIST 'COMPOSE (REPETITION-EXPRESSION NIL NIL (~[[expression][~expression~]] ~)))~
+
+     + <<constant-expression>> ~CONSTANT-EXPRESSION ::= (OR (LIST 'QUOTE (ANYTHING-EXPRESSION)) (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)))~
+
+     + <<expression>> ~EXPRESSION ::= (OR (~[[predicate-expression][~predicate-expression~]] ~) (~[[anything-expression][~anything-expression~]] ~) (~[[constant-expression][~constant-expression~]] ~) (~[[set-expression][~set-expression~]] ~) (~[[push-expression][~push-expression~]] ~) (~[[not-expression][~not-expression~]] ~) (~[[and-expression][~and-expression~]] ~) (~[[or-expression][~or-expression~]] ~) (~[[compose-expression][~compose-expression~]] ~) (~[[transform-expression][~transform-expression~]] ~) (~[[rule-invocation-expression][~rule-invocation-expression~]] ~) (~[[next-rule-invocation-expression][~next-rule-invocation-expression~]] ~))~
+
+     + <<function-name-or-partial-application>> ~FUNCTION-NAME-OR-PARTIAL-APPLICATION ::= (OR (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)) (LIST (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)) (REST-EXPRESSION (ANYTHING-EXPRESSION))))~
+
+     + <<next-rule-invocation-expression>> ~NEXT-RULE-INVOCATION-EXPRESSION ::= (LIST (OR 'NEXT-RULE 'NEXT-RULE) (REPETITION-EXPRESSION NIL NIL (~[[expression][~expression~]] ~)))~
+
+     + <<not-expression>> ~NOT-EXPRESSION ::= (LIST 'NOT (~[[expression][~expression~]] ~))~
+
+     + <<or-expression>> ~OR-EXPRESSION ::= (LIST 'OR (REPETITION-EXPRESSION NIL NIL (~[[expression][~expression~]] ~)))~
+
+     + <<predicate-expression>> ~PREDICATE-EXPRESSION ::= (LIST 'GUARD (REPETITION-EXPRESSION (CONSTANT-EXPRESSION) (CONSTANT-EXPRESSION) (~[[expression][~expression~]] ~)) (REST-EXPRESSION (~[[function-name-or-partial-application][~function-name-or-partial-application~]] ~)))~
+
+     + <<push-expression>> ~PUSH-EXPRESSION ::= (LIST (OR '<<- '<<-) (~[[variable-name][~variable-name~]] ~) (REPETITION-EXPRESSION (CONSTANT-EXPRESSION) (CONSTANT-EXPRESSION) (~[[expression][~expression~]] ~)))~
+
+     + <<rule-invocation-expression>> ~RULE-INVOCATION-EXPRESSION ::= (LIST (OR (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)) (LIST (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)) (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)))) (REPETITION-EXPRESSION NIL NIL (~[[expression][~expression~]] ~)))~
+
+     + <<set-expression>> ~SET-EXPRESSION ::= (OR (~[[variable-name][~variable-name~]] ~) (LIST (OR '<- '<-) (~[[variable-name][~variable-name~]] ~) (REPETITION-EXPRESSION (CONSTANT-EXPRESSION) (CONSTANT-EXPRESSION) (~[[expression][~expression~]] ~))))~
+
+     + <<transform-expression>> ~TRANSFORM-EXPRESSION ::= (LIST 'TRANSFORM (~[[expression][~expression~]] ~) (REST-EXPRESSION (ANYTHING-EXPRESSION)))~
+
+     + <<variable-name>> ~VARIABLE-NAME ::= (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION))~
 
   + =sequence-grammar= Grammar Class
 
      NIL
 
-     + <<expression>> =EXPRESSION &colon; (OR (=[[anything-expression][=anything-expression=]] ​=) (=[[constant-expression][=constant-expression=]] ​=) (=[[repetition-expression][=repetition-expression=]] ​=) (=[[sequence-expression][=sequence-expression=]] ​=))=
+     + <<+-expression>> ~+-EXPRESSION ::= ((LIST '+ (ANYTHING-EXPRESSION)) (~[[expression][~expression~]] ~))~
 
-     + <<repetition-expression>> =REPETITION-EXPRESSION &colon; (LIST '* (=[[expression][=expression=]] ​=))=
+     + <<?-expression>> ~?-EXPRESSION ::= ((LIST '? (ANYTHING-EXPRESSION)) (~[[expression][~expression~]] ~))~
 
-     + <<sequence-expression>> =SEQUENCE-EXPRESSION &colon; (LIST (OR 'SEQ 'SEQ) (REPETITION-EXPRESSION NIL NIL (=[[expression][=expression=]] ​=)))=
+     + <<bounds-expression>> ~BOUNDS-EXPRESSION ::= ((LIST 'BOUNDS (LIST (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)) (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION))) (REST-EXPRESSION (ANYTHING-EXPRESSION))) (~[[expression][~expression~]] ~))~
+
+     + <<expression>> ~EXPRESSION ::= (OR (~[[anything-expression][~anything-expression~]] ~) (~[[constant-expression][~constant-expression~]] ~) (~[[repetition-expression][~repetition-expression~]] ~) (~[[sequence-expression][~sequence-expression~]] ~) (~[[?-expression][~?-expression~]] ~) (~[[+-expression][~+-expression~]] ~) (~[[bounds-expression][~bounds-expression~]] ~))~
+
+     + <<repetition-expression>> ~REPETITION-EXPRESSION ::= (LIST '* (~[[expression][~expression~]] ~) (REPETITION-EXPRESSION (CONSTANT-EXPRESSION) (CONSTANT-EXPRESSION) (~[[expression][~expression~]] ~)) (REPETITION-EXPRESSION (CONSTANT-EXPRESSION) (CONSTANT-EXPRESSION) (~[[expression][~expression~]] ~)))~
+
+     + <<sequence-expression>> ~SEQUENCE-EXPRESSION ::= (LIST (OR 'SEQ 'SEQ) (REPETITION-EXPRESSION NIL NIL (~[[expression][~expression~]] ~)))~
+
+     + <<value-expression>> ~VALUE-EXPRESSION ::= ((LIST 'VALUE (LIST (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)) (~[[expression][~expression~]] ~))) (~[[expression][~expression~]] ~))~
 
   + =sexp-grammar= Grammar Class
 
      A grammar class for matching Lisp objects.
 
-      In particular this grammar class adds constructs for matching
-      lists, vectors and structures (including conses).
+      In particular, this grammar class adds constructs for matching
+      lists (`list', `list*', `rest'), vectors (`vector', `vector*') and
+      structures including conses (`structure', `cons').
 
       Rules defined in grammars of this class operate on objects but can
       switch to sequence-based processing using the `as-list' and
       `as-vector' constructs.
 
-     + <<cons-expression>> =CONS-EXPRESSION &colon; ((LIST 'CONS (ANYTHING-EXPRESSION) (ANYTHING-EXPRESSION)) (=[[expression][=expression=]] ​=))=
+     + <<cons-expression>> ~CONS-EXPRESSION ::= ((LIST 'CONS (ANYTHING-EXPRESSION) (ANYTHING-EXPRESSION)) (~[[expression][~expression~]] ~))~
 
-     + <<expression>> =EXPRESSION &colon; (OR (=[[anything-expression][=anything-expression=]] ​=) (=[[constant-expression][=constant-expression=]] ​=) (=[[repetition-expression][=repetition-expression=]] ​=) (=[[sequence-expression][=sequence-expression=]] ​=) (=[[list-elements-expression][=list-elements-expression=]] ​=) (=[[rest-expression][=rest-expression=]] ​=) (=[[list-expression][=list-expression=]] ​=) (=[[list*-expression][=list*-expression=]] ​=))=
+     + <<expression>> ~EXPRESSION ::= (OR (~[[anything-expression][~anything-expression~]] ~) (~[[constant-expression][~constant-expression~]] ~) (~[[transform-expression][~transform-expression~]] ~) (~[[repetition-expression][~repetition-expression~]] ~) (~[[sequence-expression][~sequence-expression~]] ~) (~[[structure-expression][~structure-expression~]] ~) (~[[list-elements-expression][~list-elements-expression~]] ~) (~[[rest-expression][~rest-expression~]] ~) (~[[vector-elements-expression][~vector-elements-expression~]] ~) (~[[list-expression][~list-expression~]] ~) (~[[list*-expression][~list*-expression~]] ~) (~[[vector-expression][~vector-expression~]] ~) (~[[vector*-expression][~vector*-expression~]] ~) (~[[cons-expression][~cons-expression~]] ~) (~[[value-expression][~value-expression~]] ~))~
 
-     + <<list*-expression>> =LIST*-EXPRESSION &colon; ((LIST 'LIST* (REPETITION-EXPRESSION NIL NIL (AND (SEQUENCE-EXPRESSION ((ANYTHING-EXPRESSION) (ANYTHING-EXPRESSION))) (ANYTHING-EXPRESSION))) (ANYTHING-EXPRESSION)) (=[[expression][=expression=]] ​=))=
+     + <<list*-expression>> ~LIST*-EXPRESSION ::= ((LIST 'LIST* (REPETITION-EXPRESSION NIL NIL (AND (SEQUENCE-EXPRESSION ((ANYTHING-EXPRESSION) (ANYTHING-EXPRESSION))) (ANYTHING-EXPRESSION))) (ANYTHING-EXPRESSION)) (~[[expression][~expression~]] ~))~
 
-     + <<list-elements-expression>> =LIST-ELEMENTS-EXPRESSION &colon; (LIST 'LIST-ELEMENTS (=[[expression][=expression=]] ​=))=
+     + <<list-elements-expression>> ~LIST-ELEMENTS-EXPRESSION ::= (LIST 'LIST-ELEMENTS (~[[expression][~expression~]] ~))~
 
-     + <<list-expression>> =LIST-EXPRESSION &colon; ((LIST 'LIST (REST-EXPRESSION (ANYTHING-EXPRESSION))) (=[[expression][=expression=]] ​=))=
+     + <<list-expression>> ~LIST-EXPRESSION ::= ((LIST 'LIST (REST-EXPRESSION (ANYTHING-EXPRESSION))) (~[[expression][~expression~]] ~))~
 
-     + <<rest-expression>> =REST-EXPRESSION &colon; (LIST 'REST (=[[expression][=expression=]] ​=))=
+     + <<object-expression>> ~OBJECT-EXPRESSION ::= ((LIST 'OBJECT (LIST (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)) (~[[expression][~expression~]] ~))) (~[[expression][~expression~]] ~))~
 
-     + <<vector*-expression>> =VECTOR*-EXPRESSION &colon; ((LIST 'VECTOR* (REST-EXPRESSION (ANYTHING-EXPRESSION))) (=[[expression][=expression=]] ​=))=
+     + <<rest-expression>> ~REST-EXPRESSION ::= (LIST 'REST (~[[expression][~expression~]] ~))~
 
-     + <<vector-expression>> =VECTOR-EXPRESSION &colon; ((LIST 'VECTOR (REST-EXPRESSION (ANYTHING-EXPRESSION))) (=[[expression][=expression=]] ​=))=
+     + <<structure-expression>> ~STRUCTURE-EXPRESSION ::= (LIST 'STRUCTURE (~[[expression][~expression~]] ~) (REPETITION-EXPRESSION NIL NIL (LIST (ANYTHING-EXPRESSION) (~[[expression][~expression~]] ~))))~
+
+     + <<value-expression>> ~VALUE-EXPRESSION ::= ((LIST 'VALUE (LIST (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)) (~[[expression][~expression~]] ~))) (~[[expression][~expression~]] ~))~
+
+     + <<vector*-expression>> ~VECTOR*-EXPRESSION ::= ((LIST 'VECTOR* (REST-EXPRESSION (ANYTHING-EXPRESSION))) (~[[expression][~expression~]] ~))~
+
+     + <<vector-elements-expression>> ~VECTOR-ELEMENTS-EXPRESSION ::= (LIST 'VECTOR-ELEMENTS (~[[expression][~expression~]] ~))~
+
+     + <<vector-expression>> ~VECTOR-EXPRESSION ::= ((LIST 'VECTOR (REST-EXPRESSION (ANYTHING-EXPRESSION))) (~[[expression][~expression~]] ~))~
+
 
 * Related Work
 
