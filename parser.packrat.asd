@@ -112,7 +112,7 @@
                       :depends-on ("expression")
                       :serial     t
                       :components ((:file       "package")
-                                   (:file       "bootstrap")))
+                                   (:file       "parse")))
 
                      (:module     "interface"
                       :pathname   "src"

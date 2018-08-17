@@ -11,4 +11,7 @@
 
   (:local-nicknames
    (#:base #:parser.packrat.grammar.base)
-   (#:seq  #:parser.packrat.grammar.sequence)))
+   (#:seq  #:parser.packrat.grammar.sequence))
+
+  (:export
+   #:parse))

@@ -142,7 +142,7 @@
              (list* 'list (second (first (funcall recurse)))))
             (t
              (list* (class-name (class-of node)) (funcall recurse))))))
-       (parser.packrat.bootstrap::bootstrap-parse expression)))
+       (parser.packrat.bootstrap:parse expression)))
 
     (defun describe-grammar-class (name)
       (let* ((class        (find-class name))

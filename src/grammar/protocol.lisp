@@ -75,7 +75,7 @@
    "Return a default environment instance for GRAMMAR and expression."))
 
 (defmethod parse-expression ((grammar t) (expression t)) ; TODO hack
-  (uiop:symbol-call '#:parser.packrat.bootstrap '#:bootstrap-parse
+  (uiop:symbol-call '#:parser.packrat.bootstrap '#:parse
                     expression))
 
 ;;; Default behavior

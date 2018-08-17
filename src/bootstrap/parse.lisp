@@ -116,7 +116,7 @@
                              :readers         (map 'list #'first sub-expressions)
                              :type            (funcall recurse type :structure-type))))))))
 
-(defun bootstrap-parse (expression)
+(defun parse (expression)
   (let+ (((&labels map-rec (expressions &optional context)
             (map 'list (rcurry #'rec context) expressions)))
          ((&labels combinator (class sub-expressions)
