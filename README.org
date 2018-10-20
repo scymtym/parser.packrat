@@ -1,6 +1,6 @@
-#+TITLE: parser.packrat README
-#+AUTHOR: Jan Moringen
-#+EMAIL: jmoringe@techfak.uni-bielefeld.de
+#+TITLE:    parser.packrat README
+#+AUTHOR:   Jan Moringen
+#+EMAIL:    jmoringe@techfak.uni-bielefeld.de
 #+LANGUAGE: en
 
 #+SEQ_TODO: TODO STARTED | DONE
@@ -201,53 +201,51 @@
 
      NIL
 
-     + <<and-expression>> ~AND-EXPRESSION ::= (LIST 'AND (REPETITION-EXPRESSION NIL NIL (~[[expression][~expression~]] ~)))~
+     + <<and-expression>> ~AND-EXPRESSION ::= (LIST 'AND (* (~[[expression][~expression~]] ~)))~
 
-     + <<anything-expression>> ~ANYTHING-EXPRESSION ::= (OR 'ANY 'ANY)~
+     + <<anything-expression>> ~ANYTHING-EXPRESSION ::= (OR ANY 'ANY)~
 
-     + <<compose-expression>> ~COMPOSE-EXPRESSION ::= (LIST 'COMPOSE (REPETITION-EXPRESSION NIL NIL (~[[expression][~expression~]] ~)))~
+     + <<compose-expression>> ~COMPOSE-EXPRESSION ::= (LIST 'COMPOSE (* (~[[expression][~expression~]] ~)))~
 
-     + <<constant-expression>> ~CONSTANT-EXPRESSION ::= (OR (LIST 'QUOTE (ANYTHING-EXPRESSION)) (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)))~
+     + <<constant-expression>> ~CONSTANT-EXPRESSION ::= (OR (LIST 'QUOTE «anything») (GUARD «anything» (TYPEP '(NOT (OR CONS (AND SYMBOL (NOT KEYWORD)))))))~
 
      + <<expression>> ~EXPRESSION ::= (OR (~[[predicate-expression][~predicate-expression~]] ~) (~[[anything-expression][~anything-expression~]] ~) (~[[constant-expression][~constant-expression~]] ~) (~[[set-expression][~set-expression~]] ~) (~[[push-expression][~push-expression~]] ~) (~[[not-expression][~not-expression~]] ~) (~[[and-expression][~and-expression~]] ~) (~[[or-expression][~or-expression~]] ~) (~[[compose-expression][~compose-expression~]] ~) (~[[transform-expression][~transform-expression~]] ~) (~[[rule-invocation-expression][~rule-invocation-expression~]] ~) (~[[next-rule-invocation-expression][~next-rule-invocation-expression~]] ~))~
 
-     + <<function-name-or-partial-application>> ~FUNCTION-NAME-OR-PARTIAL-APPLICATION ::= (OR (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)) (LIST (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)) (REST-EXPRESSION (ANYTHING-EXPRESSION))))~
+     + <<function-name-or-partial-application>> ~FUNCTION-NAME-OR-PARTIAL-APPLICATION ::= (OR (GUARD «anything» SYMBOLP) (LIST (GUARD «anything» SYMBOLP) (REST-EXPRESSION «anything»)))~
 
-     + <<next-rule-invocation-expression>> ~NEXT-RULE-INVOCATION-EXPRESSION ::= (LIST (OR 'NEXT-RULE 'NEXT-RULE) (REPETITION-EXPRESSION NIL NIL (~[[expression][~expression~]] ~)))~
+     + <<next-rule-invocation-expression>> ~NEXT-RULE-INVOCATION-EXPRESSION ::= (LIST (OR NEXT-RULE 'NEXT-RULE) (* (~[[expression][~expression~]] ~)))~
 
      + <<not-expression>> ~NOT-EXPRESSION ::= (LIST 'NOT (~[[expression][~expression~]] ~))~
 
-     + <<or-expression>> ~OR-EXPRESSION ::= (LIST 'OR (REPETITION-EXPRESSION NIL NIL (~[[expression][~expression~]] ~)))~
+     + <<or-expression>> ~OR-EXPRESSION ::= (LIST 'OR (* (~[[expression][~expression~]] ~)))~
 
-     + <<predicate-expression>> ~PREDICATE-EXPRESSION ::= (LIST 'GUARD (REPETITION-EXPRESSION (CONSTANT-EXPRESSION) (CONSTANT-EXPRESSION) (~[[expression][~expression~]] ~)) (REST-EXPRESSION (~[[function-name-or-partial-application][~function-name-or-partial-application~]] ~)))~
+     + <<predicate-expression>> ~PREDICATE-EXPRESSION ::= (LIST GUARD (? (~[[expression][~expression~]] ~)) (REST-EXPRESSION (~[[function-name-or-partial-application][~function-name-or-partial-application~]] ~)))~
 
-     + <<push-expression>> ~PUSH-EXPRESSION ::= (LIST (OR '<<- '<<-) (~[[variable-name][~variable-name~]] ~) (REPETITION-EXPRESSION (CONSTANT-EXPRESSION) (CONSTANT-EXPRESSION) (~[[expression][~expression~]] ~)))~
+     + <<push-expression>> ~PUSH-EXPRESSION ::= (LIST (OR <<- '<<-) (~[[variable-name][~variable-name~]] ~) (? (~[[expression][~expression~]] ~)))~
 
-     + <<rule-invocation-expression>> ~RULE-INVOCATION-EXPRESSION ::= (LIST (OR (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)) (LIST (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)) (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)))) (REPETITION-EXPRESSION NIL NIL (~[[expression][~expression~]] ~)))~
+     + <<rule-invocation-expression>> ~RULE-INVOCATION-EXPRESSION ::= (LIST (OR (GUARD «anything» SYMBOLP) (LIST (GUARD «anything» SYMBOLP) (GUARD «anything» SYMBOLP))) (* (~[[expression][~expression~]] ~)))~
 
-     + <<set-expression>> ~SET-EXPRESSION ::= (OR (~[[variable-name][~variable-name~]] ~) (LIST (OR '<- '<-) (~[[variable-name][~variable-name~]] ~) (REPETITION-EXPRESSION (CONSTANT-EXPRESSION) (CONSTANT-EXPRESSION) (~[[expression][~expression~]] ~))))~
+     + <<set-expression>> ~SET-EXPRESSION ::= (OR (~[[variable-name][~variable-name~]] ~) (LIST (OR <- '<-) (~[[variable-name][~variable-name~]] ~) (? (~[[expression][~expression~]] ~))))~
 
-     + <<transform-expression>> ~TRANSFORM-EXPRESSION ::= (LIST 'TRANSFORM (~[[expression][~expression~]] ~) (REST-EXPRESSION (ANYTHING-EXPRESSION)))~
+     + <<transform-expression>> ~TRANSFORM-EXPRESSION ::= (LIST TRANSFORM (~[[expression][~expression~]] ~) (REST-EXPRESSION «anything»))~
 
-     + <<variable-name>> ~VARIABLE-NAME ::= (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION))~
+     + <<variable-name>> ~VARIABLE-NAME ::= (GUARD «anything» (TYPEP '(AND SYMBOL (NOT (OR KEYWORD NULL)))))~
 
   + =sequence-grammar= Grammar Class
 
      NIL
 
-     + <<+-expression>> ~+-EXPRESSION ::= ((LIST '+ (ANYTHING-EXPRESSION)) (~[[expression][~expression~]] ~))~
+     + <<+-expression>> ~+-EXPRESSION ::= (LIST '+ «anything»)~
 
-     + <<?-expression>> ~?-EXPRESSION ::= ((LIST '? (ANYTHING-EXPRESSION)) (~[[expression][~expression~]] ~))~
+     + <<?-expression>> ~?-EXPRESSION ::= (LIST '? «anything»)~
 
-     + <<bounds-expression>> ~BOUNDS-EXPRESSION ::= ((LIST 'BOUNDS (LIST (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)) (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION))) (REST-EXPRESSION (ANYTHING-EXPRESSION))) (~[[expression][~expression~]] ~))~
+     + <<bounds-expression>> ~BOUNDS-EXPRESSION ::= (LIST 'BOUNDS (LIST (GUARD «anything» SYMBOLP) (GUARD «anything» SYMBOLP)) (REST-EXPRESSION «anything»))~
 
      + <<expression>> ~EXPRESSION ::= (OR (~[[anything-expression][~anything-expression~]] ~) (~[[constant-expression][~constant-expression~]] ~) (~[[repetition-expression][~repetition-expression~]] ~) (~[[sequence-expression][~sequence-expression~]] ~) (~[[?-expression][~?-expression~]] ~) (~[[+-expression][~+-expression~]] ~) (~[[bounds-expression][~bounds-expression~]] ~))~
 
-     + <<repetition-expression>> ~REPETITION-EXPRESSION ::= (LIST '* (~[[expression][~expression~]] ~) (REPETITION-EXPRESSION (CONSTANT-EXPRESSION) (CONSTANT-EXPRESSION) (~[[expression][~expression~]] ~)) (REPETITION-EXPRESSION (CONSTANT-EXPRESSION) (CONSTANT-EXPRESSION) (~[[expression][~expression~]] ~)))~
+     + <<repetition-expression>> ~REPETITION-EXPRESSION ::= (LIST '* (~[[expression][~expression~]] ~) (? (~[[expression][~expression~]] ~)) (? (~[[expression][~expression~]] ~)))~
 
-     + <<sequence-expression>> ~SEQUENCE-EXPRESSION ::= (LIST (OR 'SEQ 'SEQ) (REPETITION-EXPRESSION NIL NIL (~[[expression][~expression~]] ~)))~
-
-     + <<value-expression>> ~VALUE-EXPRESSION ::= ((LIST 'VALUE (LIST (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)) (~[[expression][~expression~]] ~))) (~[[expression][~expression~]] ~))~
+     + <<sequence-expression>> ~SEQUENCE-EXPRESSION ::= (LIST (OR SEQ 'SEQ) (* (~[[expression][~expression~]] ~)))~
 
   + =sexp-grammar= Grammar Class
 
@@ -261,29 +259,28 @@
       switch to sequence-based processing using the `as-list' and
       `as-vector' constructs.
 
-     + <<cons-expression>> ~CONS-EXPRESSION ::= ((LIST 'CONS (ANYTHING-EXPRESSION) (ANYTHING-EXPRESSION)) (~[[expression][~expression~]] ~))~
+     + <<cons-expression>> ~CONS-EXPRESSION ::= (LIST 'CONS «anything» «anything»)~
 
      + <<expression>> ~EXPRESSION ::= (OR (~[[anything-expression][~anything-expression~]] ~) (~[[constant-expression][~constant-expression~]] ~) (~[[transform-expression][~transform-expression~]] ~) (~[[repetition-expression][~repetition-expression~]] ~) (~[[sequence-expression][~sequence-expression~]] ~) (~[[structure-expression][~structure-expression~]] ~) (~[[list-elements-expression][~list-elements-expression~]] ~) (~[[rest-expression][~rest-expression~]] ~) (~[[vector-elements-expression][~vector-elements-expression~]] ~) (~[[list-expression][~list-expression~]] ~) (~[[list*-expression][~list*-expression~]] ~) (~[[vector-expression][~vector-expression~]] ~) (~[[vector*-expression][~vector*-expression~]] ~) (~[[cons-expression][~cons-expression~]] ~) (~[[value-expression][~value-expression~]] ~))~
 
-     + <<list*-expression>> ~LIST*-EXPRESSION ::= ((LIST 'LIST* (REPETITION-EXPRESSION NIL NIL (AND (SEQUENCE-EXPRESSION ((ANYTHING-EXPRESSION) (ANYTHING-EXPRESSION))) (ANYTHING-EXPRESSION))) (ANYTHING-EXPRESSION)) (~[[expression][~expression~]] ~))~
+     + <<list*-expression>> ~LIST*-EXPRESSION ::= (LIST 'LIST* (* (AND (SEQUENCE-EXPRESSION («anything» «anything»)) «anything»)) «anything»)~
 
      + <<list-elements-expression>> ~LIST-ELEMENTS-EXPRESSION ::= (LIST 'LIST-ELEMENTS (~[[expression][~expression~]] ~))~
 
-     + <<list-expression>> ~LIST-EXPRESSION ::= ((LIST 'LIST (REST-EXPRESSION (ANYTHING-EXPRESSION))) (~[[expression][~expression~]] ~))~
-
-     + <<object-expression>> ~OBJECT-EXPRESSION ::= ((LIST 'OBJECT (LIST (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)) (~[[expression][~expression~]] ~))) (~[[expression][~expression~]] ~))~
+     + <<list-expression>> ~LIST-EXPRESSION ::= (LIST 'LIST (REST-EXPRESSION «anything»))~
 
      + <<rest-expression>> ~REST-EXPRESSION ::= (LIST 'REST (~[[expression][~expression~]] ~))~
 
-     + <<structure-expression>> ~STRUCTURE-EXPRESSION ::= (LIST 'STRUCTURE (~[[expression][~expression~]] ~) (REPETITION-EXPRESSION NIL NIL (LIST (ANYTHING-EXPRESSION) (~[[expression][~expression~]] ~))))~
+     + <<structure-expression>> ~STRUCTURE-EXPRESSION ::= (LIST 'STRUCTURE (~[[expression][~expression~]] ~) (* (LIST «anything» (~[[expression][~expression~]] ~))))~
 
-     + <<value-expression>> ~VALUE-EXPRESSION ::= ((LIST 'VALUE (LIST (PREDICATE-EXPRESSION (ANYTHING-EXPRESSION)) (~[[expression][~expression~]] ~))) (~[[expression][~expression~]] ~))~
+     + <<value-expression>> ~VALUE-EXPRESSION ::= (LIST 'VALUE (LIST (GUARD «anything» SYMBOLP) (~[[expression][~expression~]] ~)))~
 
-     + <<vector*-expression>> ~VECTOR*-EXPRESSION ::= ((LIST 'VECTOR* (REST-EXPRESSION (ANYTHING-EXPRESSION))) (~[[expression][~expression~]] ~))~
+     + <<vector*-expression>> ~VECTOR*-EXPRESSION ::= (LIST 'VECTOR* (REST-EXPRESSION «anything»))~
 
      + <<vector-elements-expression>> ~VECTOR-ELEMENTS-EXPRESSION ::= (LIST 'VECTOR-ELEMENTS (~[[expression][~expression~]] ~))~
 
-     + <<vector-expression>> ~VECTOR-EXPRESSION ::= ((LIST 'VECTOR (REST-EXPRESSION (ANYTHING-EXPRESSION))) (~[[expression][~expression~]] ~))~
+     + <<vector-expression>> ~VECTOR-EXPRESSION ::= (LIST 'VECTOR (REST-EXPRESSION «anything»))~
+
 
 
 * Related Work
