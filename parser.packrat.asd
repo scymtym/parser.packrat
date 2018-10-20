@@ -17,20 +17,14 @@
                      "more-conditions"
                      "utilities.print-items"
 
-                     "architecture.builder-protocol")
+                     "architecture.builder-protocol"
+
+                     (:version "parser.packrat.cache" (:read-file-form "version-string.sexp")))
 
   :components       ((:module     "base"
                       :pathname   "src/base"
                       :components ((:file       "package")
                                    (:file       "types")))
-
-                     (:module     "cache"
-                      :pathname   "src/cache"
-                      :serial     t
-                      :components ((:file       "package")
-                                   (:file       "chunk-cache")
-                                   (:file       "stream-cache")
-                                   (:file       "packrat-cache")))
 
                      (:module     "expression"
                       :pathname   "src/expression"
