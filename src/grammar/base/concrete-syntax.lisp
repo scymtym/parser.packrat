@@ -49,7 +49,7 @@
 
 (parser.packrat:defrule constant-expression () ; TODO either constant or terminal
     (or (list 'quote value)
-        (:<- value (:guard (typep '(not (or cons (and symbol (not keyword))))))))
+        (:guard value (typep '(not (or cons (and symbol (not keyword)))))))
   (bp:node* (:terminal :value value)))
 
 ;;; Variables
@@ -100,9 +100,9 @@
 ;;; Rule invocation
 
 (parser.packrat:defrule rule-invocation-expression ()
-    (list (or (:<- rule-name (:guard symbolp))
-              (list (:<- rule-name    (:guard symbolp))
-                    (:<- grammar-name (:guard symbolp))))
+    (list (or (:guard rule-name symbolp)
+              (list (:guard rule-name    symbolp)
+                    (:guard grammar-name symbolp)))
           (* (:<<- arguments (expression #+todo :argument))))
   (bp:node* (:rule-invocation :grammar grammar-name
                               :rule    rule-name)
