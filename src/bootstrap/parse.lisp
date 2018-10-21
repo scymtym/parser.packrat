@@ -43,7 +43,7 @@
              (t
               (make-instance 'base:terminal-expression :value expression)))))
 
-    `(;; predicate
+    `(;; Predicate
       ((cons (member guard :guard))
        . ,(lambda (expression context recurse)
             (declare (ignore context))
@@ -55,14 +55,14 @@
                              :sub-expression (funcall recurse sub-expression)
                              :predicate      predicate))))
 
-      ;; anything
+      ;; Anything
       ((member any :any)
        . ,(lambda (expression context recurse)
             (declare (ignore expression context recurse))
             (make-instance 'base:anything-expression)))
 
-      ;; terminal
-      ((and symbol (not (or keyword (member :any :position))))
+      ;; Terminal
+      ((and symbol (not (or null keyword)))
        . ,(lambda (expression context recurse)
             (declare (ignore recurse))
             (case context
@@ -78,12 +78,12 @@
             (declare (ignore recurse))
             (constant-ish (second expression) context)))
 
-      ((not (or cons (member :any :position) (and symbol (not keyword))))
+      ((not (or cons (and symbol (not (or null keyword)))))
        . ,(lambda (expression context recurse)
             (declare (ignore recurse))
             (constant-ish expression context)))
 
-      ;; combinators
+      ;; Combinators
       ((cons (eql not))
        . ,(lambda (expression context recurse)
             (declare (ignore context))
@@ -105,7 +105,7 @@
             (make-instance 'base::compose-expression
                            :sub-expressions (map 'list recurse (rest expression)))))
 
-      ;; structure
+      ;; Structure
       ((cons (eql structure))
        . ,(lambda (expression context recurse)
             (declare (ignore context))
@@ -122,8 +122,8 @@
          ((&labels combinator (class sub-expressions)
             (make-instance class :sub-expressions (map-rec sub-expressions))))
          ((&labels rec (expression &optional context)
+            ;; "macros"
             (when (consp expression)
-              ;; "macros"
               (when-let ((expander (assoc-value *macros* (car expression) :test #'eq)))
                 (return-from rec
                   (rec (funcall expander expression)))))
@@ -140,7 +140,7 @@
               ((eql :position)
                (make-instance 'parser.packrat.grammar.base::position-expression))
 
-              ;; value as sequence
+              ;; Value as sequence
               ((cons (eql vector-elements))
                (make-instance 'parser.packrat.grammar.sexp::as-vector-expression
                               :sub-expression (rec (second expression))))
@@ -173,13 +173,14 @@
                                 :sub-expression (rec sub-expression)
                                 :variable       variable)))
 
-              ;; transform
+              ;; Transform
               ((cons (eql :transform))
                (destructuring-bind (sub-expression &body code) (rest expression)
                  (make-instance 'base:transform-expression
                                 :sub-expression (rec sub-expression)
                                 :code           code)))
 
+              ; Invocation
               ((cons (member next-rule :next-rule))
                (let ((arguments (rest expression)))
                  (make-instance 'base:next-rule-invocation-expression
