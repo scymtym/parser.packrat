@@ -11,6 +11,9 @@
     (or (base:anything-expression)
         (base:constant-expression)
 
+        (base:set-expression)
+        (base:push-expression)
+
         (repetition-expression)
         (sequence-expression)
 
@@ -52,4 +55,4 @@
 (define-macro-rule bounds-expression
     (list* 'bounds (list (:guard start symbolp) (:guard end symbolp))
            expressions)
-  `(:seq (<- ,start :position) ,@expressions (<- ,end :position)))
+  `(:seq (base::<- ,start :position) ,@expressions (base::<- ,end :position)))
