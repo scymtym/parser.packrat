@@ -11,7 +11,10 @@
         (base:anything-expression)
         (base:constant-expression)
 
-        (base::transform-expression)
+        (base:set-expression)
+        (base:push-expression)
+
+        (base:transform-expression)
 
         (seq:repetition-expression)
         (seq:sequence-expression)
