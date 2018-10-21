@@ -18,7 +18,7 @@
     (mapc (lambda (expression)
             (let ((parser.packrat.grammar::*bootstrapping* nil))
               (finishes (parser.packrat.grammar:parse-expression grammar expression))))
-          
+
           '((* :any)
             (* :any 1)
             (* :any 1 2)
@@ -26,10 +26,9 @@
             (:seq)
             (:seq 1)
             (:seq 1 2)
-                      
+
             (parser.packrat.grammar.sequence::? 1)
 
             (+ 1)
 
             (parser.packrat.grammar.sequence::bounds (start end) 1)))))
-
