@@ -159,9 +159,15 @@
                grammar environment* first
                (lambda (new-environment)
                  (if rest
+                     #+test-case-for-this-change (defrule test ()
+                                                   (or (:guard symbolp)
+                                                       (:compose (list a b)
+                                                                 (:transform :any b)
+                                                                 (test))))
                      (sub rest new-environment nil)
-                     (funcall success-cont (env:environment-at environment (env:position-variables/plist environment)
-                                                               :parent new-environment))))
+                     (funcall success-cont (add-value (env:environment-at environment (env:position-variables/plist environment)
+                                                                          :parent new-environment)
+                                                      (value* new-environment)))))
                failure-cont)))))
     (sub (sub-expressions expression) environment t)))
 
