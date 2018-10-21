@@ -41,4 +41,7 @@
       ;;
       '((* (or (foo) (bar)))
 
-        ("foo" (nil 0))))))
+        ("foo"    (t   3))
+        ("bar"    (t   3))
+        ("baz"    (t   0))
+        ("foobar" (t   6))))))
