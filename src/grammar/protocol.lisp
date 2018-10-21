@@ -145,7 +145,7 @@
   (make-hash-table :test #'equal))
 
 (defmethod parse ((grammar t) (expression function) (input t))
-  (let ((context (make-context grammar expression input)))
+  (let ((context (make-context grammar expression input))) ; TODO passing EXPRESSION doesn't make any sense here
     (funcall expression context input)))
 
 ;;; Compilation
