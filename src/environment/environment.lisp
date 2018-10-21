@@ -52,6 +52,6 @@
    :value (more-conditions:missing-required-initarg 'value-environment :value)))
 
 (defmethod print-items:print-items append ((object value-environment))
-  `((:value ,(value object))))
+  `((:value ,(value object) " ~A" ((:after :depth)))))
 
 (define-state-methods value-environment (value) ())

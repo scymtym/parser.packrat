@@ -134,7 +134,6 @@
   (labels ((rec (environment)
              (if (compute-applicable-methods #'value (list environment))
                  (let ((value (value environment)))
-                   (when (null value) (break))
                    value)
                  (when-let ((parent (parent environment)))
                    (rec parent)))))

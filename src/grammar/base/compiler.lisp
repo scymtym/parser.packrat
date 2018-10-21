@@ -278,6 +278,37 @@
         (t
          (env:environment-at environment (list :value value)))))
 
+(defun remove-value (environment)
+  (cond ((or (not (value* environment))
+             (typep environment '(and env:value-environment
+                                  (not value-environment-mixin))))
+         environment)
+        (t
+         (let* ((actual-class (class-of environment))
+                (superclasses (list actual-class
+                                    (find-class 'remove-value-mixin)))
+                (class        (make-instance 'standard-class
+                                             :direct-superclasses superclasses
+                                             :direct-slots        '())))
+           (change-class environment class :actual-class actual-class)))))
+
+(defclass remove-value-mixin ()
+  ((actual-class :initarg :actual-class
+                 :reader  actual-class)))
+
+(defmethod env:value ((environment remove-value-mixin))
+  nil)
+
+(defmethod env:environment-at ((environment remove-value-mixin)
+                               (position    t)
+                               &rest args &key
+                               (class (actual-class environment))
+                               parent
+                               state)
+  (declare (ignore parent state))
+  (apply #'call-next-method environment position :class class
+         (remove-from-plist args :class)))
+
 #+later (add-value (make-instance 'parser.packrat.grammar.sequence:vector-environment
                           :position 'pos
                           :sequence 'seq

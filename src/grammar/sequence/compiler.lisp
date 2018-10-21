@@ -175,8 +175,9 @@
                         ,(compile-expression
                           grammar recursion-environment sub-expression
                           (lambda (new-environment)
-                            (setf continue-environment (env:environment-at recursion-environment :fresh
-                                                                           :parent new-environment))
+                            (setf continue-environment (parser.packrat.grammar.base::remove-value
+                                                        (env:environment-at recursion-environment :fresh
+                                                                            :parent new-environment)))
                             (cond
                               ((not max)
                                (recurse new-environment))
