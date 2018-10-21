@@ -47,7 +47,9 @@
    (lambda (new-environment)
      (declare (ignore new-environment))
      (funcall failure-cont environment))
-   success-cont))
+   (lambda (new-environment)
+     (declare (ignore new-environment))
+     (funcall success-cont environment))))
 
 (macrolet ((define-pre-condition-check (expression-class)
              `(defmethod compile-expression :before  ((grammar      t)
