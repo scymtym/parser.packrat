@@ -111,12 +111,15 @@
                                    (:file       "parse")))
 
                      (:module     "interface"
-                      :pathname   "src"
+                      :pathname   "src/interface"
                       :depends-on ("base")
                       :serial     t
                       :components ((:file       "package")
-                                   ; (:file       "protocol")
-                                   (:file       "macros")))
+                                   (:file       "protocol")
+                                   (:file       "macros")
+
+                                   (:file       "inline-cache")
+                                   (:file       "compilation")))
 
                      (:module     "grammar-base-concrete-syntax"
                       :pathname   "src/grammar/base"

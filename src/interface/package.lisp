@@ -7,6 +7,8 @@
    #:parser.packrat.base)
 
   (:local-nicknames
+   (#:exp     #:parser.packrat.expression)
+   (#:env     #:parser.packrat.environment)
    (#:grammar #:parser.packrat.grammar))
 
   ;; Parsing protocol

@@ -1,0 +1,77 @@
+#+SEQ_TODO: TODO STARTED | DONE
+
+* The ~parse~ function
+
+** STARTED Compiler Macro
+
+   Contexts
+
+   | Grammar      | Expression               | Free Variables | Strategy                                      |
+   |--------------+--------------------------+----------------+-----------------------------------------------|
+   | Constant     | Constant/rule invocation | None           | Expand into rule invocation                   |
+   | Constant     | Constant/rule invocation | Some           |                                               |
+   | Constant     | Constant/other           | None           | Expand into ?                                 |
+   | Constant     | Constant/other           | Some           |                                               |
+   | Constant     | Non-Constant             | /Can't know/   | Inline-cache keyed on expression?             |
+   | Non-constant | Constant/rule invocation | None           |                                               |
+   | Non-constant | Constant/rule invocation | Some           |                                               |
+   | Non-constant | Constant/other           | None           |                                               |
+   | Non-constant | Constant/other           | Some           |                                               |
+   | Non-constant | Non-constant             | /Can't know/   | Inline-cache keyed on grammar and expression? |
+
+*** TODO Which strategy is this?
+
+    #+BEGIN_SRC lisp
+      (defun f (x y input)
+        (parse `(foo ,x ,y) input)
+    #+END_SRC
+
+    #+BEGIN_SRC lisp
+      (defun f (x y input)
+        ((lambda (#:input)
+           ...)
+         input))
+    #+END_SRC
+
+** Inline cache
+
+   Applied when expression is not constant enough. The basic idea is
+   compiling the expression on the first invocation and then using the
+   result as long as the grammar and expression arguments remain
+   similar.
+
+   The inline cache is implemented as a ~funcallable-standard-object~
+   that changes its funcallable-instance-function when called for the
+   first time.
+
+   It is used like this:
+
+   #+BEGIN_SRC
+     (funcall (load-time-value (make-instance 'inline-cache))
+              grammar expression input)
+   #+END_SRC
+
+** TODO Separate ~parse~ macro for using lexical variables?
+
+   #+BEGIN_SRC lisp
+     (let ((n 4))
+       (parse-with-access-to-lexicals
+        :test-grammar
+        '(* "foo" n n)
+        input))
+   #+END_SRC
+
+   transform to
+
+   #+BEGIN_SRC lisp
+     (let ((n 4))
+       ((lambda (n)
+          (compile-expression :test-grammar '(* "foo" n n) input
+                              :parameters '(n)))
+        n))
+   #+END_SRC
+
+
+* Compile-time optimizations
+
+**
