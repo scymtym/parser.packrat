@@ -463,14 +463,16 @@
   (if grammar-name
       `((,rule-var (find-rule ',rule-name (find-grammar ',grammar-name)
                               :if-does-not-exist :forward-reference)))
-      (let ((grammar-name (name grammar)))
-        `((,grammar-var (load-time-value
-                         (find-grammar ',grammar-name)))
-          (,rule-var    (if (eq (context-grammar ,context-var) ,grammar-var)
-                            (load-time-value
-                             (find-rule ',rule-name (find-grammar ',grammar-name)
-                                        :if-does-not-exist :forward-reference))
-                            (find-rule ',rule-name (context-grammar ,context-var))))))))
+      (let+ ((grammar-name (name grammar))
+             ((&with-gensyms context-grammar-var)))
+        `((,grammar-var         (load-time-value
+                                 (find-grammar ',grammar-name)))
+          (,context-grammar-var (context-grammar ,context-var))
+          (,rule-var            (if (eq ,context-grammar-var ,grammar-var)
+                                    (load-time-value
+                                     (find-rule ',rule-name (find-grammar ',grammar-name)
+                                                :if-does-not-exist :forward-reference))
+                                    (find-rule ',rule-name ,context-grammar-var)))))))
 
 ;; TODO make lookup-and-call/single-argument so we don't have
 ;; cons and copy-list for a single argument, rename {with ->
