@@ -18,7 +18,7 @@
 ;;; `chunk-array'
 
 (deftype chunk-array ()
-  '(simple-array chunk 1))
+  '(simple-array (simple-array * 1) 1))
 
 (declaim (inline %make-chunk-array))
 (defun %make-chunk-array (length)
@@ -28,7 +28,7 @@
                           (values chunk-array &optional))
                 make-chunk-array))
 (defun make-chunk-array (length divisor fill)
-  (declare (optimize (speed 3)))
+  (declare (optimize speed))
   (map-into (%make-chunk-array length)
             (or fill (lambda () (make-chunk divisor)))))
 
@@ -38,10 +38,10 @@
 (defun adjust-chunk-array (chunk-array new-length divisor fill)
   (declare (optimize speed))
   (let ((result (%make-chunk-array new-length)))
-    (loop :for i :from (length chunk-array) :below new-length :do
-       (setf (aref result i) (if fill
-                                 (funcall fill)
-                                 (make-chunk divisor))))
+    (loop :for i :from (length chunk-array) :below new-length
+          :do (setf (aref result i) (if fill
+                                        (funcall fill)
+                                        (make-chunk divisor))))
     (replace result chunk-array)))
 
 ;;; `chunk-cache'
@@ -52,7 +52,7 @@
               make-chunk-cache
               (length divisor &optional fill
                       &aux (chunks (make-chunk-array length divisor fill)))))
-  (chunks  nil :type simple-vector)
+  (chunks  nil :type chunk-array)
   (divisor 10  :type chunk-divisor :read-only t))
 
 (declaim (ftype (function (chunk-cache input-position) (values (or null chunk) &optional))
