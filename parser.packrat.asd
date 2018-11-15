@@ -115,6 +115,7 @@
                       :depends-on ("base")
                       :serial     t
                       :components ((:file       "package")
+                                   (:file       "variables")
                                    (:file       "protocol")
                                    (:file       "macros")
 

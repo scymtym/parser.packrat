@@ -84,8 +84,6 @@
                                         ; :documentation ,(funcall documentation)
         ))))
 
-(defvar *grammar*) ; TODO move this somewhere
-
 (defmacro in-grammar (grammar-name)
   ; (check-type grammar grammar-designator)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
