@@ -78,7 +78,7 @@
             (declare (ignore recurse))
             (constant-ish (second expression) context)))
 
-      ((not (or cons (and symbol (not (or null keyword)))))
+      ((not (or cons (and symbol (not (or null keyword))) (member :position)))
        . ,(lambda (expression context recurse)
             (declare (ignore recurse))
             (constant-ish expression context)))
