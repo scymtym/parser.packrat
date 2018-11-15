@@ -21,8 +21,8 @@
 ;;;
 ;;; The difficulty with 2. is the variety of scenarios that have to be
 ;;; supported efficiently w.r.t. memory and runtime. To address this
-;;; issue, the secondary structure uses different representation
-;;; depending on the situation:
+;;; issue, the secondary structure uses one of multiple
+;;; representations depending on the situation:
 ;;;
 ;;; + If only a mapping from a single rule (optionally with arguments)
 ;;;   to the associated parse result has to be represented, a single
@@ -34,13 +34,16 @@
 ;;; + In the (uncommon) case that more than a few entries have to be
 ;;;   stored, a hash-table is used.
 ;;;
-;;; Switches between representation happen when entries are added.
+;;; Switches between representations happen when entries are added.
+
+(defconstant +packrat-hash-table-switch-point+ 16)
 
 ;; TODO compare this against
 ;; singleton-cons ~> small vector with linear probing ~> hash-table
 (macrolet
     ((define-cached (name arguments?)
        `(defun ,name (symbol position ,@(when arguments? '(arguments)) cache)
+          (declare (optimize speed))
           (let* ((divisor    (chunk-cache-divisor cache))
                  (chunk      (find-chunk cache position))
                  (position-2 (ldb (byte divisor 0) position))
@@ -73,6 +76,7 @@
 (macrolet
     ((define-setf-cached (name arguments?)
        `(defun ,name (result symbol position ,@(when arguments? '(arguments)) cache)
+          (declare (optimize speed))
           (let* ((divisor    (chunk-cache-divisor cache))
                  (chunk      (flet ((%make-chunk ()
                                       (make-chunk divisor)))
@@ -121,7 +125,7 @@
               (t
                (let ((count   (car cell)) ; note: faster than DESTRUCTURING-BIND
                      (entries (cdr cell)))
-                 (declare (type (integer 0 16) count))
+                 (declare (type (integer 0 #.+packrat-hash-table-switch-point+) count))
                  (cond
                    ;; When there is an entry for RESULT, update it.
                    ((when-let ((entry ,(if arguments?
@@ -130,9 +134,11 @@
                                            `(assoc symbol entries :test #'eq))))
                       (setf (cdr entry) result)
                       t))
-                   ;; When there are 16 entries and we need another one,
-                   ;; upgrade to HASH-TABLE, then store the new entry.
-                   ((= 16 count)
+                   ;; When there are
+                   ;; `+packrat-hash-table-switch-point+' entries and
+                   ;; we need another one, upgrade to `hash-table',
+                   ;; then store the new entry.
+                   ((= count +packrat-hash-table-switch-point+)
                     (let ((table (setf (aref chunk position-2)
                                        (alist-hash-table entries :test #'eq))))
                       (setf (gethash ,(if arguments?
@@ -140,11 +146,12 @@
                                           `symbol)
                                      table)
                             result)))
-                   ;; When there are less than 16 entries and we need
-                   ;; another one, increase the counter and add an
-                   ;; entry.
+                   ;; When there are less than
+                   ;; `+packrat-hash-table-switch-point+' entries and
+                   ;; we need another one, increase the counter and
+                   ;; add an entry.
                    (t
-                    (incf (car cell))
+                    (setf (car cell) (1+ count))
                     (setf (cdr cell)
                           (acons ,(if arguments?
                                       `(cons symbol arguments)
