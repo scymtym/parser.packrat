@@ -24,7 +24,7 @@
             :foo
             'foo
 
-            ;;
+            ;; Variables
             name
             (:<- name)
             (:<- name 1)
@@ -32,7 +32,7 @@
             (:<<- name)
             (:<<- name 1)
 
-            ;;
+            ;; Logical connective
             (not 1)
 
             (and)
@@ -43,9 +43,13 @@
             (or 1)
             (or 1 2)
 
+            ;; Compose
             (:compose)
             (:compose 1)
             (:compose 1 2)
+
+            ;; Transform
+            (:transform 1 2)
 
             ;; rule-invocation-expression
             (foo)

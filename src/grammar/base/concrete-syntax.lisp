@@ -20,10 +20,11 @@
         (not-expression)
         (and-expression)
         (or-expression)
-        (compose-expression)
 
+        (compose-expression)
         (transform-expression)
 
+        ;; Must be last
         (rule-invocation-expression)
         (next-rule-invocation-expression)))
 
@@ -35,11 +36,12 @@
   (list* name arguments))
 
 (parser.packrat:defrule predicate-expression ()
-    (list* :guard
-           (* (:<- sub-expression (expression)) 0 1)
-           (:<- predicate (function-name-or-partial-application)))
+    (list :guard
+          (or (:seq (:<- sub-expression (expression))
+                    (:<- predicate (function-name-or-partial-application)))
+              (:<- predicate (function-name-or-partial-application))))
   (bp:node* (:predicate :predicate predicate)
-    (1 :sub-expression sub-expression)))
+    (1 :sub-expression (or sub-expression (bp:node* (:anything))))))
 
 (parser.packrat:defrule anything-expression ()
     (or ':any 'any)
@@ -70,7 +72,7 @@
   (bp:node* (:push :variable variable)
     (1 :sub-expression (or sub-expression (make-instance 'anything-expression)))))
 
-;;; Combinators
+;;; Logical connectives
 
 (parser.packrat:defrule not-expression ()
     (list 'not (:<- sub-expression (expression)))
@@ -87,15 +89,14 @@
               (* :sub-expression (nreverse sub-expressions)))))))
   (define-combinator-rule and)
   (define-combinator-rule or)
-  (define-combinator-rule compose))
+  (define-combinator-rule :compose)) ; TODO
 
 ;;;
 
 (parser.packrat:defrule transform-expression ()
     (list* :transform (:<- sub-expression (expression)) code)
-  (bp:node* (:transform)
-    (1 :sub-expression sub-expression)
-    (1 :code           code)))
+  (bp:node* (:transform :code code)
+    (1 :sub-expression sub-expression)))
 
 ;;; Rule invocation
 
