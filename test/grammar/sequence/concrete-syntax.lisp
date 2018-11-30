@@ -19,16 +19,21 @@
             (let ((parser.packrat.grammar::*bootstrapping* nil))
               (finishes (parser.packrat.grammar:parse-expression grammar expression))))
 
-          '((* :any)
+          '(;; Repetition
+            (* :any)
             (* :any 1)
             (* :any 1 2)
 
+            ;; Sequence
             (:seq)
             (:seq 1)
             (:seq 1 2)
 
+            ;; Zero or more
             (parser.packrat.grammar.sequence::? 1)
 
+            ;; One or more
             (+ 1)
 
+            ;; Bounds
             (parser.packrat.grammar.sequence::bounds (start end) 1)))))

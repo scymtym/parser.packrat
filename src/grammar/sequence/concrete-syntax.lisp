@@ -24,12 +24,12 @@
 
 (parser.packrat:defrule repetition-expression ()
     (list '* (:<- sub-expression (base::expression))
-          (* (:<- min (base::expression)) 0 1) ; TODO use ? for min max
-          (* (:<- max (base::expression)) 0 1))
+          (? (:seq (:<- min (base::expression))
+                   (? (:<- max (base::expression))))))
   (bp:node* (:repetition)
     (1    :sub-expression  sub-expression)
-    (bp:? :max-repetitions min)
-    (bp:? :min-repetitions max)))
+    (bp:? :min-repetitions min)
+    (bp:? :max-repetitions max)))
 
 (parser.packrat:defrule sequence-expression ()
     (list (or :seq 'seq) (* (:<<- element-expressions (base::expression))))
@@ -41,8 +41,7 @@
 (defmacro define-macro-rule (name expression expansion) ; TODO there is also a define-macro rule in sexp/concrete-syntax
   `(parser.packrat:defrule ,name ()
        (:compose (:transform ,expression ,expansion)
-                 (:<- result (base::expression))) ; TODO shouldn't the result variable be unnecessary?
-     result))
+                 (base::expression))))
 
 (define-macro-rule ?-expression
     (list '? expression)

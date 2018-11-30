@@ -4,6 +4,9 @@
   `((?       . ,(lambda (expression)
                   (assert (length= 2 expression))
                   `(* ,(second expression) nil 1)))
+    (parser.packrat.grammar.sequence::?       . ,(lambda (expression)
+                  (assert (length= 2 expression))
+                  `(* ,(second expression) nil 1)))
 
     (+       . ,(lambda (expression)
                   (assert (length= 2 expression))
