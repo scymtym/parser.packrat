@@ -107,6 +107,11 @@
             (declare (ignore context))
             (make-instance 'base::compose-expression
                            :sub-expressions (map 'list recurse (rest expression)))))
+      ((cons (eql :must))
+       . ,(lambda (expression context recurse)
+            (declare (ignore context))
+            (make-instance 'base::must-expression
+                           :sub-expression (funcall recurse (second expression)))))
 
       ;; Structure
       ((cons (eql structure))

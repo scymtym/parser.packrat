@@ -87,6 +87,8 @@
 
 ;;; Default behavior
 
+(defvar *fatal-cont*) ; TODO hack
+
 (defconstant +context-var+ 'context)
 
 (defmethod compile-rule-using-environment ((grammar     t)
@@ -117,9 +119,10 @@
                          ,@(env:position-variables environment)
                          ,@(when value `(,value)))))))
          (form (maybe-let assigned-names
-                 (compile-expression
-                  grammar environment expression
-                  (make-return-cont t) (make-return-cont nil)))))
+                 (let ((*fatal-cont* (make-return-cont nil)))
+                   (compile-expression
+                    grammar environment expression
+                    (make-return-cont t) *fatal-cont*)))))
     (make-rule-lambda grammar environment parameters (list form))))
 
 (defmethod make-rule-lambda ((grammar     t)

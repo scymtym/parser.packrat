@@ -39,6 +39,10 @@
                                       print-items:print-items-mixin)
   ())
 
+(exp:define-expression-class must (exp:single-sub-expression-mixin
+                                   print-items:print-items-mixin)
+  ())
+
 ;;; Constant
 
 (exp:define-expression-class constant (print-items:print-items-mixin)

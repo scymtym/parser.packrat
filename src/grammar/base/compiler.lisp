@@ -173,6 +173,15 @@
                failure-cont)))))
     (sub (sub-expressions expression) environment t)))
 
+(defmethod compile-expression ((grammar      base-grammar)
+                               (environment  t)
+                               (expression   must-expression)
+                               (success-cont function)
+                               (failure-cont function))
+  (compile-expression
+   grammar environment (sub-expression expression)
+   success-cont parser.packrat.compiler::*fatal-cont*))
+
 ;;; Variables
 
 (defun value* (environment)
