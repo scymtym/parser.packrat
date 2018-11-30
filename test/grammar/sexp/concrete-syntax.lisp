@@ -15,15 +15,21 @@
     (mapc (lambda (expression)
             (finishes (parser.packrat.grammar:parse-expression grammar expression)))
 
-          '((structure symbol (name symbol-name))
+          '(;; Structure
+            (structure symbol (name symbol-name))
+            (structure 'type (name symbol-name))
 
+            ;; `list' and `list*'
             (list a b)
             (list* a b)
             (list* a (rest b))
 
+            ;; `vector' and `vector*'
             (vector a b)
             (vector* a b)
 
+            ;; `cons'
             (cons a b)
 
+            ;; `value'
             (parser.packrat.grammar.sexp::value (a) b)))))

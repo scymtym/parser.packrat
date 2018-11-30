@@ -5,21 +5,8 @@
   (:use seq::meta-grammar))
 (parser.packrat:in-grammar meta-grammar)
 
-(parser.packrat:defrule base::expression ()
-    (or ; ((expression sequence-meta-grammar))
-
-        (base:anything-expression)
-        (base:constant-expression)
-
-        (base:set-expression)
-        (base:push-expression)
-
-        (base:transform-expression)
-
-        (seq:repetition-expression)
-        (seq:sequence-expression)
-
-        (structure-expression)
+(parser.packrat:defrule grammar:expression ()
+    (or (structure-expression)
 
         (list-elements-expression)
         (rest-expression)
@@ -32,7 +19,32 @@
 
         (cons-expression)
 
-        (value-expression)))
+        (value-expression)
+
+        (seq:repetition-expression)
+        (seq:sequence-expression)
+
+        (seq::?-expression)
+        (seq::+-expression)
+
+        ;; ((expression sequence-meta-grammar))
+        (base:predicate-expression)
+        (base:anything-expression)
+
+        (base:constant-expression)
+
+        (base:set-expression)
+        (base:push-expression)
+
+        (base:not-expression)
+        (base:and-expression)
+        (base:or-expression)
+
+        (base::compose-expression) ; TODO
+        (base:transform-expression)
+
+        (base:rule-invocation-expression)
+        (base:next-rule-invocation-expression)))
 
 (parser.packrat:defrule structure-expression ()
     (list 'structure
@@ -41,8 +53,8 @@
                    (:<<- sub-expressions (base::expression)))))
   (bp:node* (:structure)
     (1 :type           type)
-    (* :reader         readers)
-    (* :sub-expression sub-expressions)))
+    (* :reader         (nreverse readers))
+    (* :sub-expression (nreverse sub-expressions))))
 
 (parser.packrat:defrule list-elements-expression ()
     (list 'list-elements (:<- elements-expression (base::expression)))
@@ -63,16 +75,14 @@
 
 (defmacro define-macro-rule (name expression expansion)
   `(parser.packrat:defrule ,name ()
-       (:compose (:transform ,expression ,expansion)
-                 (:<- result (base::expression)))
-     result))
+       (:compose (:transform ,expression ,expansion) (base::expression))))
 
 (define-macro-rule list-expression
     (list* 'list element-expressions)
   `(list-elements (:seq ,@element-expressions)))
 
 (define-macro-rule list*-expression
-    (list 'list* (* (and (:seq :any :any) (:<<- element-expressions :any))) last)
+    (list 'list* (* (and (:seq :any :any) (:<<- element-expressions))) last)
   `(list-elements (:seq ,@(nreverse element-expressions) (rest ,last))))
 
 (define-macro-rule vector-expression
