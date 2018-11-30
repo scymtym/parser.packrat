@@ -128,6 +128,6 @@
                              (body        t))
   `(lambda (,+context-var+ ,@(env:state-variables environment) ,@parameters)
      ;; (declare (optimize (speed 3) (debug 0) (safety 0)))
-     (declare (optimize (speed 1) (debug 1) (safety 1)))
+     (declare (optimize (speed 1) (debug 3) (safety 1)))
      (declare (ignorable ,+context-var+))
      ,@body))
