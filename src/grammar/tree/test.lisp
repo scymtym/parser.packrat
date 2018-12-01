@@ -8,13 +8,13 @@
 (parser.packrat:in-grammar tree-test)
 
 (parser.packrat:defrule find-bindings (operator)
-                        (ancestors
-                         (* (or (list* operator
-                                       (list (* (list (:<<- names)
-                                                      (:<<- values (:transform value (class-of value))))))
-                                       :any)
-                                :any)))
-                        (list names values))
+    (ancestors
+     (* (or (list* operator
+                   (list (* (list (:<<- names)
+                                  (:<<- values (:transform value (class-of value))))))
+                   :any)
+            :any)))
+  (list names values))
 
 (parser.packrat:parse
  '(find-bindings 'let*)

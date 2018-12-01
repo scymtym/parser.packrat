@@ -19,7 +19,6 @@
     (children  (* (or (<<- result (node foo (:bar (or 2 5)))) :any))) ; ./foo[@bar=2 or @bar=5]
   #+END_SRC
 
-
 ** TODO Maybe syntax
 
    #+BEGIN_SRC lisp

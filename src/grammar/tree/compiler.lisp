@@ -29,7 +29,6 @@
             (setf (values (car ,(generator new-environment))
                           (cdr ,(generator new-environment)))
                   (funcall (cdr ,(generator environment))))
-            (print (list :generator ,(generator new-environment)))
             ,(funcall success-cont new-environment))))
      (lambda (element-environment)
        (declare (ignore element-environment))
@@ -45,7 +44,6 @@
                                               :class 'env:value-environment
                                               :state '())))
     `(let ((,(env:value new-environment) (car ,(generator environment))))
-       (print (list :value ,(env:value new-environment)))
        ,(compile-expression
          grammar new-environment (exp:sub-expression expression)
          success-cont failure-cont))))
@@ -61,8 +59,9 @@
                                               :class 'generator-environment
                                               :state '())))
     `(let ((,(generator new-environment) (cons nil nil)))
-       (setf (cdr ,(generator new-environment))
-             (depth-first-traverse ,(env:value environment)) ; TODO almost same for children- vs. ancestors-expression -> ancestor-expression-mixin)
+       (setf (values (car ,(generator new-environment))
+                     (cdr ,(generator new-environment)))
+             (funcall (depth-first-traverse ,(env:value environment))) ; TODO almost same for children- vs. ancestors-expression -> ancestor-expression-mixin)
              )
        ;; TODO later (declare (dynamic-extent ,position))
        ,(compile-expression
@@ -83,7 +82,7 @@
                                             (exp:sub-expression expression))))
     (reinitialize-instance expression :sub-expression sub-expression)))
 
-;;; Runtime support
+;;; Concrete syntax support
 
 (unless (assoc 'ancestors parser.packrat.bootstrap::*primitives*)
   (push (cons '(cons (eql ancestors))
