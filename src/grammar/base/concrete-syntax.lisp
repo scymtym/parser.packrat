@@ -12,7 +12,7 @@
     (or (predicate-expression)
         (anything-expression)
 
-        (constant-expression)
+        (constant-expression :default)
 
         (set-expression)
         (push-expression)
@@ -49,10 +49,12 @@
 
 ;;; Constant
 
-(parser.packrat:defrule constant-expression () ; TODO either constant or terminal
+(parser.packrat:defrule constant-expression (context) ; TODO either constant or terminal
     (or (list 'quote value)
         (:guard value (typep '(not (or cons (and symbol (not keyword)))))))
-  (bp:node* (:terminal :value value)))
+  (ecase context
+    (:value   (bp:node* (:constant :value value)))
+    (:default (bp:node* (:terminal :value value)))))
 
 ;;; Variables
 
@@ -104,7 +106,7 @@
     (list (or (:guard rule-name symbolp)
               (list (:guard rule-name    symbolp)
                     (:guard grammar-name symbolp)))
-          (* (:<<- arguments (expression #+todo :argument))))
+          (* (:<<- arguments (or (constant-expression :value) (expression #+todo :argument)))))
   (bp:node* (:rule-invocation :grammar grammar-name
                               :rule    rule-name)
     (* :sub-expression (nreverse arguments))))

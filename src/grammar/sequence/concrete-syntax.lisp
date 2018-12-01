@@ -9,7 +9,7 @@
 
 (parser.packrat:defrule base::expression ()
     (or (base:anything-expression)
-        (base:constant-expression)
+        (base:constant-expression :default)
 
         (base:set-expression)
         (base:push-expression)
@@ -24,8 +24,10 @@
 
 (parser.packrat:defrule repetition-expression ()
     (list '* (:<- sub-expression (base::expression))
-          (? (:seq (:<- min (base::expression))
-                   (? (:<- max (base::expression))))))
+          (? (:seq (:<- min (or (base::constant-expression :value)
+                                (base::expression)))
+                   (? (:<- max (or (base::constant-expression :value)
+                                   (base::expression)))))))
   (bp:node* (:repetition)
     (1    :sub-expression  sub-expression)
     (bp:? :min-repetitions min)

@@ -31,7 +31,7 @@
         (base:predicate-expression)
         (base:anything-expression)
 
-        (base:constant-expression)
+        (base:constant-expression :default)
 
         (base:set-expression)
         (base:push-expression)
@@ -48,7 +48,9 @@
 
 (parser.packrat:defrule structure-expression ()
     (list 'structure
-          (:<- type (base::expression))
+          (:<- type (or (base:constant-expression :value) ; TODO always pass context
+                        (grammar:expression))
+               )
           (* (list (:<<- readers) ; TODO must be a function name
                    (:<<- sub-expressions (base::expression)))))
   (bp:node* (:structure)
