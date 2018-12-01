@@ -5,79 +5,79 @@
   (:use seq::meta-grammar))
 (parser.packrat:in-grammar meta-grammar)
 
-(parser.packrat:defrule grammar:expression ()
-    (or (structure-expression)
+(parser.packrat:defrule grammar:expression (context)
+    (or (structure-expression context)
 
-        (list-elements-expression)
-        (rest-expression)
-        (vector-elements-expression)
+        (list-elements-expression context)
+        (rest-expression context)
+        (vector-elements-expression context)
 
-        (list-expression)
-        (list*-expression)
-        (vector-expression)
-        (vector*-expression)
+        (list-expression context)
+        (list*-expression context)
+        (vector-expression context)
+        (vector*-expression context)
 
-        (cons-expression)
+        (cons-expression context)
 
-        (value-expression)
+        (value-expression context)
 
-        (seq:repetition-expression)
-        (seq:sequence-expression)
+        (seq:repetition-expression context)
+        (seq:sequence-expression context)
 
-        (seq::?-expression)
-        (seq::+-expression)
+        (seq::?-expression context)
+        (seq::+-expression context)
 
         ;; ((expression sequence-meta-grammar))
-        (base:predicate-expression)
-        (base:anything-expression)
+        (base:predicate-expression context)
+        (base:anything-expression context)
 
-        (base:constant-expression :default)
+        (base:constant-expression context)
 
-        (base:set-expression)
-        (base:push-expression)
+        (base:set-expression context)
+        (base:push-expression context)
 
-        (base:not-expression)
-        (base:and-expression)
-        (base:or-expression)
+        (base:not-expression context)
+        (base:and-expression context)
+        (base:or-expression context)
 
-        (base::compose-expression) ; TODO
-        (base:transform-expression)
+        (base::compose-expression context) ; TODO
+        (base:transform-expression context)
 
-        (base:rule-invocation-expression)
-        (base:next-rule-invocation-expression)))
+        (base:rule-invocation-expression context)
+        (base:next-rule-invocation-expression context)))
 
-(parser.packrat:defrule structure-expression ()
+(parser.packrat:defrule structure-expression (context)
     (list 'structure
-          (:<- type (or (base:constant-expression :value) ; TODO always pass context
-                        (grammar:expression))
-               )
+          (:<- type (grammar:expression :value))
           (* (list (:<<- readers) ; TODO must be a function name
-                   (:<<- sub-expressions (base::expression)))))
+                   (:<<- sub-expressions (base::expression context)))))
   (bp:node* (:structure)
     (1 :type           type)
     (* :reader         (nreverse readers))
     (* :sub-expression (nreverse sub-expressions))))
 
-(parser.packrat:defrule list-elements-expression ()
-    (list 'list-elements (:<- elements-expression (base::expression)))
+(parser.packrat:defrule list-elements-expression (context)
+    (list 'list-elements (:<- elements-expression (grammar:expression context)))
   (bp:node* (:as-list)
     (1 :sub-expression elements-expression)))
 
-(parser.packrat:defrule rest-expression ()
-   (list 'rest (:<- rest-expression (base::expression)))
+(parser.packrat:defrule rest-expression (context)
+   (list 'rest (:<- rest-expression (base::expression context)))
  (bp:node* (:rest)
    (1 :sub-expression rest-expression)))
 
-(parser.packrat:defrule vector-elements-expression ()
-    (list 'vector-elements (:<- elements-expression (base::expression)))
+(parser.packrat:defrule vector-elements-expression (context)
+    (list 'vector-elements
+          (:<- elements-expression (grammar:expression context)))
   (bp:node* (:as-vector)
     (1 :sub-expression elements-expression)))
 
 ;;; Syntactic sugar
 
 (defmacro define-macro-rule (name expression expansion)
-  `(parser.packrat:defrule ,name ()
-       (:compose (:transform ,expression ,expansion) (base::expression))))
+  `(parser.packrat:defrule ,name (context)
+       (:compose (:transform ,expression ,expansion)
+                 (base::expression context))))
 
 (define-macro-rule list-expression
     (list* 'list element-expressions)

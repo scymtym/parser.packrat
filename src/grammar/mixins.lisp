@@ -48,10 +48,15 @@
 (defun make-meta-expression (meta-grammar-name meta-start-rule-name)
   (let ((invoke-expression-class
           (find-symbol (string '#:rule-invocation-expression)
+                       (find-package '#:parser.packrat.grammar.base)))
+        (constant-expression-class
+          (find-symbol (string '#:constant-expression)
                        (find-package '#:parser.packrat.grammar.base))))
     (make-instance invoke-expression-class
-                   :grammar meta-grammar-name
-                   :rule    meta-start-rule-name)))
+                   :grammar   meta-grammar-name
+                   :rule      meta-start-rule-name
+                   :arguments (list (make-instance constant-expression-class
+                                                   :value :default)))))
 
 (defclass meta-grammar-mixin ()
   ;; TODO could just a use a meta-grammar-expression. that would

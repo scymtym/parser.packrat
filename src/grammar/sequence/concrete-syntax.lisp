@@ -7,43 +7,42 @@
 
 ;;;
 
-(parser.packrat:defrule base::expression ()
-    (or (base:anything-expression)
-        (base:constant-expression :default)
+(parser.packrat:defrule base::expression (context)
+    (or (base:anything-expression context)
+        (base:constant-expression context)
 
-        (base:set-expression)
-        (base:push-expression)
+        (base:set-expression context)
+        (base:push-expression context)
 
-        (repetition-expression)
-        (sequence-expression)
+        (repetition-expression context)
+        (sequence-expression context)
 
-        (?-expression)
-        (+-expression)
+        (?-expression context)
+        (+-expression context)
 
-        (bounds-expression)))
+        (bounds-expression context)))
 
-(parser.packrat:defrule repetition-expression ()
-    (list '* (:<- sub-expression (base::expression))
-          (? (:seq (:<- min (or (base::constant-expression :value)
-                                (base::expression)))
-                   (? (:<- max (or (base::constant-expression :value)
-                                   (base::expression)))))))
+(parser.packrat:defrule repetition-expression (context)
+    (list '* (:<- sub-expression (base::expression context))
+          (? (:seq (:<- min (base::expression :value))
+                   (? (:<- max (base::expression :value))))))
   (bp:node* (:repetition)
     (1    :sub-expression  sub-expression)
     (bp:? :min-repetitions min)
     (bp:? :max-repetitions max)))
 
-(parser.packrat:defrule sequence-expression ()
-    (list (or :seq 'seq) (* (:<<- element-expressions (base::expression))))
+(parser.packrat:defrule sequence-expression (context)
+    (list (or :seq 'seq)
+          (* (:<<- element-expressions (base::expression context))))
   (bp:node* (:sequence)
     (* :sub-expression (nreverse element-expressions))))
 
 ;;; Syntactic sugar
 
 (defmacro define-macro-rule (name expression expansion) ; TODO there is also a define-macro rule in sexp/concrete-syntax
-  `(parser.packrat:defrule ,name ()
+  `(parser.packrat:defrule ,name (context)
        (:compose (:transform ,expression ,expansion)
-                 (base::expression))))
+                 (base::expression context))))
 
 (define-macro-rule ?-expression
     (list '? expression)
