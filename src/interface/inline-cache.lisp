@@ -80,7 +80,8 @@
        (if (and (eq                        grammar    ,grammar)
                 (expression-is-invocation? expression ',rule))
            ;; Fast path
-           (let* ((arguments (rest expression))
+           (let* (,@(when names
+                      `((arguments (rest expression))))
                   ,@(make-bindings 'arguments names))
              (grammar:parse ,grammar (lambda ,(remove-if (rcurry #'member names) rule-lambda-list) ,@rule-body) input))
            ;; Slow path
