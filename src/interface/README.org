@@ -33,7 +33,7 @@
          input))
     #+END_SRC
 
-** Inline cache
+** STARTED Inline cache
 
    Applied when expression is not constant enough. The basic idea is
    compiling the expression on the first invocation and then using the
@@ -51,7 +51,7 @@
               grammar expression input)
    #+END_SRC
 
-** TODO Separate ~parse~ macro for using lexical variables?
+** STARTED Separate ~parse~ macro for using lexical variables?
 
    #+BEGIN_SRC lisp
      (let ((n 4))

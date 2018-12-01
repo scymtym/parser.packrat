@@ -57,7 +57,12 @@
            `(funcall (load-time-value (make-instance 'inline-cache))
                      *grammar* ,expression ,input))
 
-          (t
+          (grammar-constant
            `(funcall (load-time-value (make-instance 'inline-cache))
                      ,(make-find-grammar-form)
+                     ,expression ,input))
+
+          (t
+           `(funcall (load-time-value (make-instance 'inline-cache))
+                     (grammar:find-grammar ,grammar) ; TODO inline cache could get grammar symbol and cache lokup
                      ,expression ,input)))))
