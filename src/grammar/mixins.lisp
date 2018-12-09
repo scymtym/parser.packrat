@@ -15,8 +15,8 @@
 ;;; `dependencies-mixin'
 
 (defclass dependencies-mixin ()
-  ((dependencies :reader   dependencies
-                 :initform '())))
+  ((%dependencies :reader   dependencies
+                  :initform '())))
 
 ;;; `rule-storage-mixin'
 
@@ -25,7 +25,8 @@
            :initform (make-hash-table :test #'eq))))
 
 (defmethod print-items:print-items append ((object rule-storage-mixin))
-  `((:rule-count ,(hash-table-count (%rules object)) " ~D rule~:P" ((:after :name)))))
+  (let ((count (hash-table-count (%rules object))))
+    `((:rule-count ,count " ~D rule~:P" ((:after :name))))))
 
 (defmethod rules ((grammar rule-storage-mixin))
   (hash-table-values (%rules grammar)))
