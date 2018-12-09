@@ -281,17 +281,3 @@
      + <<vector-elements-expression>> ~VECTOR-ELEMENTS-EXPRESSION ::= (LIST 'VECTOR-ELEMENTS (~[[expression][~expression~]] ~))~
 
      + <<vector-expression>> ~VECTOR-EXPRESSION ::= (LIST 'VECTOR (REST-EXPRESSION «anything»))~
-
-
-
-* Related Work
-
-  + OMeta ::
-
-  + Ohm ::
-
-  + clometa ::
-
-  + Esrap ::
-
-  + Stratego/Spoofax :: http://www.metaborg.org/en/latest/index.html
