@@ -64,11 +64,11 @@
 
 (defgeneric parse-expression (grammar expression) ; TODO allow dispatch on rule class? separate protocol?
   (:documentation
-   ""))
+   "Parse the s-expression EXPRESSION according to GRAMMAR's meta-grammar."))
 
 (defgeneric parse (grammar expression input) ; TODO separate protocol?
   (:documentation
-   "TODO"))
+   "Parse INPUT according to EXPRESSION."))
 
 (defgeneric default-environment (grammar expression)
   (:documentation
