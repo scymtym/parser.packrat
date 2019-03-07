@@ -19,12 +19,11 @@
 ;;; Utilities
 
 (defun make-inline-rule-lambda (grammar expression)
-  (let* ((environment       (grammar:default-environment
-                             grammar expression))
-         (state-variables   (env:state-variables environment))
-         (free-variables    (map 'list #'exp:variable
-                                 (exp:variable-references
-                                  expression :filter (of-type 'base:variable-reference-expression)))))
+  (let* ((environment     (grammar:default-environment grammar expression))
+         (state-variables (env:state-variables environment))
+         (free-variables  (map 'list #'exp:variable
+                               (exp:variable-references
+                                expression :filter (of-type 'base:variable-reference-expression)))))
     (values (parser.packrat.compiler:compile-rule
              grammar free-variables expression)
             ; state-variables
@@ -63,14 +62,13 @@
                                  ,variable))))
 
 (defun make-inline-cache-form/invocation (grammar expression)
-  (let+ ((rule           (parser.packrat.grammar.base:rule expression))
-         (count          (length (parser.packrat.grammar.base:arguments
-                                  expression)))
+  (let+ ((rule           (base:rule expression))
+         (count          (length (base:arguments expression)))
          (names          (map-into (make-list count) #'gensym))
-         (new-expression (make-instance 'parser.packrat.grammar.base:rule-invocation-expression
+         (new-expression (make-instance 'base:rule-invocation-expression
                                         :rule      rule
                                         :arguments (map 'list (lambda (variable)
-                                                                (make-instance 'parser.packrat.grammar.base:variable-reference-expression
+                                                                (make-instance 'base:variable-reference-expression
                                                                                :variable variable))
                                                         names)))
          ((&values (&ign rule-lambda-list &rest rule-body) ; free-variables
