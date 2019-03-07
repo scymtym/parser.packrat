@@ -42,7 +42,7 @@
          (free-variables      (when (and grammar/resolved expression/parsed)
                                 (map 'list #'exp:variable
                                      (exp:variable-references
-                                      expression/parsed :filter (of-type 'parser.packrat.grammar.base:variable-reference-expression)))))
+                                      expression/parsed :filter (of-type 'base:variable-reference-expression)))))
          ((&flet make-find-grammar-form ()
             `(load-time-value (grammar:find-grammar ',grammar-constant)))))
     (cond ((and expression/parsed grammar/resolved (not free-variables))

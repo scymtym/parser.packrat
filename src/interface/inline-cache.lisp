@@ -24,17 +24,17 @@
          (state-variables   (env:state-variables environment))
          (free-variables    (map 'list #'exp:variable
                                  (exp:variable-references
-                                  expression :filter (of-type 'parser.packrat.grammar.base:variable-reference-expression)))))
+                                  expression :filter (of-type 'base:variable-reference-expression)))))
     (values (parser.packrat.compiler:compile-rule
              grammar free-variables expression)
             ; state-variables
             free-variables)))
 
 (defun simple-invocation? (expression)
-  (and (typep expression 'parser.packrat.grammar.base:rule-invocation-expression)
-       (every (of-type '(or parser.packrat.grammar.base:variable-reference-expression
-                            parser.packrat.grammar.base:constant-expression))
-              (parser.packrat.grammar.base:arguments expression))))
+  (and (typep expression 'base:rule-invocation-expression)
+       (every (of-type '(or base:variable-reference-expression
+                            base:constant-expression))
+              (base:arguments expression))))
 
 (defun make-inline-cache-form (grammar expression ; free-variables
                                )
