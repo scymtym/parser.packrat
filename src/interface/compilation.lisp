@@ -14,19 +14,17 @@
   (when (typep expression '(cons (eql list)
                                  (cons (cons (eql quote) (cons symbol null))
                                        list)))
-    (destructuring-bind (list rule &rest arguments)
-        expression
+    (destructuring-bind (list rule &rest arguments) expression
       (declare (ignore list))
       (list* (second rule) arguments))))
 
 (define-compiler-macro parse (expression input
                               &key (grammar nil grammar-supplied?))
-  (let+ ((grammar-constant    (cond
-                                ((not grammar-supplied?)
-                                 nil #+no (when (boundp '*grammar*) ; TODO wrong
-                                            *grammar*))
-                                ((constantp grammar)
-                                 (eval grammar))))
+  (let+ ((grammar-constant    (cond ((not grammar-supplied?)
+                                     nil #+no (when (boundp '*grammar*) ; TODO wrong
+                                                *grammar*))
+                                    ((constantp grammar)
+                                     (eval grammar))))
          (grammar/resolved    (typecase grammar-constant
                                 (null)
                                 (symbol ; TODO grammar-designator
@@ -59,8 +57,7 @@
 
           (grammar-constant
            `(funcall (load-time-value (make-instance 'inline-cache))
-                     ,(make-find-grammar-form)
-                     ,expression ,input))
+                     ,(make-find-grammar-form) ,expression ,input))
 
           (t
            `(funcall (load-time-value (make-instance 'inline-cache))
