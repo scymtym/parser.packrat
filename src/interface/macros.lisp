@@ -52,22 +52,24 @@
                 (if value?
                     (setf value* value)
                     value*)))))
-         (element-type (singleton-option
+         #+no (element-type (singleton-option
                         'defgrammar :element-type '(not (or null keyword))))
-         (class (singleton-option 'defgrammar :class '(not null)))
-         (use '())
+         (class         (singleton-option 'defgrammar :class '(not null)))
+         (use           '())
+         (cached?       (singleton-option 'defgrammar :cached? 'boolean))
          (documentation (singleton-option 'defgrammar :documentation 'string)))
     ;; Build and check use list. If used grammars cannot be found,
     ;; still expand, but signal full warnings.
     (dolist (option options)
       (destructuring-bind (keyword &rest value) option
         (ecase keyword
-          (:element-type (apply element-type value))
+          ; (:element-type (apply element-type value))
           (:class (apply class value))
           (:use
            (dolist (used value)
              (grammar:find-grammar used :if-does-not-exist #'warn)) ; TODO ensure?
            (appendf use value))
+          (:cached? (apply cached? value))
           (:documentation
            (apply #'documentation value)))))
 
@@ -80,8 +82,9 @@
                  `(:element-type ',(funcall element-type)))
         ,@(when (funcall class)
             `(:grammar-class ',(funcall class)))
-        :use ',use
-                                        ; :documentation ,(funcall documentation)
+        :use     ',use
+        :cached? ',(funcall cached?)
+        ; :documentation ,(funcall documentation)
         ))))
 
 (defmacro in-grammar (grammar-name)
