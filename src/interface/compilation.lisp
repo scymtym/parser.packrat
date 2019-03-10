@@ -48,7 +48,7 @@
     (cond ((and expression/parsed grammar/resolved (not free-variables))
            `(grammar:parse
              ,(make-find-grammar-form)
-             ,(make-inline-rule-lambda grammar/resolved expression/parsed)
+             ,(make-rule-lambda grammar/resolved expression/parsed)
              ,input))
 
           ((not grammar-supplied?)
