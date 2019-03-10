@@ -4,9 +4,12 @@
                         rule-storage-mixin
                         parser.packrat.grammar::meta-grammar-mixin
                         print-items:print-items-mixin)
-  ((use :initarg :use
-        :reader  use
-        :initform '()))) ; TODO mixin for dependencies
+  ((%cached? :initarg  :cached?
+             :reader   cached?
+             :initform t)
+   (%use     :initarg :use
+             :reader  use
+             :initform '()))) ; TODO mixin for dependencies
 
 (defmethod find-rule ((name symbol) (grammar base-grammar)
                       &key recursive? if-does-not-exist)

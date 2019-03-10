@@ -510,12 +510,22 @@
                       (multiple-value-list
                        ,(emit-call rule-var state-variables arguments-var)))))))))
 
+(defun emit-call/no-cache
+    (rule-name rule-var position-variables state-variables arguments-var)
+  (let ((rule-key `',rule-name))
+    `(progn
+       ,(emit-d-call rule-key position-variables state-variables arguments-var)
+       (let ((*depth* (+ *depth* 2))
+             (*old-state* (list ,@(remove-if (rcurry #'member position-variables) state-variables))))
+         ,(emit-call rule-var state-variables arguments-var)))))
+
 (defmethod compile-expression ((grammar      base-grammar) ; TODO (grammar t)?
                                (environment  t)
                                (expression   rule-invocation-expression)
                                (success-cont function)
                                (failure-cont function))
-  (let+ (((&accessors-r/o (grammar-name grammar) (rule-name rule) arguments) expression)
+  (let+ (((&accessors-r/o cached?) grammar)
+         ((&accessors-r/o (grammar-name grammar) (rule-name rule) arguments) expression)
          (state-variables    (env:state-variables environment))
          (position-variables (env:position-variables environment))
          ((&with-gensyms grammar-var rule-var arguments-var success?-var value-var))
@@ -553,9 +563,11 @@
                              ,@(env:position-variables continue-environment)
                              ,@(unless (member value-var (env:position-variables continue-environment))
                                  `(,value-var)))
-           ,(emit-lookup-and-call
-             rule-name rule-var position-variables state-variables
-             (when arguments arguments-var))
+           ,(funcall (if cached?
+                         'emit-lookup-and-call
+                         'emit-call/no-cache)
+                     rule-name rule-var position-variables state-variables
+                     (when arguments arguments-var))
          ,(emit-d-return rule-name position-variables state-variables (when arguments arguments-var)
                          success?-var (env:position-variables continue-environment) value-var)
          (if ,success?-var
