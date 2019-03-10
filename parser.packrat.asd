@@ -152,6 +152,11 @@
                      (:static-file "version-string.sexp")
                      (:static-file "README.org"))
 
+  :perform          (load-op :after (operation component)
+                      (let ((symbol (find-symbol (string '#:*bootstrapping*)
+                                                 '#:parser.packrat.grammar)))
+                        (setf (symbol-value symbol) nil)))
+
   :in-order-to      ((test-op (test-op "parser.packrat/test"))))
 
 (defsystem "parser.packrat/test"
