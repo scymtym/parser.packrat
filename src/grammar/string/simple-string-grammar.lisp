@@ -3,9 +3,12 @@
 (defclass simple-string-grammar (seq:sequence-grammar)
   ()
   (:default-initargs
-   :sequence-type '(and simple-string (not (or simple-base-string (simple-array nil 1))))
-   :element-type  'character
-   :index-type    'array-index))
+   :sequence-type   '(and simple-string (not (or simple-base-string (simple-array nil 1))))
+   :element-type    'character
+   :index-type      'array-index
+
+   :meta-grammar    'meta-grammar
+   :meta-start-rule 'base::expression))
 
 (defmethod grammar:default-environment ((grammar    simple-string-grammar)
                                         (expression t))

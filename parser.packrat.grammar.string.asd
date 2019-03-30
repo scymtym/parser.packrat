@@ -25,7 +25,9 @@
                                    (:file       "prepare")
                                    (:file       "compiler")
 
-                                   (:file       "runtime"))))
+                                   (:file       "runtime")
+
+                                   (:file       "concrete-syntax"))))
 
   :in-order-to      ((test-op (test-op "parser.packrat.grammar.string/test"))))
 
