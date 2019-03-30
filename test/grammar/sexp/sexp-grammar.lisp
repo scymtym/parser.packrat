@@ -1,6 +1,6 @@
 ;;;; sexp-grammar.lisp --- Unit tests for the sexp-grammar class.
 ;;;;
-;;;; Copyright (C) 2017-2018 Jan Moringen
+;;;; Copyright (C) 2017-2019 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -19,7 +19,7 @@
 (test sexp-grammar.smoke
   "Smoke test for `sexp-grammar' grammar class."
 
-  (grammar-test (grammar 'parser.packrat.grammar.sexp:sexp-grammar :name :test)
+  (grammar-test (grammar 'mock-grammar)
     (rules-test (grammar)
 
       ;; `structure'

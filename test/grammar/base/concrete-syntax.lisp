@@ -11,10 +11,7 @@
 (test concrete-syntax.smoke
   "Smoke test for the concrete syntax of the base grammar."
 
-  (grammar-test (grammar 'parser.packrat.grammar.base:base-grammar
-                         :name            :test
-                         :meta-grammar    'parser.packrat.grammar.base::meta-grammar
-                         :meta-start-rule 'parser.packrat.grammar.base::expression)
+  (grammar-test (grammar 'mock-grammar)
     (mapc (lambda (expression)
             (let ((parser.packrat.grammar::*bootstrapping* nil))
               (finishes (parser.packrat.grammar:parse-expression grammar expression))))

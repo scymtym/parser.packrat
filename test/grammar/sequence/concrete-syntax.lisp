@@ -1,6 +1,6 @@
 ;;;; concrete-syntax.lisp --- Unit tests for the concrete syntax of the sequence grammar.
 ;;;;
-;;;; Copyright (C) 2017-2018 Jan Moringen
+;;;; Copyright (C) 2017-2019 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -11,10 +11,7 @@
 (test concrete-syntax.smoke
   "Smoke test for the concrete syntax of the sequence grammar."
 
-  (grammar-test (grammar 'parser.packrat.grammar.sequence::sequence-grammar
-                         :name            :test
-                         :meta-grammar    'parser.packrat.grammar.sequence::meta-grammar
-                         :meta-start-rule 'parser.packrat.grammar.base::expression)
+  (grammar-test (grammar 'mock-grammar)
     (mapc (lambda (expression)
             (let ((parser.packrat.grammar::*bootstrapping* nil))
               (finishes (parser.packrat.grammar:parse-expression grammar expression))))

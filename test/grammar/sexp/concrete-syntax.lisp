@@ -1,6 +1,6 @@
 ;;;; concrete-syntax.lisp --- Unit tests for the concrete syntax of the sexp grammar.
 ;;;;
-;;;; Copyright (C) 2017-2018 Jan Moringen
+;;;; Copyright (C) 2017-2019 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -11,7 +11,7 @@
 (test concrete-syntax.smoke
   "Smoke test for the concrete syntax of the sexp grammar."
 
-  (grammar-test (grammar 'parser.packrat.grammar.sexp::sexp-grammar :name :test)
+  (grammar-test (grammar 'mock-grammar)
     (mapc (lambda (expression)
             (finishes (parser.packrat.grammar:parse-expression grammar expression)))
 
