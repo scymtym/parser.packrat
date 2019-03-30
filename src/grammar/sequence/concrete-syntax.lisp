@@ -8,13 +8,7 @@
 ;;;
 
 (parser.packrat:defrule base::expression (context)
-    (or (base:anything-expression context)
-        (base:constant-expression context)
-
-        (base:set-expression context)
-        (base:push-expression context)
-
-        (repetition-expression context)
+    (or (repetition-expression context)
         (sequence-expression context)
 
         (?-expression context)

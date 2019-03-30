@@ -21,30 +21,9 @@
 
         (value-expression context)
 
-        (seq:repetition-expression context)
-        (seq:sequence-expression context)
+        ((base::expression seq::meta-grammar) context)
 
-        (seq::?-expression context)
-        (seq::+-expression context)
-
-        ;; ((expression sequence-meta-grammar))
-        (base:predicate-expression context)
-        (base:anything-expression context)
-
-        (base:constant-expression context)
-
-        (base:set-expression context)
-        (base:push-expression context)
-
-        (base:not-expression context)
-        (base:and-expression context)
-        (base:or-expression context)
-
-        (base::compose-expression context) ; TODO
-        (base:transform-expression context)
-
-        (base:rule-invocation-expression context)
-        (base:next-rule-invocation-expression context)))
+        ((base::expression base::meta-grammar) context)))
 
 (parser.packrat:defrule structure-expression (context)
     (list 'structure
