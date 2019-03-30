@@ -15,6 +15,9 @@
    (#:grammar #:parser.packrat.grammar)
    (#:base    #:parser.packrat.grammar.base))
 
+  (:export
+   #:?)
+
   ;; Expressions
   (:export
    #:min-repetitions
