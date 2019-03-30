@@ -5,7 +5,7 @@
 (test stream-grammar.smoke
   "Smoke test for the `stream-grammar' grammar class."
 
-  (grammar-test (grammar 'parser.packrat.grammar.stream::stream-grammar :name :test)
+  (grammar-test (grammar 'mock-grammar)
     (rules-test (grammar)
       `((or (:seq #\f #\o #\o (* (:seq #\b #\a)) #\r)
             (:seq (:seq #\f #\o #\o) (:seq #\b #\a #\z)))
