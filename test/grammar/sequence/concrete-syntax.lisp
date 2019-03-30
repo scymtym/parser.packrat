@@ -13,8 +13,7 @@
 
   (grammar-test (grammar 'mock-grammar)
     (mapc (lambda (expression)
-            (let ((parser.packrat.grammar::*bootstrapping* nil))
-              (finishes (parser.packrat.grammar:parse-expression grammar expression))))
+            (finishes (parser.packrat.grammar:parse-expression grammar expression)))
 
           '(;; Repetition
             (* :any)
