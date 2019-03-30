@@ -18,6 +18,10 @@
    (#:exp   #:parser.packrat.expression)
    (#:env   #:parser.packrat.environment))
 
+  ;; Concrete syntax
+  (:export
+   #:<- #:<<-)
+
   ;; Expressions
   (:export
    #:anything-expression
