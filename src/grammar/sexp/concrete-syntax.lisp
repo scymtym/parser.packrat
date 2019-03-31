@@ -78,7 +78,7 @@
 
 (define-macro-rule cons-expression
     (list 'cons car-expression cdr-expression)
-  `(structure consp (car ,car-expression) (cdr ,cdr-expression)))
+  `(structure 'cons (car ,car-expression) (cdr ,cdr-expression)))
 
 ;;;
 
