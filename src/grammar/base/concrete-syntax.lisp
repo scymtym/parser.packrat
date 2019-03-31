@@ -62,11 +62,13 @@
     (:guard (typep '(and symbol (not (or keyword null))))))
 
 (parser.packrat:defrule set-expression (context)
-    (or (:<- variable (variable-name))
-        (list (or :<- '<-) (:<- variable (variable-name))
+    (or (:<- variable1 (variable-name))
+        (list (or :<- '<-) (:<- variable2 (variable-name))
               (* (:<- sub-expression (expression context)) 0 1)))
-  (bp:node* (:set :variable variable)
-    (1 :sub-expression (or sub-expression (make-instance 'anything-expression)))))
+  (if (and variable1 (eq context :value))
+      (bp:node* (:variable-reference :variable variable1))
+      (bp:node* (:set :variable (or variable1 variable2))
+        (1 :sub-expression (or sub-expression (make-instance 'anything-expression))))))
 
 (parser.packrat:defrule push-expression (context)
     (list (or :<<- '<<-) (:<- variable (variable-name))
