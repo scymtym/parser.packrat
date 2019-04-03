@@ -66,11 +66,11 @@
                                (expression   bounds-test-expression)
                                (success-cont function)
                                (failure-cont function))
-  `(if (null ,(tail environment))
-       ,(funcall failure-cont environment)
+  `(if (consp ,(tail environment))
        ,(compile-expression
          grammar environment (exp:sub-expression expression)
-         success-cont failure-cont)))
+         success-cont failure-cont)
+       ,(funcall failure-cont environment)))
 
 (defmethod compile-expression ((grammar      t)
                                (environment  list-environment)

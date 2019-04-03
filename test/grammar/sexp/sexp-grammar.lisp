@@ -56,6 +56,11 @@
         ((1 :b c c) (t   (1 :b c c) (1 :b c c)))
         ((1 :b c d) (nil (1 :b c d))))
 
+      '((list* (* a) :b)
+
+        ((a . :b)   (t (a . :b)   (a . :b)))
+        ((a a . :b) (t (a a . :b) (a a . :b))))
+
       ;; `as-vector'
       '((vector a :b (* 'c))
 
