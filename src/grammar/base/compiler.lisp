@@ -613,7 +613,8 @@
                              (find-rule ',rule-name (find-grammar ',grammar-name)
                                         :if-does-not-exist :forward-reference)))
                  ,@(when arguments `((,arguments-var (list ,@argument-forms)))))
-      (when arguments `(declare (dynamic-extent ,arguments-var)))
+      ;; TODO wrong (when arguments `(declare (dynamic-extent ,arguments-var)))
+      ;;            At least SBCL stack-allocated the arguments of the `list' application, not just the list itself
       ;; TODO tail calls do not need the receiving part
       `(multiple-value-bind (,success?-var
                              ,@(env:position-variables continue-environment)
