@@ -1,6 +1,6 @@
 (defsystem "parser.packrat"
   :description      "A Packrat parser for Common Lisp."
-  :licence          "BSD" ; see COPYING file for details
+  :license          "BSD" ; see COPYING file for details
 
   :author           "Jan Moringen <jmoringe@techfak.uni-bielefeld.de>"
   :maintainer       "Jan Moringen <jmoringe@techfak.uni-bielefeld.de>"
@@ -160,46 +160,47 @@
   :in-order-to      ((test-op (test-op "parser.packrat/test"))))
 
 (defsystem "parser.packrat/test"
+  :description "Unit tests for the parser.packrat system."
 
-  :version    (:read-file-form "version-string.sexp")
-  :depends-on ((:require "sb-cltl2")
+  :version     (:read-file-form "version-string.sexp")
+  :depends-on  ((:require "sb-cltl2")
 
-               (:version "fiveam"         "1.4")
+                (:version "fiveam"         "1.4")
 
-               (:version "parser.packrat" (:read-file-form "version-string.sexp")))
+                (:version "parser.packrat" (:read-file-form "version-string.sexp")))
 
-  :components ((:module     "grammar"
-                :pathname   "test/grammar"
-                :serial     t
-                :components ((:file       "package")
-                             (:file       "util")))
+  :components  ((:module     "grammar"
+                 :pathname   "test/grammar"
+                 :serial     t
+                 :components ((:file       "package")
+                              (:file       "util")))
 
-               (:module     "grammar-base"
-                :depends-on ("grammar")
-                :pathname   "test/grammar/base"
-                :serial     t
-                :components ((:file       "package")
-                             (:file       "concrete-syntax")
-                             (:file       "base-grammar")))
+                (:module     "grammar-base"
+                 :depends-on ("grammar")
+                 :pathname   "test/grammar/base"
+                 :serial     t
+                 :components ((:file       "package")
+                              (:file       "concrete-syntax")
+                              (:file       "base-grammar")))
 
-               (:module     "grammar-sequence"
-                :depends-on ("grammar")
-                :pathname   "test/grammar/sequence"
-                :serial     t
-                :components ((:file       "package")
-                             (:file       "concrete-syntax")
-                             (:file       "sequence-grammar")))
+                (:module     "grammar-sequence"
+                 :depends-on ("grammar")
+                 :pathname   "test/grammar/sequence"
+                 :serial     t
+                 :components ((:file       "package")
+                              (:file       "concrete-syntax")
+                              (:file       "sequence-grammar")))
 
-               (:module     "grammar-sexp"
-                :depends-on ("grammar")
-                :pathname   "test/grammar/sexp"
-                :serial     t
-                :components ((:file       "package")
-                             (:file       "concrete-syntax")
-                             (:file       "sexp-grammar"))))
+                (:module     "grammar-sexp"
+                 :depends-on ("grammar")
+                 :pathname   "test/grammar/sexp"
+                 :serial     t
+                 :components ((:file       "package")
+                              (:file       "concrete-syntax")
+                              (:file       "sexp-grammar"))))
 
-  :perform    (test-op (operation component)
-                ;; (uiop:symbol-call '#:parser.packrat.grammar.test          '#:run-tests)
-                (uiop:symbol-call '#:parser.packrat.grammar.base.test     '#:run-tests)
-                (uiop:symbol-call '#:parser.packrat.grammar.sequence.test '#:run-tests)
-                (uiop:symbol-call '#:parser.packrat.grammar.sexp.test     '#:run-tests)))
+  :perform     (test-op (operation component)
+                 ;; (uiop:symbol-call '#:parser.packrat.grammar.test          '#:run-tests)
+                 (uiop:symbol-call '#:parser.packrat.grammar.base.test     '#:run-tests)
+                 (uiop:symbol-call '#:parser.packrat.grammar.sequence.test '#:run-tests)
+                 (uiop:symbol-call '#:parser.packrat.grammar.sexp.test     '#:run-tests)))

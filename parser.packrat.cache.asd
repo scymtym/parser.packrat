@@ -1,6 +1,6 @@
 (defsystem "parser.packrat.cache"
   :description      "Caches for the parser.packrat system."
-  :licence          "BSD" ; see COPYING file for details
+  :license          "BSD" ; see COPYING file for details
 
   :author           "Jan Moringen <jmoringe@techfak.uni-bielefeld.de>"
   :maintainer       "Jan Moringen <jmoringe@techfak.uni-bielefeld.de>"
