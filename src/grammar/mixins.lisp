@@ -83,8 +83,8 @@
       (let+ (((&accessors-r/o meta-grammar meta-start-rule) grammar)
              (meta-expression (make-meta-expression
                                meta-grammar meta-start-rule))
-             ((&values success? &ign result)
+             ((&values success? position result)
               (parse meta-grammar meta-expression expression)))
-        (if success?
+        (if (eq success? t)
             result
-            (error "Failed to parse expression")))))
+            (error "Failed to parse expression at ~S" position)))))
