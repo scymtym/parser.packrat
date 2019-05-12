@@ -18,7 +18,7 @@
                                        environment (list :position (+ position amount)))))
                  (funcall success-cont new-environment)))
          (t
-          (let* ((new-environment (parser.packrat.grammar.base::add-value
+          (let* ((new-environment (base::add-value
                                    (env:environment-at environment :fresh
                                                        :parent element-environment)
                                    (env:value element-environment)))
@@ -96,7 +96,7 @@
     (compile-expression
      grammar environment (exp:sub-expression expression)
      (lambda (element-environment)
-       (let* ((new-environment (parser.packrat.grammar.base::add-value
+       (let* ((new-environment (base::add-value
                                 (env:environment-at environment :fresh
                                                     :parent element-environment)
                                 (env:value element-environment)))
@@ -143,7 +143,7 @@
                           (min            min-repetitions)
                           (max            max-repetitions))
           expression)
-         (max=1? (and (typep max 'parser.packrat.grammar.base:constant-expression) ; TODO
+         (max=1? (and (typep max 'base:constant-expression) ; TODO
                       (eql 1 (exp:value max))))
          (count? (or min (and max (not max=1?))))
          ((&flet compile-constraint (expression environment success-cont)
@@ -175,7 +175,7 @@
                         ,(compile-expression
                           grammar recursion-environment sub-expression
                           (lambda (new-environment)
-                            (setf continue-environment (parser.packrat.grammar.base::remove-value
+                            (setf continue-environment (base::remove-value
                                                         (env:environment-at recursion-environment :fresh
                                                                             :parent new-environment)))
                             (cond

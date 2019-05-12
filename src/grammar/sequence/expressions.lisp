@@ -19,12 +19,12 @@
 (defclass repetition-expression (exp:single-sub-expression-mixin
                                  exp:expression
                                  print-items:print-items-mixin)
-  ((min-repetitions :initarg  :min-repetitions
-                    :reader   min-repetitions
-                    :initform nil)
-   (max-repetitions :initarg  :max-repetitions
-                    :reader   max-repetitions
-                    :initform nil)))
+  ((%min-repetitions :initarg  :min-repetitions
+                     :reader   min-repetitions
+                     :initform nil)
+   (%max-repetitions :initarg  :max-repetitions
+                     :reader   max-repetitions
+                     :initform nil)))
 
 (defmethod print-items:print-items append ((object repetition-expression))
   `((:min-repetitions ,(min-repetitions object) "~:[0~;~:*~D~]")
