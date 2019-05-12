@@ -3,7 +3,8 @@
 ;;; Grammar
 
 (parser.packrat:defgrammar meta-grammar
-  (:class parser.packrat.grammar.sexp:sexp-grammar))
+  (:class   parser.packrat.grammar.sexp:sexp-grammar)
+  (:cached? nil))
 (parser.packrat:in-grammar meta-grammar)
 
 ;;; Rules

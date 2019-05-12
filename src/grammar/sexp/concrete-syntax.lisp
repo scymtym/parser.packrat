@@ -1,8 +1,9 @@
 (cl:in-package #:parser.packrat.grammar.sexp)
 
 (parser.packrat:defgrammar meta-grammar
-  (:class parser.packrat.grammar.sexp:sexp-grammar)
-  (:use seq::meta-grammar))
+  (:class   parser.packrat.grammar.sexp:sexp-grammar)
+  (:cached? nil)
+  (:use     seq::meta-grammar))
 (parser.packrat:in-grammar meta-grammar)
 
 (parser.packrat:defrule grammar:expression (context)
