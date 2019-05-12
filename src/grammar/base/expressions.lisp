@@ -6,10 +6,11 @@
   (predicate))
 
 (defmethod print-items:print-items append ((object predicate-expression))
-  `((:open      nil                               "(")
-    (:predicate ,(ensure-list (predicate object)) "~{~A~^ ~} " ((:after  :open)
-                                                                (:before :sub-expression)))
-    (:close     nil                                ")"         ((:after  :sub-expression)))))
+  (let ((predicate (ensure-list (predicate object))))
+    `((:open      nil        "(")
+      (:predicate ,predicate "~{~A~^ ~} " ((:after  :open)
+                                           (:before :sub-expression)))
+      (:close     nil        ")"          ((:after  :sub-expression))))))
 
 (exp:define-expression-class anything (exp::value-environment-needing-mixin)
   ())
@@ -132,14 +133,10 @@
       (:close                nil        ")"                                      ((:after :arguments))))))
 
 (exp:define-expression-class rule-invocation (rule-invocation-base)
-  ((grammar :initarg  :grammar
-            :reader   grammar
-            :initform nil
+  ((grammar :initform nil
             :documentation
             "Name of the grammar ")
-   (rule    :initarg  :rule
-            :reader   rule
-            :documentation
+   (rule    :documentation
             "Name of the rule")))
 
 (defmethod print-items:print-items append ((object rule-invocation-expression))
