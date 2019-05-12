@@ -111,18 +111,21 @@
          (assigned-variables (remove-duplicates writes :key #'exp:variable))
          (assigned-names     (mapcar #'exp:variable assigned-variables))
 
-         ((&flet make-return-cont (success)
-            (lambda (environment)
-              (let ((value (when success
-                             (env::value* environment)))) ; TODO hack
-                `(values ,success
+         ((&flet make-return-cont (kind)
+            (lambda (environment &optional message)
+              (let ((value (ecase kind
+                             ((t)       ; TODO hack
+                              (env::value* environment))
+                             ((nil) message)
+                             (:fatal message))))
+                `(values ,kind
                          ,@(env:position-variables environment)
                          ,@(when value `(,value)))))))
          (form (maybe-let assigned-names
-                 (let ((*fatal-cont* (make-return-cont nil)))
+                 (let ((*fatal-cont* (make-return-cont :fatal)))
                    (compile-expression
                     grammar environment expression
-                    (make-return-cont t) *fatal-cont*)))))
+                    (make-return-cont t) (make-return-cont nil))))))
     (make-rule-lambda grammar environment parameters (list form))))
 
 (defmethod make-rule-lambda ((grammar     t)

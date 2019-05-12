@@ -111,7 +111,8 @@
        . ,(lambda (expression context recurse)
             (declare (ignore context))
             (make-instance 'base::must-expression
-                           :sub-expression (funcall recurse (second expression)))))
+                           :sub-expression (funcall recurse (second expression))
+                           :message        (third expression))))
 
       ;; Structure
       ((cons (eql structure))

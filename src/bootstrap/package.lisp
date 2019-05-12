@@ -13,7 +13,8 @@
    #:value)
 
   (:import-from #:parser.packrat.grammar.base
-   #:<- #:<<-)
+   #:<- #:<<-
+   #:must)
 
   (:import-from #:parser.packrat.grammar.sequence
    #:?)

@@ -41,7 +41,7 @@
 
 (exp:define-expression-class must (exp:single-sub-expression-mixin
                                    print-items:print-items-mixin)
-  ())
+  (message))
 
 ;;; Constant
 

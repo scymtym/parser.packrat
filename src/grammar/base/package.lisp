@@ -20,13 +20,17 @@
 
   ;; Concrete syntax
   (:export
-   #:<- #:<<-)
+   #:<- #:<<-
+   #:must)
 
   ;; Expressions
   (:export
    #:anything-expression
 
    #:terminal-expression
+
+   #:must-expression
+   #:message
 
    #:not-expression
    #:and-expression

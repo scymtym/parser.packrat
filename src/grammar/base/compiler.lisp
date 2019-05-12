@@ -180,7 +180,9 @@
                                (failure-cont function))
   (compile-expression
    grammar environment (sub-expression expression)
-   success-cont parser.packrat.compiler::*fatal-cont*))
+   success-cont
+   (lambda (new-environment)
+     (funcall parser.packrat.compiler::*fatal-cont* new-environment (message expression)))))
 
 ;;; Variables
 
@@ -561,8 +563,9 @@
       ;; TODO tail calls do not need the receiving part
       `(multiple-value-bind (,success?-var
                              ,@(env:position-variables continue-environment)
-                             ,@(unless (member value-var (env:position-variables continue-environment))
-                                 `(,value-var)))
+                             ,@(if (member value-var (env:position-variables continue-environment))
+                                   '(message)
+                                   `(,value-var)))
            ,(funcall (if cached?
                          'emit-lookup-and-call
                          'emit-call/no-cache)
@@ -570,9 +573,12 @@
                      (when arguments arguments-var))
          ,(emit-d-return rule-name position-variables state-variables (when arguments arguments-var)
                          success?-var (env:position-variables continue-environment) value-var)
-         (if ,success?-var
-             ,(funcall success-cont continue-environment)
-             ,(funcall failure-cont continue-environment))))))
+         (case ,success?-var
+           ((t)    ,(funcall success-cont continue-environment))
+           ((nil)  ,(funcall failure-cont continue-environment))
+           (:fatal ,(funcall parser.packrat.compiler::*fatal-cont* continue-environment (if (member value-var (env:position-variables continue-environment))
+                                                                                            'message
+                                                                                            value-var))))))))
 
 (defmethod compile-expression ((grammar      base-grammar)
                                (environment  t)
@@ -626,9 +632,10 @@
          (d "~&~V@T~A ~{~S~^ ~} -> ~S ~{~S~^ ~} ~S~%"
             *depth* ',rule-name (list ,@state-variables)
             ,success?-var (list ,@(env:position-variables continue-environment)) ,value-var)
-         (if ,success?-var
-             ,(funcall success-cont continue-environment)
-             ,(funcall failure-cont continue-environment))))))
+         (case ,success?-var
+           ((t)    ,(funcall success-cont continue-environment))
+           ((nil)  ,(funcall failure-cont continue-environment))
+           (:fatal ,(funcall parser.packrat.compiler::*fatal-cont* continue-environment value-var)))))))
 
 ;;; Rule
 

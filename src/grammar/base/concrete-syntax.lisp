@@ -17,6 +17,8 @@
         (set-expression context)
         (push-expression context)
 
+        (must-expression context)
+
         (not-expression context)
         (and-expression context)
         (or-expression context)
@@ -75,6 +77,15 @@
           (* (:<- sub-expression (expression context)) 0 1))
   (bp:node* (:push :variable variable)
     (1 :sub-expression (or sub-expression (make-instance 'anything-expression)))))
+
+;;; Must
+
+(parser.packrat:defrule must-expression (context)
+    (list (or :must 'must)
+          (<- sub-expression (expression context))
+          (* (:guard message stringp) 0 1))
+  (bp:node* (:must :message message)
+    (1 :sub-expression sub-expression)))
 
 ;;; Logical connectives
 
