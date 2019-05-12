@@ -55,11 +55,11 @@
 ;;; Variables
 
 (defclass variable-reference-mixin ()
-  ((variable :initarg :variable
-             :type    symbol
-             :reader  exp:variable)
-   (mode     :reader  exp:mode
-             :allocation :class))
+  ((%variable :initarg :variable
+              :type    symbol
+              :reader  exp:variable)
+   (%mode     :reader  exp:mode
+              :allocation :class))
   (:default-initargs
    :variable (more-conditions:missing-required-initarg 'variable-reference-mixin :variable)))
 
@@ -78,8 +78,8 @@
                                 exp:single-sub-expression-mixin
                                 ; exp::value-environment-needing-mixin
                                 )
-  ((mode :allocation :class
-         :initform :write)))
+  ((%mode :allocation :class
+          :initform :write)))
 
 (exp:define-expression-class set (variable-write-mixin
                                   print-items:print-items-mixin)

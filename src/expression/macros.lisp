@@ -14,9 +14,10 @@
                                                 (reader  name)
                                                 allocation
                                                 &allow-other-keys))
-            `((,name ,@(unless (eq allocation :class) `(:initarg ,initarg))
-                     :reader ,reader
-                     ,@(remove-from-plist initargs :initarg :reader)))))
+            `((,(symbolicate '#:% name)
+               ,@(unless (eq allocation :class) `(:initarg ,initarg))
+               :reader ,reader
+               ,@(remove-from-plist initargs :initarg :reader)))))
          ((&flet+ make-default-initarg ((name &key
                                               (initarg   (make-keyword name))
                                               (initform nil iniform-supplied?)
