@@ -3,7 +3,7 @@
 (parser.packrat:defgrammar meta-grammar
   (:class   parser.packrat.grammar.sexp:sexp-grammar)
   (:cached? nil)
-  (:use     seq::meta-grammar))
+  (:use     seq::meta-grammar)) ; TODO base meta-grammar
 (parser.packrat:in-grammar meta-grammar)
 
 (parser.packrat:defrule base::expression (context)
