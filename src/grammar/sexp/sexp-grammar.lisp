@@ -1,6 +1,6 @@
 (cl:in-package #:parser.packrat.grammar.sexp)
 
-(defclass sexp-grammar (parser.packrat.grammar.base:base-grammar)
+(defclass sexp-grammar (base:base-grammar)
   ()
   (:default-initargs
    :meta-grammar    'meta-grammar

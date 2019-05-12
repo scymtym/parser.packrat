@@ -36,8 +36,8 @@
 
 (defmacro define-macro-rule (name expression expansion) ; TODO there is also a define-macro rule in sexp/concrete-syntax
   `(parser.packrat:defrule ,name (context)
-       (:compose (:transform ,expression ,expansion)
-                 (base::expression context))))
+     (:compose (:transform ,expression ,expansion)
+               (base::expression context))))
 
 (define-macro-rule ?-expression
     (list '? expression)

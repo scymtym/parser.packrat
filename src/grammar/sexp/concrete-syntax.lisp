@@ -84,6 +84,6 @@
 ;;;
 
 (define-macro-rule value-expression
-    (list 'value (list (guard variable symbolp)
-          (<- expression (base::expression))))
+    (list 'value (list (<- variable (base::variable-name)))
+          (<- expression (base::expression context)))
   `(and (<- ,variable) ,expression))

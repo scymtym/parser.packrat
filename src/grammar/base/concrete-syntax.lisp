@@ -153,22 +153,24 @@
 
 ;;; Logical connectives
 
-(parser.packrat:defrule not-expression (context)
-    (list 'not (<- sub-expression (expression! context)))
-  (bp:node* (:not)
-    (1 :sub-expression sub-expression)))
-
 (macrolet
-    ((define-combinator-rule (combinator)
+    ((define-combinator-rule (combinator arity)
        (let ((rule-name (symbolicate combinator '#:-expression))
              (kind      (make-keyword combinator)))
          `(parser.packrat:defrule ,rule-name (context)
-              (list ',combinator (* (<<- sub-expressions (expression! context))))
+              (list ',combinator
+                    ,(ecase arity
+                       (1 `(<- sub-expression (expression! context)))
+                       (* `(* (<<- sub-expressions (expression! context))))))
             (bp:node* (,kind)
-              (* :sub-expression (nreverse sub-expressions)))))))
-  (define-combinator-rule and)
-  (define-combinator-rule or)
-  (define-combinator-rule :compose)) ; TODO
+              ,(ecase arity
+                 (1 `(1 :sub-expression sub-expression))
+                 (* `(* :sub-expression (nreverse sub-expressions)))))))))
+  (define-combinator-rule not      1)
+  (define-combinator-rule and      *)
+  (define-combinator-rule or       *)
+  (define-combinator-rule :compose *)  ; TODO
+  )
 
 ;;;
 

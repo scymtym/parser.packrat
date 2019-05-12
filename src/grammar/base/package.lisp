@@ -60,4 +60,7 @@
 
   ;; Grammar
   (:export
-   #:base-grammar))
+   #:base-grammar)
+
+  (:export
+   #:compile-comparison)) ; TODO used?

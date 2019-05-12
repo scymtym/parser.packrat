@@ -1,3 +1,9 @@
+;;;; stream-grammar.lisp --- Unit tests for the stream-grammar class.
+;;;;
+;;;; Copyright (C) 2017-2019 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:in-package #:parser.packrat.grammar.stream.test)
 
 (in-suite :parser.packrat.grammar.stream)
