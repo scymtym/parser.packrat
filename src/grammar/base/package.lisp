@@ -20,6 +20,7 @@
 
   ;; Concrete syntax
   (:export
+   #:guard
    #:<- #:<<-
    #:must)
 

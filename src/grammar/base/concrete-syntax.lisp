@@ -39,7 +39,7 @@
   (list* name arguments))
 
 (parser.packrat:defrule predicate-expression (context)
-    (list :guard
+    (list (or :guard 'guard)
           (or (:seq (:<- sub-expression (expression context))
                     (:<- predicate (function-name-or-partial-application)))
               (:<- predicate (function-name-or-partial-application))))

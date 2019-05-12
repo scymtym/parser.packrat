@@ -13,6 +13,12 @@
 
   (grammar-test (grammar 'mock-grammar)
     (rules-test (grammar)
+      '((guard evenp)
+
+        (0 (t   0))
+        (1 (nil 1))
+        (2 (t   2)))
+
       '((or 1 2)
 
         (0 (nil 0))
