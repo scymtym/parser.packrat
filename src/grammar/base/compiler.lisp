@@ -428,47 +428,6 @@
 (defun (setf cached/arguments) (new-value cache rule arguments &rest state)
   (setf (gethash (list rule state arguments) cache) new-value))
 
-(defvar *depth* 0)
-
-(defvar *old-state* nil)
-
-(defvar *debug-stream* *standard-output*)
-
-(defun d (format-control &rest format-arguments)
-  (when-let ((stream *debug-stream*))
-    (apply #'format stream format-control format-arguments)))
-
-(defun d-call (rule-name position state arguments)
-  (let ((state (unless (equalp state *old-state*)
-                 state))
-        (*print-level* 2))
-    (d "~&~V@T~A [~{~S~^ ~}] ~@[(~{~S~^ ~})~]~%"
-       *depth* rule-name (append position state) arguments)))
-
-(defun emit-d-call (rule-name position-variables state-variables arguments-var)
-  (let ((state-variables (remove-if (rcurry #'member position-variables)
-                                    state-variables)))
-    `(d-call ',rule-name (list ,@position-variables) (list ,@state-variables)
-             ,(or arguments-var ''()))))
-
-(defun d-return (rule-name old-position old-state arguments
-                 success? new-position value)
-  (let ((old-state (unless (equalp old-state *old-state*)
-                     old-state))
-        (*print-level* 2))
-    (d "~&~V@T~A [~{~S~^ ~}] ~@[(~{~S~^ ~})~] -> ~:[FAIL~;SUCC~] [~{~S~^ ~}] ~S~%"
-       *depth* rule-name (append old-position old-state)
-       arguments
-       success? new-position value)))
-
-(defun emit-d-return (rule-name position-variables state-variables arguments-var
-                      success?-var new-position-variables value-var)
-  (let ((state-variables (remove-if (rcurry #'member position-variables)
-                                    state-variables)))
-    `(d-return ',rule-name (list ,@position-variables) (list ,@state-variables)
-               ,(or arguments-var ''())
-               ,success?-var (list ,@new-position-variables) ,value-var)))
-
 (defun emit-find-grammar-and-rule (grammar grammar-name rule-name
                                    context-var grammar-var rule-var)
   (if grammar-name

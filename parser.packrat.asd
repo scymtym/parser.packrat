@@ -71,6 +71,7 @@
 
                                    (:file       "base-grammar")
 
+                                   (:file       "debug")
                                    (:file       "compiler")))
 
                      (:module     "grammar-sequence"
