@@ -431,18 +431,18 @@
 (defun emit-find-grammar-and-rule (grammar grammar-name rule-name
                                    context-var grammar-var rule-var)
   (if grammar-name
-      `((,rule-var (find-rule ',rule-name (find-grammar ',grammar-name)
+      `((,rule-var (grammar:find-rule ',rule-name (grammar:find-grammar ',grammar-name)
                               :if-does-not-exist :forward-reference)))
-      (let+ ((grammar-name (name grammar))
+      (let+ ((grammar-name (grammar:name grammar))
              ((&with-gensyms context-grammar-var)))
         `((,grammar-var         (load-time-value
-                                 (find-grammar ',grammar-name)))
+                                 (grammar:find-grammar ',grammar-name)))
           (,context-grammar-var (context-grammar ,context-var))
           (,rule-var            (if (eq ,context-grammar-var ,grammar-var)
                                     (load-time-value
-                                     (find-rule ',rule-name (find-grammar ',grammar-name)
-                                                :if-does-not-exist :forward-reference))
-                                    (find-rule ',rule-name ,context-grammar-var)))))))
+                                     (grammar:find-rule ',rule-name (grammar:find-grammar ',grammar-name)
+                                                        :if-does-not-exist :forward-reference))
+                                    (grammar:find-rule ',rule-name ,context-grammar-var)))))))
 
 ;; TODO make lookup-and-call/single-argument so we don't have
 ;; cons and copy-list for a single argument, rename {with ->
@@ -552,7 +552,7 @@
                                (success-cont function)
                                (failure-cont function))
   (let+ (((&accessors-r/o arguments) expression)
-         (grammar-name       (name grammar))
+         (grammar-name       (grammar:name grammar))
          (rule-name          'current-rule)
          (state-variables    (env:state-variables environment))
          (position-variables (env:position-variables environment))
@@ -582,8 +582,8 @@
          (continue-environment (add-value (env:environment-at call-environment :fresh) value-var)))
 
     (maybe-let `((,rule-var (load-time-value
-                             (find-rule ',rule-name (find-grammar ',grammar-name)
-                                        :if-does-not-exist :forward-reference)))
+                             (grammar:find-rule ',rule-name (grammar:find-grammar ',grammar-name)
+                                                :if-does-not-exist :forward-reference)))
                  ,@(when arguments `((,arguments-var (list ,@argument-forms)))))
       ;; TODO wrong (when arguments `(declare (dynamic-extent ,arguments-var)))
       ;;            At least SBCL stack-allocated the arguments of the `list' application, not just the list itself

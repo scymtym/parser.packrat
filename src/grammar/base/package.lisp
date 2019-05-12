@@ -4,7 +4,6 @@
    #:alexandria
    #:let-plus
 
-   #:parser.packrat.grammar
    #:parser.packrat.compiler)
 
   (:import-from #:parser.packrat.expression
@@ -12,11 +11,12 @@
    #:sub-expressions)
 
   (:local-nicknames
-   (#:bp    #:architecture.builder-protocol)
+   (#:bp      #:architecture.builder-protocol)
 
-   (#:cache #:parser.packrat.cache)
-   (#:exp   #:parser.packrat.expression)
-   (#:env   #:parser.packrat.environment))
+   (#:cache   #:parser.packrat.cache)
+   (#:exp     #:parser.packrat.expression)
+   (#:grammar #:parser.packrat.grammar)
+   (#:env     #:parser.packrat.environment))
 
   ;; Concrete syntax
   (:export

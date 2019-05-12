@@ -7,6 +7,6 @@
             base::meta-grammar))
 (parser.packrat:in-grammar meta-grammar)
 
-(parser.packrat:defrule grammar:expression (context)
+(parser.packrat:defrule base::expression (context)
   (or ((base::expression seq::meta-grammar) context)
       ((base::expression base::meta-grammar) context)))

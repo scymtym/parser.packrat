@@ -6,7 +6,7 @@
   (:use     seq::meta-grammar))
 (parser.packrat:in-grammar meta-grammar)
 
-(parser.packrat:defrule grammar:expression (context)
+(parser.packrat:defrule base::expression (context)
     (or (structure-expression context)
 
         (list-elements-expression context)
@@ -28,7 +28,7 @@
 
 (parser.packrat:defrule structure-expression (context)
     (list 'structure
-          (:<- type (grammar:expression :value))
+          (:<- type (base::expression :value))
           (* (list (:<<- readers) ; TODO must be a function name
                    (:<<- sub-expressions (base::expression context)))))
   (bp:node* (:structure)
@@ -37,7 +37,7 @@
     (* :sub-expression (nreverse sub-expressions))))
 
 (parser.packrat:defrule list-elements-expression (context)
-    (list 'list-elements (:<- elements-expression (grammar:expression context)))
+    (list 'list-elements (:<- elements-expression (base::expression context)))
   (bp:node* (:as-list)
     (1 :sub-expression elements-expression)))
 
@@ -48,7 +48,7 @@
 
 (parser.packrat:defrule vector-elements-expression (context)
     (list 'vector-elements
-          (:<- elements-expression (grammar:expression context)))
+          (:<- elements-expression (base::expression context)))
   (bp:node* (:as-vector)
     (1 :sub-expression elements-expression)))
 
