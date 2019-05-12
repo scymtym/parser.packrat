@@ -9,7 +9,9 @@
    #:cl
    #:let-plus
 
-   #:fiveam)
+   #:fiveam
+
+   #:parser.packrat.grammar.base)
 
   (:import-from #:parser.packrat.grammar.test
    #:grammar-test
