@@ -454,17 +454,21 @@
     ,@(when arguments-var `(,arguments-var))))
 
 (defun emit-lookup-and-call
-    (rule-name rule-var position-variables state-variables arguments-var)
-  (let ((cache-place #+eventually `(cache:cached
-                                    ',rule-name ,@position-variables ,cache-var)
-                     `(cached
-                       (context-cache ,parser.packrat.compiler::+context-var+) ',rule-name
-                       ,@position-variables
-                       ,@(when arguments-var `(,arguments-var)))))
+    (rule-name rule-var position-variables state-variables arguments-var
+     &key grammar-name)
+  (let* ((rule-key    (if grammar-name
+                          `'(,rule-name . ,grammar-name)
+                          `',rule-name))
+         (cache-place #+eventually `(cache:cached
+                                     ',rule-name ,@position-variables ,cache-var)
+                      `(cached
+                        (context-cache ,parser.packrat.compiler::+context-var+) ,rule-key
+                        ,@position-variables
+                        ,@(when arguments-var `(,arguments-var)))))
     `(values-list
       (or ,cache-place
           ,(maybe-let (when arguments-var `((,arguments-var (copy-list ,arguments-var))))
-             (emit-d-call rule-name position-variables state-variables arguments-var)
+             (emit-d-call rule-key position-variables state-variables arguments-var)
              `(let ((*depth* (+ *depth* 2))
                     (*old-state* (list ,@ (remove-if (rcurry #'member position-variables) state-variables))))
                 (setf ,cache-place
@@ -472,8 +476,11 @@
                        ,(emit-call rule-var state-variables arguments-var)))))))))
 
 (defun emit-call/no-cache
-    (rule-name rule-var position-variables state-variables arguments-var)
-  (let ((rule-key `',rule-name))
+    (rule-name rule-var position-variables state-variables arguments-var
+     &key grammar-name)
+  (let ((rule-key (if grammar-name
+                      `'(,rule-name . ,grammar-name)
+                      `',rule-name)))
     `(progn
        ,(emit-d-call rule-key position-variables state-variables arguments-var)
        (let ((*depth* (+ *depth* 2))
@@ -529,7 +536,7 @@
                          'emit-lookup-and-call
                          'emit-call/no-cache)
                      rule-name rule-var position-variables state-variables
-                     (when arguments arguments-var))
+                     (when arguments arguments-var) :grammar-name grammar-name)
          ,(emit-d-return rule-name position-variables state-variables (when arguments arguments-var)
                          success?-var (env:position-variables continue-environment) value-var)
          (case ,success?-var
