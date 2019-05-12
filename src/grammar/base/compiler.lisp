@@ -378,6 +378,7 @@
 
          )
     `(labels ((,transform-name ,(env:position-variables transform-environment)
+                (declare (ignorable ,@(env:position-variables transform-environment))) ; TODO hack
                 ,(if (%uses-fail? expression)
                      `(let ((,value-var   nil)
                             (,aborted-var nil))
