@@ -1,6 +1,6 @@
 ;;;; protocol.lisp --- Protocol provided by the grammar module.
 ;;;;
-;;;; Copyright (C) 2017, 2018 Jan Moringen
+;;;; Copyright (C) 2017, 2018, 2019 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -30,7 +30,7 @@
 
 (defmethod add-dependency :before (used user)
   (when (find used (dependencies user) :test #'eq)
-    (error "~@<~A already depends on ~A.~@:>" user used))
+    (error "~@<~A already depends on ~A.~@:>" user used)) ; TODO condition classes
   (when (find user (dependents used) :test #'eq)
     (error "~@<~A already is a dependent of ~A.~@:>" user used)))
 
