@@ -79,7 +79,7 @@
                               (exp:variable-references
                                expression :filter (of-type 'base:variable-reference-expression)))))
     (values (parser.packrat.compiler:compile-rule
-             grammar free-variables expression)
+             grammar nil free-variables expression)
             free-variables)))
 
 (defun make-rule-form/expression (grammar expression/parsed expression/raw)

@@ -22,7 +22,8 @@
   (:export
    #:guard
    #:<- #:<<-
-   #:must)
+   #:must
+   #:next-rule)
 
   ;; Expressions
   (:export

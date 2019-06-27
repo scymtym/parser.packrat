@@ -448,8 +448,10 @@
 (defun emit-find-grammar-and-rule (grammar grammar-name rule-name
                                    context-var grammar-var rule-var)
   (if grammar-name
-      `((,rule-var (grammar:find-rule ',rule-name (grammar:find-grammar ',grammar-name)
-                              :if-does-not-exist :forward-reference)))
+      `((,grammar-var (load-time-value (grammar:find-grammar ',grammar-name)))
+        (,rule-var    (load-time-value
+                       (grammar:find-rule ',rule-name (grammar:find-grammar ',grammar-name)
+                                          :if-does-not-exist :forward-reference))))
       (let+ ((grammar-name (grammar:name grammar))
              ((&with-gensyms context-grammar-var)))
         `((,grammar-var         (load-time-value
@@ -465,44 +467,46 @@
 ;; cons and copy-list for a single argument, rename {with ->
 ;; multiple}-arguments
 ;; TODO include grammar name in cache key?
-(defun emit-call (rule-var state-variables arguments-var)
+(defun emit-call (rule-var context state-variables arguments-var)
   `(,(if arguments-var 'apply 'funcall)
-    ,rule-var ,parser.packrat.compiler::+context-var+ ,@state-variables
+    ,rule-var ,context ,@state-variables
     ,@(when arguments-var `(,arguments-var))))
 
 (defun emit-lookup-and-call
     (rule-name rule-var position-variables state-variables arguments-var
-     &key grammar-name)
+     &key grammar-name grammar)
   (let* ((rule-key    (if grammar-name
-                          `'(,rule-name . ,grammar-name)
-                          `',rule-name))
+                          `(,rule-name . ,grammar-name)
+                          `,rule-name))
+         (context     parser.packrat.compiler::+context-var+)
          (cache-place #+eventually `(cache:cached
                                      ',rule-name ,@position-variables ,cache-var)
                       `(cached
-                        (context-cache ,parser.packrat.compiler::+context-var+) ,rule-key
+                        (context-cache ,parser.packrat.compiler::+context-var+) ',rule-key
                         ,@position-variables
                         ,@(when arguments-var `(,arguments-var)))))
     `(values-list
       (or ,cache-place
           ,(maybe-let (when arguments-var `((,arguments-var (copy-list ,arguments-var))))
-             (emit-d-call rule-key position-variables state-variables arguments-var)
+             (emit-d-call rule-key context position-variables state-variables arguments-var :grammar grammar)
              `(let ((*depth* (+ *depth* 2))
                     (*old-state* (list ,@ (remove-if (rcurry #'member position-variables) state-variables))))
                 (setf ,cache-place
                       (multiple-value-list
-                       ,(emit-call rule-var state-variables arguments-var)))))))))
+                       ,(emit-call rule-var context state-variables arguments-var)))))))))
 
 (defun emit-call/no-cache
     (rule-name rule-var position-variables state-variables arguments-var
-     &key grammar-name)
+     &key grammar-name grammar)
   (let ((rule-key (if grammar-name
-                      `'(,rule-name . ,grammar-name)
-                      `',rule-name)))
+                      `(,rule-name . ,grammar-name)
+                      `,rule-name))
+        (context  parser.packrat.compiler::+context-var+))
     `(progn
-       ,(emit-d-call rule-key position-variables state-variables arguments-var)
-       (let ((*depth* (+ *depth* 2))
+       ,(emit-d-call rule-key context position-variables state-variables arguments-var :grammar grammar)
+       (let ((*depth*     (+ *depth* 2))
              (*old-state* (list ,@(remove-if (rcurry #'member position-variables) state-variables))))
-         ,(emit-call rule-var state-variables arguments-var)))))
+         ,(emit-call rule-var context state-variables arguments-var)))))
 
 (defmethod compile-expression ((grammar      base-grammar) ; TODO (grammar t)?
                                (environment  t)
@@ -553,8 +557,9 @@
                          'emit-lookup-and-call
                          'emit-call/no-cache)
                      rule-name rule-var position-variables state-variables
-                     (when arguments arguments-var) :grammar-name grammar-name)
-         ,(emit-d-return rule-name position-variables state-variables (when arguments arguments-var)
+                     (when arguments arguments-var) :grammar-name grammar-name :grammar grammar)
+         ,(emit-d-return rule-name parser.packrat.compiler::+context-var+
+                         position-variables state-variables (when arguments arguments-var)
                          success?-var (env:position-variables continue-environment) value-var)
          (case ,success?-var
            ((t)    ,(funcall success-cont continue-environment))
@@ -568,9 +573,9 @@
                                (expression   next-rule-invocation-expression)
                                (success-cont function)
                                (failure-cont function))
-  (let+ (((&accessors-r/o arguments) expression)
-         (grammar-name       (grammar:name grammar))
-         (rule-name          'current-rule)
+  (let+ (((&accessors-r/o cached? (grammar-name grammar:name)) grammar)
+         ((&accessors-r/o arguments) expression)
+         (rule-name          parser.packrat.compiler::*rule-name*)
          (state-variables    (env:state-variables environment))
          (position-variables (env:position-variables environment))
          ((&with-gensyms rule-var arguments-var success?-var value-var))
@@ -598,34 +603,43 @@
           (argument arguments #+no nil environment)) ; TODO ENVIRONMENT is just passed trough, then bound to CALL-ENVIRONMENT
          (continue-environment (add-value (env:environment-at call-environment :fresh) value-var)))
 
-    (maybe-let `((,rule-var (load-time-value
+    (maybe-let `((,rule-var #+no (load-time-value
                              (grammar:find-rule ',rule-name (grammar:find-grammar ',grammar-name)
-                                                :if-does-not-exist :forward-reference)))
+                                                :if-does-not-exist :forward-reference))
+                            (grammar:find-rule ',rule-name (first (use (context-grammar ,parser.packrat.compiler::+context-var+)))
+                                               ))
                  ,@(when arguments `((,arguments-var (list ,@argument-forms)))))
       ;; TODO wrong (when arguments `(declare (dynamic-extent ,arguments-var)))
       ;;            At least SBCL stack-allocated the arguments of the `list' application, not just the list itself
       ;; TODO tail calls do not need the receiving part
       `(multiple-value-bind (,success?-var
                              ,@(env:position-variables continue-environment)
-                             ,@(unless (member value-var (env:position-variables continue-environment))
-                                 `(,value-var)))
-           ,(emit-lookup-and-call
-             rule-name rule-var
-             position-variables state-variables (when arguments arguments-var))
-         (d "~&~V@T~A ~{~S~^ ~} -> ~S ~{~S~^ ~} ~S~%"
-            *depth* ',rule-name (list ,@state-variables)
-            ,success?-var (list ,@(env:position-variables continue-environment)) ,value-var)
+                             ,@(if (member value-var (env:position-variables continue-environment))
+                                   '(message)
+                                   `(,value-var)))
+           ,(funcall (if cached?
+                         'emit-lookup-and-call
+                         'emit-call/no-cache)
+                     rule-name rule-var position-variables state-variables
+                     (when arguments arguments-var)
+                     :grammar grammar)
+         ,(emit-d-return rule-name parser.packrat.compiler::+context-var+
+                         position-variables state-variables (when arguments arguments-var)
+                         success?-var (env:position-variables continue-environment) value-var)
          (case ,success?-var
            ((t)    ,(funcall success-cont continue-environment))
            ((nil)  ,(funcall failure-cont continue-environment))
-           (:fatal ,(funcall parser.packrat.compiler::*fatal-cont* continue-environment value-var)))))))
+           (:fatal ,(funcall parser.packrat.compiler::*fatal-cont* continue-environment (if (member value-var (env:position-variables continue-environment))
+                                                                                            'message
+                                                                                            value-var))))))))
 
 ;;; Rule
 
 (defmethod compile-rule :around ((grammar    base-grammar)
+                                 (name       t)
                                  (parameters list)
                                  (expression t)
                                  &key environment)
-  (declare (ignore environment))
+  (declare (ignore name environment))
   (let ((*gensym-counter* 0))
     (call-next-method)))

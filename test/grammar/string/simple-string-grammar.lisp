@@ -13,8 +13,8 @@
      :expression #1='(:seq #\f #\o #\o)
      :function   (compile
                   nil (parser.packrat.compiler:compile-rule
-                       grammar '() (parser.packrat.grammar:parse-expression
-                                    grammar `(:transform ,#1# :foo)))))
+                       grammar 'foo '() (parser.packrat.grammar:parse-expression
+                                         grammar `(:transform ,#1# :foo)))))
 
     (parser.packrat.grammar:ensure-rule
      'bar grammar
@@ -22,8 +22,8 @@
      :expression #2='(:seq #\b #\a #\r)
      :function   (compile
                   nil (parser.packrat.compiler:compile-rule
-                       grammar '() (parser.packrat.grammar:parse-expression
-                                    grammar `(:transform ,#2# :bar)))))
+                       grammar 'bar '() (parser.packrat.grammar:parse-expression
+                                         grammar `(:transform ,#2# :bar)))))
 
     (rules-test (grammar)
       '((or (:seq "foo" (* "ba") #\r)

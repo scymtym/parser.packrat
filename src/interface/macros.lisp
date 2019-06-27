@@ -123,5 +123,5 @@
       :rule-class 'grammar::rule
       :expression ',expression
       :function   ,(apply #'parser.packrat.compiler:compile-rule
-                          grammar parameters ast
+                          grammar name parameters ast
                           (when environment (list :environment (eval environment)))))))

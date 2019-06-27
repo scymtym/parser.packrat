@@ -129,7 +129,7 @@
 
 (defmethod parse ((grammar t) (expression parser.packrat.expression:expression) (input t))
   (let* (; (exp:var)
-         (code       (c:compile-rule grammar '() expression))
+         (code       (c:compile-rule grammar nil '() expression))
          (function   (compile nil code)))
     (parse grammar function input)
     #+later-special-case (if (typep expression 'parser.packrat.grammar.base:rule-invocation-expression)
@@ -149,12 +149,13 @@
 ;;; Default method for compiler protocol
 (defmethod c:compile-rule
     ((grammar    t)
+     (name       t)
      (parameters list)
      (expression t)
      &key
      (environment (default-environment grammar expression)))
   (c:compile-rule-using-environment
-   grammar parameters environment expression))
+   grammar name parameters environment expression))
 
 (defmethod c:validate-invocation ((grammar     t)
                                   (environment t)

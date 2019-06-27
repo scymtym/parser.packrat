@@ -44,7 +44,7 @@
 
 ;;; Rule compilation protocol
 
-(defgeneric compile-rule (grammar parameters expression &key environment)
+(defgeneric compile-rule (grammar name parameters expression &key environment)
   (:documentation
    "Return a lambda expression implementing the behavior of EXPRESSION.
 
@@ -66,7 +66,7 @@
     on GRAMMAR and EXPRESSION is used by default."))
 
 (defgeneric compile-rule-using-environment
-    (grammar parameters environment expression)
+    (grammar name parameters environment expression)
   (:documentation
    "Return a lambda expression implementing the behavior of EXPRESSION.
 
@@ -87,11 +87,14 @@
 
 ;;; Default behavior
 
+(defvar *rule-name*) ; TODO hack
+
 (defvar *fatal-cont*) ; TODO hack
 
 (defconstant +context-var+ 'context)
 
 (defmethod compile-rule-using-environment ((grammar     t)
+                                           (name        t)
                                            (parameters  list)
                                            (environment t)
                                            (expression  t))
@@ -122,7 +125,8 @@
                          ,@(env:position-variables environment)
                          ,@(when value `(,value)))))))
          (form (maybe-let assigned-names
-                 (let ((*fatal-cont* (make-return-cont :fatal)))
+                 (let ((*rule-name*  name)
+                       (*fatal-cont* (make-return-cont :fatal)))
                    (compile-expression
                     grammar environment expression
                     (make-return-cont t) (make-return-cont nil))))))
