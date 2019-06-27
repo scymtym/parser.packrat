@@ -53,3 +53,20 @@
 (define-condition rule-missing-error (rule-missing-problem
                                       error)
   ())
+
+;;; Expression syntax
+
+(define-condition expression-syntax-error (grammar-condition
+                                           error)
+  ((%expression :initarg :expression
+                :reader  expression)
+   (%message    :initarg :message
+                :reader  message))
+  (:default-initargs
+   :expression (more-conditions:missing-required-initarg 'expression-syntax-error :expression))
+  (:report
+   (lambda (condition stream)
+     (format stream "~@<~A in expression ~S in grammar ~A.~@:>"
+             (message condition)
+             (expression condition)
+             (grammar condition)))))

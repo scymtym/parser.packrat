@@ -92,6 +92,13 @@
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (setf *grammar* (grammar:find-grammar ',grammar-name))))
 
+;;; `defrule'
+
+(defmacro with-current-source-form ((&rest forms) &body body)
+  #-sbcl (declare (ignore forms))
+  #+sbcl `(sb-ext:with-current-source-form (,@forms) ,@body)
+  #-sbcl `(progn ,@body))
+
 (defmacro defrule (name-and-options (&rest parameters)
                    expression &rest production)
   (let+ (((name &key
@@ -105,7 +112,11 @@
          (expression   (if production
                            `(:transform ,expression ,@production)
                            expression))
-         (ast          (grammar:parse-expression grammar expression)))
+         (ast          (handler-case
+                           (grammar:parse-expression grammar expression)
+                         (grammar:expression-syntax-error (condition)
+                           (with-current-source-form ((grammar:expression condition))
+                             (error condition))))))
     `(grammar:ensure-rule
       ',name
       (grammar:find-grammar ',grammar-name)

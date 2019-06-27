@@ -17,7 +17,10 @@
 
    #:grammar-missing-error
 
-   #:rule-missing-error)
+   #:rule-missing-error
+
+   #:expression-syntax-error
+   #:expression)
 
   ;; Name protocol
   (:export

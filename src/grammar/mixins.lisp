@@ -87,4 +87,6 @@
               (parse meta-grammar meta-expression expression)))
         (if (eq success? t)
             result
-            (error "Failed to parse expression at ~S" position)))))
+            (error 'expression-syntax-error :grammar    grammar
+                                            :expression position
+                                            :message    result)))))
