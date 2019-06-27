@@ -106,7 +106,7 @@
 
                      (:module     "bootstrap"
                       :pathname   "src/bootstrap"
-                      :depends-on ("expression")
+                      :depends-on ("expression" "grammar")
                       :serial     t
                       :components ((:file       "package")
                                    (:file       "parse")))
@@ -155,7 +155,7 @@
 
   :perform          (load-op :after (operation component)
                       (let ((symbol (find-symbol (string '#:*bootstrapping*)
-                                                 '#:parser.packrat.grammar)))
+                                                 '#:parser.packrat.bootstrap)))
                         (setf (symbol-value symbol) nil)))
 
   :in-order-to      ((test-op (test-op "parser.packrat/test"))))

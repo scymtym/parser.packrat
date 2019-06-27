@@ -1,5 +1,17 @@
 (cl:in-package #:parser.packrat.bootstrap)
 
+;;; Hook into expression parsing
+
+(defvar *bootstrapping* t)
+
+(defmethod parser.packrat.grammar:parse-expression :around ((grammar t) (expression t) &key builder)
+  (declare (ignore builder))
+  (if *bootstrapping*
+      (parse expression)
+      (call-next-method)))
+
+;;;
+
 (defparameter *macros*
   `((?       . ,(lambda (expression)
                   (assert (length= 2 expression))

@@ -62,7 +62,7 @@
 (defgeneric ensure-rule-using-rule (rule name grammar
                                     &key rule-class &allow-other-keys))
 
-(defgeneric parse-expression (grammar expression) ; TODO allow dispatch on rule class? separate protocol?
+(defgeneric parse-expression (grammar expression &key builder) ; TODO allow dispatch on rule class? separate protocol?
   (:documentation
    "Parse the s-expression EXPRESSION according to GRAMMAR's meta-grammar."))
 
@@ -73,10 +73,6 @@
 (defgeneric default-environment (grammar expression)
   (:documentation
    "Return a default environment instance for GRAMMAR and expression."))
-
-(defmethod parse-expression ((grammar t) (expression t)) ; TODO hack
-  (uiop:symbol-call '#:parser.packrat.bootstrap '#:parse
-                    expression))
 
 ;;; Default behavior
 

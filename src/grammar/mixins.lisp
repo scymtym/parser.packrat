@@ -75,18 +75,16 @@
                       expressions for this grammar should be
                       parsed.")))
 
-(defvar *bootstrapping* t)
-
-(defmethod parse-expression ((grammar meta-grammar-mixin) (expression t))
-  (if *bootstrapping*
-      (call-next-method)
-      (let+ (((&accessors-r/o meta-grammar meta-start-rule) grammar)
-             (meta-expression (make-meta-expression
-                               meta-grammar meta-start-rule))
-             ((&values success? position result)
-              (parse meta-grammar meta-expression expression)))
-        (if (eq success? t)
-            result
-            (error 'expression-syntax-error :grammar    grammar
-                                            :expression position
-                                            :message    result)))))
+(defmethod parse-expression ((grammar meta-grammar-mixin) (expression t)
+                             &key (builder nil))
+  (let+ (((&accessors-r/o meta-grammar meta-start-rule) grammar)
+         (meta-expression (make-meta-expression
+                           meta-grammar meta-start-rule))
+         ((&values success? position result)
+          (architecture.builder-protocol:with-builder (builder)
+            (parse meta-grammar meta-expression expression))))
+    (if (eq success? t)
+        result
+        (error 'expression-syntax-error :grammar    grammar
+                                        :expression position
+                                        :message    result))))
