@@ -1,6 +1,6 @@
 ;;;; conditions.lisp --- Conditions signaled by the grammar module.
 ;;;;
-;;;; Copyright (C) 2017 Jan Moringen
+;;;; Copyright (C) 2017, 2019 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -9,16 +9,18 @@
 ;;; TODO Do we want to go with foo-missing-{error,warning}?
 
 (define-condition grammar-condition (condition)
-  ((grammar :initarg :grammar
-            :reader  grammar))
+  ((%grammar :initarg :grammar
+             :reader  grammar))
   (:default-initargs
    :grammar (more-conditions:missing-required-initarg 'grammar-condition :grammar)))
 
 (define-condition rule-condition (condition)
-  ((rule :initarg :rule
-         :reader  rule))
+  ((%rule :initarg :rule
+          :reader  rule))
   (:default-initargs
    :rule (more-conditions:missing-required-initarg 'rule-condition :rule)))
+
+;;; Missing grammars and rules
 
 (define-condition grammar-missing-problem (grammar-condition)
   ()
