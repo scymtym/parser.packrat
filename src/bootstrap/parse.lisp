@@ -194,6 +194,7 @@
                (let ((arguments (rest expression)))
                  (make-instance 'base:next-rule-invocation-expression
                                 :arguments (map-rec arguments :invoke))))
+
               ((cons (or symbol                           ; rule-name
                          (cons symbol (cons symbol null)) ; (rule-name grammar-name)
                          ))

@@ -34,15 +34,15 @@
 ;;; Predicate and anything
 
 (parser.packrat:defrule function-name-or-partial-application ()
-    (or (:guard name symbolp)
-        (list* (:guard name symbolp) arguments))
+    (or (guard name symbolp)
+        (list* (guard name symbolp) arguments))
   (list* name arguments))
 
 (parser.packrat:defrule predicate-expression (context)
     (list (or :guard 'guard)
-          (or (:seq (:<- sub-expression (expression context))
-                    (:<- predicate (function-name-or-partial-application)))
-              (:<- predicate (function-name-or-partial-application))))
+          (or (:seq (<- sub-expression (expression context))
+                    (<- predicate (function-name-or-partial-application)))
+              (<- predicate (function-name-or-partial-application))))
   (bp:node* (:predicate :predicate predicate)
     (1 :sub-expression (or sub-expression (bp:node* (:anything))))))
 
@@ -54,7 +54,7 @@
 
 (parser.packrat:defrule constant-expression (context)
     (or (list 'quote value)
-        (:guard value (typep '(not (or cons (and symbol (not keyword)))))))
+        (guard value (typep '(not (or cons (and symbol (not keyword)))))))
   (ecase context
     (:value   (bp:node* (:constant :value value)))
     (:default (bp:node* (:terminal :value value)))))
@@ -62,7 +62,7 @@
 ;;; Variables
 
 (parser.packrat:defrule variable-name ()
-    (:guard (typep '(and symbol (not (or keyword null))))))
+    (guard (typep '(and symbol (not (or keyword null))))))
 
 (parser.packrat:defrule set-expression (context)
     (or (:<- variable1 (variable-name))
@@ -84,7 +84,7 @@
 (parser.packrat:defrule must-expression (context)
     (list (or :must 'must)
           (<- sub-expression (expression context))
-          (* (:guard message stringp) 0 1))
+          (* (guard message stringp) 0 1))
   (bp:node* (:must :message message)
     (1 :sub-expression sub-expression)))
 
@@ -110,22 +110,22 @@
 ;;;
 
 (parser.packrat:defrule transform-expression (context)
-    (list* :transform (:<- sub-expression (expression context)) code)
+    (list* :transform (<- sub-expression (expression context)) code)
   (bp:node* (:transform :code code)
     (1 :sub-expression sub-expression)))
 
 ;;; Rule invocation
 
 (parser.packrat:defrule rule-invocation-expression (context)
-    (list (or (:guard rule-name symbolp)
-              (list (:guard rule-name    symbolp)
-                    (:guard grammar-name symbolp)))
-          (* (:<<- arguments (expression :value))))
+    (list (or (guard rule-name symbolp)
+              (list (guard rule-name    symbolp)
+                    (guard grammar-name symbolp)))
+          (* (<<- arguments (expression :value))))
   (bp:node* (:rule-invocation :grammar grammar-name
                               :rule    rule-name)
     (* :sub-expression (nreverse arguments))))
 
 (parser.packrat:defrule next-rule-invocation-expression (context)
-    (list (or :next-rule 'next-rule) (* (:<<- arguments (expression :value))))
+    (list (or :next-rule 'next-rule) (* (<<- arguments (expression :value))))
   (bp:node* (:next-rule-invocation)
     (* :sub-expression (nreverse arguments))))

@@ -10,6 +10,11 @@
    #:sub-expression
    #:sub-expressions)
 
+  (:import-from #:parser.packrat.grammar.base
+   #:guard
+   #:<- #:<<-
+   #:must)
+
   (:local-nicknames
    (#:bp      #:architecture.builder-protocol)
 

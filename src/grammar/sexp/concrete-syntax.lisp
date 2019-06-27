@@ -28,27 +28,27 @@
 
 (parser.packrat:defrule structure-expression (context)
     (list 'structure
-          (:<- type (base::expression :value))
-          (* (list (:<<- readers) ; TODO must be a function name
-                   (:<<- sub-expressions (base::expression context)))))
+          (<- type (base::expression :value))
+          (* (list (<<- readers) ; TODO must be a function name
+                   (<<- sub-expressions (base::expression context)))))
   (bp:node* (:structure)
     (1 :type           type)
     (* :reader         (nreverse readers))
     (* :sub-expression (nreverse sub-expressions))))
 
 (parser.packrat:defrule list-elements-expression (context)
-    (list 'list-elements (:<- elements-expression (base::expression context)))
+    (list 'list-elements (<- elements-expression (base::expression context)))
   (bp:node* (:as-list)
     (1 :sub-expression elements-expression)))
 
 (parser.packrat:defrule rest-expression (context)
-   (list 'rest (:<- rest-expression (base::expression context)))
+   (list 'rest (<- rest-expression (base::expression context)))
  (bp:node* (:rest)
    (1 :sub-expression rest-expression)))
 
 (parser.packrat:defrule vector-elements-expression (context)
     (list 'vector-elements
-          (:<- elements-expression (base::expression context)))
+          (<- elements-expression (base::expression context)))
   (bp:node* (:as-vector)
     (1 :sub-expression elements-expression)))
 
@@ -64,7 +64,7 @@
   `(list-elements (:seq ,@element-expressions)))
 
 (define-macro-rule list*-expression
-    (list 'list* (* (and (:seq :any :any) (:<<- element-expressions))) last)
+    (list 'list* (* (and (:seq :any :any) (<<- element-expressions))) last)
   `(list-elements (:seq ,@(nreverse element-expressions) (rest ,last))))
 
 (define-macro-rule vector-expression
@@ -84,6 +84,6 @@
 ;;;
 
 (define-macro-rule value-expression
-    (list 'value (list (:guard value symbolp)
-          (:<- expression (base::expression))))
-  `(and (<- ,value) ,expression))
+    (list 'value (list (guard variable symbolp)
+          (<- expression (base::expression))))
+  `(and (<- ,variable) ,expression))
