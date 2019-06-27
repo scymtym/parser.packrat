@@ -27,9 +27,10 @@
         (compose-expression context)
         (transform-expression context)
 
-        ;; Must be last
-        (rule-invocation-expression context)
-        (next-rule-invocation-expression context)))
+        ;; These two must be last; next-rule must be before generic
+        ;; rule-invocation.
+        (next-rule-invocation-expression context)
+        (rule-invocation-expression context)))
 
 ;;; Predicate and anything
 
