@@ -7,10 +7,10 @@
 (cl:in-package #:parser.packrat.cache)
 
 (defclass stream-cache ()
-  ((stream :initarg  :stream
-           :reader   stream)
-   (chunks :reader   chunks
-           :initform (make-chunk-cache 0 10)))
+  ((%stream :initarg  :stream
+            :reader   stream)
+   (%chunks :reader   chunks
+            :initform (make-chunk-cache 0 10)))
   (:default-initargs
    :stream (missing-required-initarg 'stream-cache :stream)))
 
@@ -36,15 +36,14 @@
           ;; bounds test
           (lambda (position)
             (declare (type input-position position))
-            (cond
-              ((< position length-at-least)
-               length-at-least)
-              (end-seen?
-               nil)
-              (t
-               (ensure-chunk chunks position #'fill-chunk)
-               (when (< position length-at-least)
-                 length-at-least))))
+            (cond ((< position length-at-least)
+                   length-at-least)
+                  (end-seen?
+                   nil)
+                  (t
+                   (ensure-chunk chunks position #'fill-chunk)
+                   (when (< position length-at-least)
+                     length-at-least))))
           ;; access
           (lambda (position)
             (declare (type input-position position))
