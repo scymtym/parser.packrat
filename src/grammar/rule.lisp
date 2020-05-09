@@ -1,6 +1,6 @@
 ;;;; rule.lisp --- Rule and forward referenced rule classes.
 ;;;;
-;;;; Copyright (C) 2017, 2018 Jan Moringen
+;;;; Copyright (C) 2017, 2018, 2019 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -43,8 +43,8 @@
 ;;; `rule'
 
 (defclass rule (rule-base)
-  ((expression :initarg :expression
-               :reader  expression))
+  ((%expression :initarg :expression
+                :reader  expression))
   (:metaclass c2mop:funcallable-standard-class)
   (:default-initargs
    :expression (more-conditions:missing-required-initarg 'rule :expression))

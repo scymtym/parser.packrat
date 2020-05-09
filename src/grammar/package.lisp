@@ -47,7 +47,7 @@
    #:rules
    #:rules/alist
 
-   #:find-rule                      ; also `setf'
+   #:find-rule                          ; also `setf'
 
    #:ensure-rule
    #:ensure-rule-using-rule

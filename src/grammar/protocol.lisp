@@ -164,7 +164,7 @@
                                    &allow-other-keys)
   (let ((initargs (list* :name name (remove-from-plist args :rule-class))))
     (if (eq (class-of rule) rule-class)
-        (apply #'reinitialize-instance rule initargs)
+        (apply #'reinitialize-instance rule initargs) ; TODO reset environment to default if not supplied
         (apply #'change-class rule rule-class initargs))))
 
 (defmethod parse ((grammar symbol) (expression t) (input t))
