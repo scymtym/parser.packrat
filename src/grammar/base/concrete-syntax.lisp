@@ -1,3 +1,9 @@
+;;;; package.lisp --- Meta-grammar rules for the base grammar module.
+;;;;
+;;;; Copyright (C) 2017, 2018, 2019 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:in-package #:parser.packrat.grammar.base)
 
 ;;; Grammar
@@ -74,20 +80,62 @@
 (parser.packrat:defrule variable-name! ()
     (:must (variable-name) "must be a variable name"))
 
-(parser.packrat:defrule set-expression (context)
+(parser.packrat:defrule implicit-list (action)
+    (list (* (<<- variables (variable-name!)) 1))
+  (let ((expressions
+          (loop :for variable :in (nreverse variables)
+                :collect (bp:node* (action :variable variable)
+                           (1 :sub-expression (bp:node* (:anything)))))))
+    (bp:node* (:as-list)
+      (1 :sub-expression (bp:node* (:sequence)
+                           (* :sub-expression expressions))))))
+
+(parser.packrat:defrule set-expression/simple (context)
     (or (<- variable1 (variable-name))
-        (list (or :<- '<-) (<- variable2 (variable-name!))
+        (list (or :<- '<-)
+              (and (not (list* :any)) (<- variable2 (variable-name!)))
               (* (<- sub-expression (expression! context)) 0 1)))
   (if (and variable1 (eq context :value))
       (bp:node* (:variable-reference :variable variable1))
       (bp:node* (:set :variable (or variable1 variable2))
-        (1 :sub-expression (or sub-expression (make-instance 'anything-expression))))))
+        (1 :sub-expression (or sub-expression (bp:node* (:anything)))))))
 
-(parser.packrat:defrule push-expression (context)
-    (list (or :<<- '<<-) (<- variable (variable-name!))
+(parser.packrat:defrule set-expression/compose (context)
+    (list '<-
+          (<- set (or (implicit-list :set) (expression! context)))
+          (* (<<- sub-expressions (expression! context))))
+  (when (eq context :value)
+    (:fail))
+  (if sub-expressions
+      (bp:node* (:compose)
+        (* :sub-expression (append sub-expressions (list set))))
+      set))
+
+(parser.packrat:defrule set-expression (context)
+    (or (set-expression/simple  context)
+        (set-expression/compose context)))
+
+(parser.packrat:defrule push-expression/simple (context)
+    (list (or :<<- '<<-)
+          (and (not (list* :any)) (<- variable (variable-name!)))
           (* (<- sub-expression (expression! context)) 0 1))
   (bp:node* (:push :variable variable)
-    (1 :sub-expression (or sub-expression (make-instance 'anything-expression)))))
+    (1 :sub-expression (or sub-expression (bp:node* (:anything))))))
+
+(parser.packrat:defrule push-expression/compose (context)
+    (list '<<-
+          (<- push (or (implicit-list :push) (expression! context)))
+          (* (<<- sub-expressions (expression! context))))
+  (when (eq context :value)
+    (:fail))
+  (if sub-expressions
+      (bp:node* (:compose)
+        (* :sub-expression (append sub-expressions (list push))))
+      push))
+
+(parser.packrat:defrule push-expression (context)
+    (or (push-expression/simple  context)
+        (push-expression/compose context)))
 
 ;;; Must
 
