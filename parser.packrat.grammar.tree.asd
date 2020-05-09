@@ -16,11 +16,14 @@
 
   :components       ((:module     "grammar-tree"
                       :pathname   "src/grammar/tree"
+                      :serial     t
                       :components ((:file       "package")
 
                                    (:file       "expressions")
                                    (:file       "environment")
                                    (:file       "compiler")
+
+                                   (:file       "concrete-syntax")
 
                                    (:file       "runtime"))))
 
