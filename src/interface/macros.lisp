@@ -99,29 +99,42 @@
   #+sbcl `(sb-ext:with-current-source-form (,@forms) ,@body)
   #-sbcl `(progn ,@body))
 
+(defun expand-expression (grammar name parameters expression environment)
+  (let* ((ast      (handler-bind
+                       ((grammar:expression-syntax-error
+                          (lambda (condition)
+                            (with-current-source-form
+                                ((grammar:expression condition))
+                              (error condition)))))
+                     (grammar:parse-expression grammar expression)))
+         (function (handler-bind ((parser.packrat.compiler::compilation-error
+                                    (lambda (condition)
+                                      (with-current-source-form
+                                          ((grammar:expression condition))
+                                        (error condition)))))
+                     (apply #'parser.packrat.compiler:compile-rule
+                            grammar name parameters ast
+                            (when environment (list :environment environment))))))
+    function))
+
 (defmacro defrule (name-and-options (&rest parameters)
                    expression &rest production)
   (let+ (((name &key
                 ((:grammar grammar-name) nil grammar-supplied?) ; TODO call this :in?
                 environment)
           (ensure-list name-and-options))
-         (grammar      (if grammar-supplied?
-                           (grammar:find-grammar grammar-name) ; TODO grammar-designator
-                           *grammar*))
-         (grammar-name (grammar:name grammar))
-         (expression   (if production
-                           `(:transform ,expression ,@production)
-                           expression))
-         (ast          (handler-case
-                           (grammar:parse-expression grammar expression)
-                         (grammar:expression-syntax-error (condition)
-                           (with-current-source-form ((grammar:expression condition))
-                             (error condition))))))
-    `(grammar:ensure-rule
-      ',name
-      (grammar:find-grammar ',grammar-name)
-      :rule-class 'grammar::rule
-      :expression ',expression
-      :function   ,(apply #'parser.packrat.compiler:compile-rule
-                          grammar name parameters ast
-                          (when environment (list :environment (eval environment)))))))
+         (grammar       (if grammar-supplied?
+                            (grammar:find-grammar grammar-name) ; TODO grammar-designator
+                            *grammar*))
+         (grammar-name  (grammar:name grammar))
+         (expression    (if production
+                            `(:transform ,expression ,@production)
+                            expression))
+         (function-form (expand-expression
+                         grammar name parameters expression
+                         (when environment (eval environment)))))
+    `(grammar:ensure-rule ',name (grammar:find-grammar ',grammar-name)
+                          :rule-class 'grammar::rule
+                          ,@(when environment `(:environment ,environment))
+                          :expression ',expression
+                          :function   ,function-form)))

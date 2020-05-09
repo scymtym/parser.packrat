@@ -1,3 +1,9 @@
+;;;; package.lisp --- Package definition for the interface module.
+;;;;
+;;;; Copyright (C) 2018, 2019 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:defpackage #:parser.packrat
   (:use
    #:cl
