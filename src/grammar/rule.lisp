@@ -11,7 +11,9 @@
 (defclass rule-base (named-mixin
                      print-items:print-items-mixin
                      c2mop:funcallable-standard-object)
-  ()
+  ((%environment :initarg  :environment ; TODO should be calling convention
+                 :reader   environment
+                 :initform nil))
   (:metaclass c2mop:funcallable-standard-class)
   (:documentation
    "Superclass for rule classes."))
