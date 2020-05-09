@@ -433,6 +433,20 @@
 
 ;;; Rule invocation
 
+(defmethod validate-invocation ((grammar     t)
+                                (environment t)
+                                (invocation  rule-invocation-expression))
+  (let+ (((&accessors-r/o (grammar-name grammar) (rule-name rule)) invocation)
+         (grammar            (if grammar-name
+                                 (grammar:find-grammar grammar-name)
+                                 grammar))
+         (target-environment (if-let ((rule (grammar:find-rule rule-name grammar
+                                                               :if-does-not-exist nil)))
+                               (or (grammar::environment rule) ; TODO rule should always have a calling convention
+                                   (grammar:default-environment grammar invocation))
+                               (grammar:default-environment grammar invocation))))
+    (typep target-environment (class-of environment))))
+
 (defun cached (cache rule &rest state)
   (gethash (list rule state) cache))
 
