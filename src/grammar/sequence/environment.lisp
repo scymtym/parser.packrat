@@ -51,9 +51,10 @@
 
 (defclass list-environment (env:environment
                             sequential-environment-mixin)
-  ((tail :initarg :tail
-         :type    (or list symbol)
-         :reader  tail))
+  ((tail :initarg  :tail
+         :type     (or list symbol)
+         :reader   tail
+         :initform (gensym #.(string '#:tail))))
   (:documentation
    "Environment for `list' inputs."))
 
