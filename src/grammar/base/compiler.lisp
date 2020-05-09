@@ -1,17 +1,30 @@
 (cl:in-package #:parser.packrat.grammar.base)
 
+(defmethod compile-test ((grammar      base-grammar)
+                         (environment  t)
+                         (expression   t)
+                         (predicate    t)
+                         (value        t)
+                         (arguments    t)
+                         (success-cont function)
+                         (failure-cont function))
+  `(if (,predicate ,value ,@arguments)
+       ,(funcall success-cont environment)
+       ,(funcall failure-cont environment)))
+
 (defmethod compile-expression ((grammar      base-grammar)
                                (environment  env:value-environment)
                                (expression   predicate-expression)
                                (success-cont function)
                                (failure-cont function))
   (let+ (((&accessors-r/o sub-expression predicate) expression)
-         ((predicate &rest arguments) (ensure-list predicate)))
-    (compile-expression grammar environment sub-expression
+         ((predicate &rest arguments) (ensure-list predicate))) ; TODO should be done earlier
+    (compile-expression
+     grammar environment sub-expression
      (lambda (new-environment)
-       `(if (,predicate ,(env:value new-environment) ,@arguments)
-            ,(funcall success-cont new-environment)
-            ,(funcall failure-cont new-environment)))
+       (compile-test grammar new-environment expression
+                     predicate (env:value new-environment) arguments
+                     success-cont failure-cont))
      failure-cont)))
 
 (defmethod compile-expression ((grammar      base-grammar)
@@ -31,9 +44,9 @@
          (predicate (typecase expected
                       (string 'equal)
                       (t      'eql))))
-    `(if (,predicate ,value ',expected)
-         ,(funcall success-cont environment) ; (producing (value environment) environment)
-         ,(funcall failure-cont environment))))
+    (compile-test grammar environment expression
+                  predicate value (list `',expected)
+                  success-cont failure-cont)))
 
 ;;; Combinators
 
@@ -202,9 +215,12 @@
      grammar environment sub-expression
      (if already-bound?
          (lambda (new-environment)
-           `(if (equal ,name ,(value* new-environment))
-                ,(funcall success-cont new-environment)
-                ,(funcall failure-cont environment)))
+           (compile-test grammar new-environment expression
+                         'equal (value* new-environment) (list name)
+                         success-cont
+                         (lambda (new-environment)
+                           (declare (ignore new-environment))
+                           (funcall failure-cont environment))))
          (lambda (new-environment)
            (setf (env:lookup variable new-environment)
                  (cons name t)) ; TODO hack. maybe make a new environment instead?
