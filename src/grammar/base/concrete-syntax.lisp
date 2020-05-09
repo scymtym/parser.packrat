@@ -19,6 +19,8 @@
     (or (predicate-expression context)
         (anything-expression context)
 
+        (position-expression context) ; must be early
+
         (constant-expression context)
 
         (set-expression context)
@@ -32,6 +34,9 @@
 
         (compose-expression context)
         (transform-expression context)
+
+        ;; Syntactic sugar
+        (value-expression context)
 
         ;; These two must be last; next-rule must be before generic
         ;; rule-invocation.
@@ -201,3 +206,20 @@
     (list (or :next-rule 'next-rule) (* (<<- arguments (expression! :value))))
   (bp:node* (:next-rule-invocation)
     (* :sub-expression (nreverse arguments))))
+
+;;; Position
+
+(parser.packrat:defrule position-expression (context)
+    'position
+  (bp:node* (:position)))
+
+;;; Syntactic sugar
+
+(defmacro define-macro-rule (name expression expansion)
+  `(parser.packrat:defrule ,name (context)
+     (:compose (:transform ,expression ,expansion)
+               (expression! context))))
+
+(define-macro-rule value-expression
+    (list 'value (list object) expression)
+  `(and ,object ,expression))

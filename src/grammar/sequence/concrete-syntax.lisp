@@ -50,4 +50,4 @@
 (define-macro-rule bounds-expression
     (list* 'bounds (list (:guard start symbolp) (:guard end symbolp))
            expressions)
-  `(:seq (base::<- ,start :position) ,@expressions (base::<- ,end :position)))
+  `(:seq (base::<- ,start position) ,@expressions (base::<- ,end position)))
