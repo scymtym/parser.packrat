@@ -16,10 +16,6 @@
   `((?       . ,(lambda (expression)
                   (assert (length= 2 expression))
                   `(* ,(second expression) nil 1)))
-    (parser.packrat.grammar.sequence::?       . ,(lambda (expression)
-                  (assert (length= 2 expression))
-                  `(* ,(second expression) nil 1)))
-
     (+       . ,(lambda (expression)
                   (assert (length= 2 expression))
                   `(* ,(second expression) 1)))
@@ -44,7 +40,7 @@
 
     (bounds  . ,(lambda (expression)
                   (let+ ((((start end) &rest expressions) (rest expression)))
-                    `(:seq (<- ,start :position) ,@expressions (<- ,end :position)))))
+                    `(seq (<- ,start :position) ,@expressions (<- ,end :position)))))
 
     (value   . ,(lambda (expression)
                   (let+ ((((object) expression) (rest expression)))
