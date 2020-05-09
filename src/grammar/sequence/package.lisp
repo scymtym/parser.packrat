@@ -1,3 +1,9 @@
+;;;; package.lisp --- Package definition for the grammar.sequence module.
+;;;;
+;;;; Copyright (C) 2017, 2018, 2019 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:defpackage #:parser.packrat.grammar.sequence
   (:use
    #:cl
@@ -15,8 +21,11 @@
    (#:grammar #:parser.packrat.grammar)
    (#:base    #:parser.packrat.grammar.base))
 
+  (:import-from #:parser.packrat.grammar.base
+   #:<- #:<<- #:guard)
+
   (:export
-   #:?)
+   #:seq #:?)
 
   ;; Expressions
   (:export

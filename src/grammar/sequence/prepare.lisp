@@ -46,8 +46,7 @@
                                        (environment sequential-environment-mixin)
                                        (expression  base:rule-invocation-expression))
   ;; If the rule invocation needs a value environment, establish it.
-  (if (parser.packrat.compiler:validate-invocation
-       grammar environment expression)
+  (if (validate-invocation grammar environment expression)
       (call-next-method)
       (wrap-value-needing-expression grammar expression)))
 

@@ -1,5 +1,7 @@
 (cl:in-package #:parser.packrat.grammar.sequence)
 
+;;; Expressions
+
 ;;; Default for `sequential-environment-mixin'
 
 (defmethod compile-expression ((grammar      t)
@@ -231,3 +233,5 @@
         `(labels ,(element expressions names environment)
            (,(first names) ,@(env:position-variables environment)))
         (funcall success-cont environment))))
+
+;;; Rules

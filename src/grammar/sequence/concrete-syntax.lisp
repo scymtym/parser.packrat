@@ -1,3 +1,9 @@
+;;;; concrete-syntax.lisp --- Meta-grammar rules for the sequence grammar module.
+;;;;
+;;;; Copyright (C) 2017, 2018, 2019, 2020 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:in-package #:parser.packrat.grammar.sequence)
 
 (parser.packrat:defgrammar meta-grammar
@@ -18,9 +24,9 @@
         (bounds-expression context)))
 
 (parser.packrat:defrule repetition-expression (context)
-    (list '* (:<- sub-expression (base::expression context))
-          (? (:seq (:<- min (base::expression :value))
-                   (? (:<- max (base::expression :value))))))
+    (list '* (<- sub-expression (base::expression context))
+          (? (seq (<- min (base::expression :value))
+                  (? (<- max (base::expression :value))))))
   (bp:node* (:repetition)
     (1    :sub-expression  sub-expression)
     (bp:? :min-repetitions min)
@@ -28,7 +34,7 @@
 
 (parser.packrat:defrule sequence-expression (context)
     (list (or :seq 'seq)
-          (* (:<<- element-expressions (base::expression context))))
+          (* (<<- element-expressions (base::expression context))))
   (bp:node* (:sequence)
     (* :sub-expression (nreverse element-expressions))))
 
@@ -48,6 +54,6 @@
   `(* ,expression 1))
 
 (define-macro-rule bounds-expression
-    (list* 'bounds (list (:guard start symbolp) (:guard end symbolp))
+    (list* 'bounds (list (guard start symbolp) (guard end symbolp))
            expressions)
-  `(:seq (base::<- ,start position) ,@expressions (base::<- ,end position)))
+  `(seq (<- ,start position) ,@expressions (<- ,end position)))
