@@ -578,7 +578,7 @@
                      parser.packrat.compiler::+context-var+ grammar-var rule-var)
                   ,@(when arguments
                       `((,arguments-var (list ,@argument-forms)))))
-      (when arguments `(declare (dynamic-extent ,arguments-var)))
+      ;; TODO wrong, see command in next-rule-invocation-expression (when arguments `(declare (dynamic-extent ,arguments-var)))
       ;; TODO tail calls do not need the receiving part
       `(multiple-value-bind (,success?-var
                              ,@(env:position-variables continue-environment)
