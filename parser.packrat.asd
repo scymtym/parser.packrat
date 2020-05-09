@@ -50,8 +50,9 @@
                       :depends-on ("expression" "environment")
                       :serial     t
                       :components ((:file       "package")
+                                   (:file       "conditions")
                                    (:file       "util")
-                                   (:file       "protocol" )))
+                                   (:file       "protocol")))
 
                      (:module     "grammar"
                       :pathname   "src/grammar"

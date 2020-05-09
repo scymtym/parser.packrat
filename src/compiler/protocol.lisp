@@ -1,3 +1,9 @@
+;;;; protocol.lisp --- Protocol provided by the compiler module.
+;;;;
+;;;; Copyright (C) 2017, 2018, 2019 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:in-package #:parser.packrat.compiler)
 
 ;;; Expression compilation protocol
@@ -28,6 +34,17 @@
     environment representing the state after EXPRESSION has succeeded
     as the sole argument to obtain the code that should be executed if
     EXPRESSION succeeds."))
+
+;;; Default behavior
+
+(defmethod compile-expression :around ((grammar      t)
+                                       (environment  t)
+                                       (expression   t)
+                                       (success-cont t)
+                                       (failure-cont t))
+  (more-conditions:with-condition-translation
+      (((error compilation-error) :node expression))
+    (call-next-method)))
 
 ;;; Invocation compilation protocol
 
