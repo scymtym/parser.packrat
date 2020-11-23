@@ -94,7 +94,7 @@
 
 ;;; `defrule'
 
-(defmacro with-current-source-form ((&rest forms) &body body)
+(defmacro with-current-source-form ((&rest forms) &body body) ; TODO t-w-c-s-f
   #-sbcl (declare (ignore forms))
   #+sbcl `(sb-ext:with-current-source-form (,@forms) ,@body)
   #-sbcl `(progn ,@body))
