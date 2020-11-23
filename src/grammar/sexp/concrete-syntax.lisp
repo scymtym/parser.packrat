@@ -33,31 +33,35 @@
         ((base::expression base::meta-grammar) context)))
 
 (parser.packrat:defrule structure-expression (context)
-    (list 'structure
-          (<- type (base::expression! :value))
-          (* (and (list* :any)
-                  (must (list (<<- readers #+TODO (base::function-name)) ; TODO must be a function name
-                              (<<- sub-expressions (base::expression! context)))
-                        "a list of two elements"))))
-  (bp:node* (:structure)
-    (1 :type           type)
-    (* :reader         (nreverse readers))
-    (* :sub-expression (nreverse sub-expressions))))
+    (base::value (source)
+      (list 'structure
+            (<- type (base::expression! :value))
+            (* (and (list* :any)
+                    (must (list (<<- readers #+TODO (base::function-name)) ; TODO must be a function name
+                                (<<- sub-expressions (base::expression! context)))
+                          "a list of two elements")))))
+    (bp:node* (:structure :source source)
+      (1 :type           type)
+      (* :reader         (nreverse readers))
+      (* :sub-expression (nreverse sub-expressions))))
 
 (parser.packrat:defrule list-elements-expression (context)
-    (list 'list-elements (<- elements-expression (base::expression! context)))
-  (bp:node* (:as-list)
+    (base::value (source)
+      (list 'list-elements (<- elements-expression (base::expression! context))))
+  (bp:node* (:as-list :source source)
     (1 :sub-expression elements-expression)))
 
 (parser.packrat:defrule rest-expression (context)
-   (list 'rest (<- rest-expression (base::expression! context)))
- (bp:node* (:rest)
+    (base::value (source)
+      (list 'rest (<- rest-expression (base::expression! context))))
+ (bp:node* (:rest :source source)
    (1 :sub-expression rest-expression)))
 
 (parser.packrat:defrule vector-elements-expression (context)
-    (list 'vector-elements
-          (<- elements-expression (base::expression! context)))
-  (bp:node* (:as-vector)
+    (base::value (source)
+      (list 'vector-elements
+            (<- elements-expression (base::expression! context))))
+  (bp:node* (:as-vector :source source)
     (1 :sub-expression elements-expression)))
 
 ;;; Syntactic sugar
