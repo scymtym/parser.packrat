@@ -25,13 +25,27 @@
                                              :if-does-not-exist nil))
               (grammar:dependencies grammar)))))
 
-(declaim (inline %make-context))
-(defstruct (context
-            (:constructor %make-context (grammar)))
-  (cache   (make-hash-table :test #'equal) :read-only t)
-  (grammar nil                             :read-only t))
+(defstruct (context (:constructor nil) (:predicate nil) (:copier nil))
+  (grammar nil :read-only t))
+
+(declaim (inline %make-context/no-cache))
+(defstruct (context/no-cache
+            (:include context)
+            (:constructor %make-context/no-cache (grammar))
+            (:predicate nil)
+            (:copier nil)))
+
+(declaim (inline %make-context/cache))
+(defstruct (context/cache
+            (:include context)
+            (:constructor %make-context/cache (grammar))
+            (:predicate nil)
+            (:copier nil))
+  (cache (make-hash-table :test #'equal) :read-only t))
 
 (defmethod grammar::make-context ((grammar    base-grammar)
                                   (expression t)
                                   (input      t))
-  (%make-context grammar))
+  (if (cached? grammar)
+      (%make-context/cache grammar)
+      (%make-context/no-cache grammar)))

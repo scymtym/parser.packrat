@@ -482,8 +482,9 @@
                                    context-var grammar-var rule-var)
   (flet ((make-load-time-lookup (grammar-name)
            `(load-time-value
-             (grammar:find-rule ',rule-name (grammar:find-grammar ',grammar-name)
-                                :if-does-not-exist :forward-reference))))
+             (the (values function &optional)
+                  (grammar:find-rule ',rule-name (grammar:find-grammar ',grammar-name)
+                                     :if-does-not-exist :forward-reference)))))
     (if grammar-name
         `((,rule-var ,(make-load-time-lookup grammar-name)))
         (let+ ((grammar-name (grammar:name grammar))
@@ -493,7 +494,8 @@
             (,context-grammar-var (context-grammar ,context-var))
             (,rule-var            (if (eq ,context-grammar-var ,grammar-var)
                                       ,(make-load-time-lookup grammar-name)
-                                      (grammar:find-rule ',rule-name ,context-grammar-var))))))))
+                                      (the (values function &optional)
+                                           (grammar:find-rule ',rule-name ,context-grammar-var)))))))))
 
 ;; TODO make lookup-and-call/single-argument so we don't have
 ;; cons and copy-list for a single argument, rename {with ->
@@ -514,7 +516,7 @@
          (cache-place #+eventually `(cache:cached
                                      ',rule-name ,@position-variables ,cache-var)
                       `(cached
-                        (context-cache ,parser.packrat.compiler::+context-var+) ',rule-key
+                        (context/cache-cache ,parser.packrat.compiler::+context-var+) ',rule-key
                         ,@position-variables
                         ,@(when arguments-var `(,arguments-var)))))
     `(values-list
@@ -534,11 +536,13 @@
                       `(,rule-name . ,grammar-name)
                       `,rule-name))
         (context  parser.packrat.compiler::+context-var+))
-    `(progn
-       ,(emit-d-call rule-key context position-variables state-variables arguments-var :grammar grammar)
-       (let ((*depth*     (+ *depth* 2))
-             (*old-state* (list ,@(remove-if (rcurry #'member position-variables) state-variables))))
-         ,(emit-call rule-var context state-variables arguments-var)))))
+    (if t
+        `(progn
+           ,(emit-d-call rule-key context position-variables state-variables arguments-var :grammar grammar)
+           (let ((*depth*     (+ *depth* 2))
+                 (*old-state* (list ,@(remove-if (rcurry #'member position-variables) state-variables))))
+             ,(emit-call rule-var context state-variables arguments-var)))
+        (emit-call rule-var context state-variables arguments-var))))
 
 (defmethod compile-expression ((grammar      base-grammar) ; TODO (grammar t)?
                                (environment  t)
@@ -590,9 +594,10 @@
                          'emit-call/no-cache)
                      rule-name rule-var position-variables state-variables
                      (when arguments arguments-var) :grammar-name grammar-name :grammar grammar)
-         ,(emit-d-return rule-name parser.packrat.compiler::+context-var+
-                         position-variables state-variables (when arguments arguments-var)
-                         success?-var (env:position-variables continue-environment) value-var)
+         ,(when t
+            (emit-d-return rule-name parser.packrat.compiler::+context-var+
+                           position-variables state-variables (when arguments arguments-var)
+                           success?-var (env:position-variables continue-environment) value-var))
          (case ,success?-var
            ((t)    ,(funcall success-cont continue-environment))
            ((nil)  ,(funcall failure-cont continue-environment))
