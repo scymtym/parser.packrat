@@ -55,6 +55,13 @@
   `(* ,expression 1))
 
 (define-macro-rule bounds-expression
-    (list* 'bounds (list (guard start symbolp) (guard end symbolp))
+    (list* 'bounds (list (must (guard start symbolp) "must be a symbol")
+                         (must (guard end symbolp) "must be a symbol"))
            expressions)
-  `(seq (<- ,start position) ,@expressions (<- ,end position)))
+  (let ((prefix (butlast expressions))
+        (last   (lastcar expressions))
+        (result (gensym)))
+    `(seq (<- ,start position)
+          ,@prefix
+          (<- ,result ,last)
+          (:transform (<- ,end position) ,result))))
