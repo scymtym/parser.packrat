@@ -8,15 +8,20 @@
 * Calling Convention
 
   #+BEGIN_SRC lisp :results silent :exports results
-    (defun grammar-calling-convention-lambda-list (grammar-class)
-      (let* ((class       (c2mop:ensure-finalized (find-class grammar-class)))
-             (prototype   (c2mop:class-prototype class))
-             (environment (parser.packrat.grammar:default-environment prototype nil)))
-        (parser.packrat.environment:state-variables environment)))
+    (defmethod calling-convention-lambda-list ((thing symbol))
+      (calling-convention-lambda-list (find-class thing)))
 
-    (defun print-grammar-calling-convention-lambda-list (grammar-class)
+    (defmethod calling-convention-lambda-list ((thing class))
+      (let* ((class       (c2mop:ensure-finalized thing))
+             (prototype   (c2mop:class-prototype class)))
+        (parser.packrat.grammar:default-environment prototype nil)))
+
+    (defmethod calling-convention-lambda-list ((thing parser.packrat.environment:environment))
+      (parser.packrat.environment:state-variables thing))
+
+    (defun print-calling-convention-lambda-list (grammar-or-environment)
       (let ((*print-pretty* nil))
-        (princ (grammar-calling-convention-lambda-list grammar-class))))
+        (princ (calling-convention-lambda-list grammar-or-environment))))
   #+END_SRC
 
   The usual calling convention for sequence-based grammars, that is

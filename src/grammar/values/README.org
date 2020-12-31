@@ -12,7 +12,7 @@
 
 * Calling Convention
 
-  # src_lisp[:results output verbatim :exports results]{(print-grammar-calling-convention-lambda-list 'parser.packrat.grammar.values::values-grammar)}.
+  src_lisp[:results output verbatim :exports results]{(print-calling-convention-lambda-list (make-instance 'parser.packrat.grammar.values::values-environment))} {{{results(=NIL=)}}}.
 
 * Optimizations
 
