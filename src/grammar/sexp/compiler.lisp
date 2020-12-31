@@ -28,10 +28,9 @@
                         (t
                          (list* value first-args)))))
                    ((&flet make-value-environment (value)
-                      (env:environment-at
-                             slot-environment (list :value value)
-                             :class 'env:value-environment
-                             :state '()))))
+                      (env:environment-at slot-environment (list :value value)
+                                          :class 'env:value-environment
+                                          :state '()))))
               (if first-reader
                   `(let ((,first-var (,first-reader ,@(make-reader-args))))
                      ,(compile-expression
