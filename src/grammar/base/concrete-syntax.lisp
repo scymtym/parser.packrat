@@ -159,11 +159,12 @@
        (let ((rule-name (symbolicate combinator '#:-expression))
              (kind      (make-keyword combinator)))
          `(parser.packrat:defrule ,rule-name (context)
-              (list ',combinator
-                    ,(ecase arity
-                       (1 `(<- sub-expression (expression! context)))
-                       (* `(* (<<- sub-expressions (expression! context))))))
-            (bp:node* (,kind)
+              (value (source)
+                (list ',combinator
+                      ,(ecase arity
+                         (1 `(<- sub-expression (expression! context)))
+                         (* `(* (<<- sub-expressions (expression! context)))))))
+            (bp:node* (,kind :source source)
               ,(ecase arity
                  (1 `(1 :sub-expression sub-expression))
                  (* `(* :sub-expression (nreverse sub-expressions)))))))))

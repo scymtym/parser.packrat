@@ -2,7 +2,7 @@
 
 ;;; `expression'
 
-(defclass expression () ())
+(defclass expression () ((%source :initarg :source :reader source :initform nil))) ; TODO hack
 
 ;;; `sub-expression-mixin'
 

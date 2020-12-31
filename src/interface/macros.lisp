@@ -110,7 +110,8 @@
          (function (handler-bind ((parser.packrat.compiler::compilation-error
                                     (lambda (condition)
                                       (with-current-source-form
-                                          ((grammar:expression condition))
+                                          ((parser.packrat.expression::source
+                                            (parser.packrat.compiler::node condition))) ; TODO do this properly
                                         (error condition)))))
                      (apply #'parser.packrat.compiler:compile-rule
                             grammar name parameters ast

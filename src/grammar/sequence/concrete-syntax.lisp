@@ -33,9 +33,10 @@
     (bp:? :max-repetitions max)))
 
 (parser.packrat:defrule sequence-expression (context)
-    (list (or :seq 'seq)
-          (* (<<- element-expressions (base::expression context))))
-  (bp:node* (:sequence)
+    (base::value (source)
+      (list (or :seq 'seq)
+            (* (<<- element-expressions (base::expression context)))))
+  (bp:node* (:sequence :source source)
     (* :sub-expression (nreverse element-expressions))))
 
 ;;; Syntactic sugar
