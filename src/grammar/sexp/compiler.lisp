@@ -44,6 +44,7 @@
     (compile-expression
      grammar environment type
      (lambda (new-environment)
+       ; TODO (base::compile-test grammar environment expression 'typep value (list (env:value new-environment)))
        `(if (typep ,value ,(env:value new-environment))
             ,(slot readers sub-expressions slot-vars environment)
             ,(funcall failure-cont environment)))
