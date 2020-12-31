@@ -1,3 +1,9 @@
+;;;; parser.packrat.grammar.string.lisp --- System definition for the grammar.string module.
+;;;;
+;;;; Copyright (C) 2017, 2018, 2019, 2020 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (defsystem "parser.packrat.grammar.string"
   :description      "String parsing for the parser.packrat system."
   :license          "BSD" ; see COPYING file for details
@@ -12,9 +18,7 @@
   :depends-on       ("let-plus"
                      "utilities.print-items"
 
-                     (:version "parser.packrat"       (:read-file-form "version-string.sexp"))
-                     ; (:version "parser.packrat.cache" (:read-file-form "version-string.sexp"))
-                     )
+                     (:version "parser.packrat" (:read-file-form "version-string.sexp")))
 
   :components       ((:module     "grammar-string"
                       :pathname   "src/grammar/string"

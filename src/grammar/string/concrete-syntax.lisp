@@ -1,3 +1,9 @@
+;;;; concrete-syntax.lisp --- Meta-grammar for the grammar.string module.
+;;;;
+;;;; Copyright (C) 2017, 2018, 2019 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:in-package #:parser.packrat.grammar.string)
 
 (parser.packrat:defgrammar meta-grammar

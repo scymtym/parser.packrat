@@ -1,3 +1,9 @@
+;;;; runtime.lisp --- Runtime support required by the grammar.srting module.
+;;;;
+;;;; Copyright (C) 2017, 2018, 2019 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:in-package #:parser.packrat.grammar.string)
 
 (defun %string= (string1 string2 start1 end1)
