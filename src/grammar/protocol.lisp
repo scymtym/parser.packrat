@@ -1,6 +1,6 @@
 ;;;; protocol.lisp --- Protocol provided by the grammar module.
 ;;;;
-;;;; Copyright (C) 2017, 2018, 2019 Jan Moringen
+;;;; Copyright (C) 2017, 2018, 2019, 2020 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -108,13 +108,17 @@
     (apply #'ensure-rule-using-rule rule name grammar args)))
 
 (defmethod ensure-rule-using-rule ((rule null) (name t) (grammar t)
-                                   &rest args &key rule-class &allow-other-keys)
+                                   &rest args
+                                   &key (rule-class (find-class 'rule))
+                                   &allow-other-keys)
   (setf (find-rule name grammar)
         (apply #'make-instance rule-class :name name
                (remove-from-plist args :rule-class))))
 
 (defmethod ensure-rule-using-rule ((rule t) (name t) (grammar t)
-                                   &rest args &key rule-class &allow-other-keys)
+                                   &rest args
+                                   &key (rule-class (find-class 'rule))
+                                   &allow-other-keys)
   (let ((initargs (list* :name name (remove-from-plist args :rule-class))))
     (if (typep rule rule-class)
         (apply #'reinitialize-instance rule initargs)
