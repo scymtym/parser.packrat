@@ -57,7 +57,7 @@
              (if-let ((parent (parent environment)))
                (rec parent)
                environment)))
-    environment))
+    (rec environment)))
 
 (defmethod depth ((environment t))
   (labels ((rec (environment depth)
