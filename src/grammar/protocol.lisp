@@ -61,6 +61,15 @@
   (push used (dependencies user))
   (push user (dependents used)))
 
+(defmethod add-dependency :after (used user)
+  (loop :for (name . rule) :in (rules/alist user)
+        :when (typep rule 'forward-referenced-rule)
+        :do (when-let ((inherited (find-rule name used :if-does-not-exist nil)))
+              (error "~@<Using grammar ~A in grammar ~A should replace
+                      ~A with inherited rule ~A, but that behavior is
+                      not implemented yet.~@:>"
+                     used user rule inherited))))
+
 ;;; Rule protocol
 
 (defgeneric expression (rule))
@@ -123,6 +132,19 @@
              :warning-condition 'rule-missing-warning)
           (store-value (value)
             (setf (find-rule name grammar) value))))))
+
+(defmethod (setf find-rule) :after ((new-value t) (name symbol) (grammar t)
+                                    &key recursive? if-does-not-exist)
+  (declare (ignore recursive? if-does-not-exist))
+  (map-dependents
+   (lambda (dependent)
+     (when-let ((rule (find-rule name dependent :if-does-not-exist nil
+                                                :recursive?        nil)))
+       (when (typep rule 'forward-referenced-rule)
+         (error "~@<Adding rule ~A to grammar ~A should replace ~A in ~
+                 grammar ~A but that is not implemented yet.~@:>"
+                name grammar rule dependent))))
+   grammar))
 
 (defmethod ensure-rule ((name t) (grammar t) &rest args &key &allow-other-keys)
   (let ((rule (find-rule name grammar :recursive? nil :if-does-not-exist nil)))
