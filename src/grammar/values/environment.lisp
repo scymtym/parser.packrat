@@ -1,20 +1,25 @@
+;;;; environment.lisp --- Values environment provided by the grammar.values module.
+;;;;
+;;;; Copyright (C) 2017-2021 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:in-package #:parser.packrat.grammar.values)
 
 (defclass values-environment (env:environment
                               seq:sequential-environment-mixin
                               print-items:print-items-mixin)
-  ((values :initarg :values
-           :reader  values*
-           :writer  (setf %values))
-   (value  :initarg :value
-           :reader  value
-           :writer  (setf %value))))
+  ((%values :initarg :values
+            :reader  values*
+            :writer  (setf %values))
+   (%value  :initarg :value
+            :reader  value
+            :writer  (setf %value))))
 
 (defmethod shared-initialize :after ((instance   values-environment)
                                      (slot-names t)
-                                     &key
-                                     (values nil            values-supplied?)
-                                     (value  (first values)))
+                                     &key (values nil            values-supplied?)
+                                          (value  (first values)))
   (when values-supplied?
     (setf (%values instance) values
           (%value  instance) value)))
@@ -35,7 +40,7 @@
 
 (env:define-state-methods values-environment (value) ((values* :values)))
 
-;; no runtime state
+;;; no runtime state
 (defmethod env:position-variables ((environment values-environment))
   '())
 

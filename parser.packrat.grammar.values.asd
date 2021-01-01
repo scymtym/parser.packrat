@@ -1,3 +1,9 @@
+;;;; parser.packrat.grammar.values.lisp --- System definition for the grammar.values module.
+;;;;
+;;;; Copyright (C) 2017-2021 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (defsystem "parser.packrat.grammar.values"
   :description      "Values parsing for the parser.packrat system."
   :license          "BSD" ; see COPYING file for details
