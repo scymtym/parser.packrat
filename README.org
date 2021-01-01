@@ -44,7 +44,10 @@
 * STARTED Tutorial
 
   #+BEGIN_SRC lisp :exports results :results silent
-    (ql:quickload '(:parser.packrat :parser.packrat.grammar.string))
+    (ql:quickload '(:parser.packrat
+                    :parser.packrat.grammar.string
+                    :parser.packrat.grammar.values
+                    :parser.packrat.grammar.stream))
   #+END_SRC
 
   The fundamental concepts are
@@ -108,7 +111,11 @@
 
     + =grammar= :: Grammar protocols
 
-      + =sexp= :: S-expression grammar
+      + =base= :: [[grammar-base-grammar][Base Grammar]]
+
+      + =sequence= :: [[grammar-sequence-grammar][Sequence Grammar]]
+
+      + =sexp= :: [[grammar-sexp-grammar][S-expression Grammar]]
 
   + =test= :: Unit tests
 
@@ -123,7 +130,7 @@
 * STARTED Reference
 
   #+BEGIN_SRC lisp :exports results :results silent
-    (defun print-expression-ast (expression)
+    (defun print-expression-ast (expression grammar-name)
       (parser.packrat.expression:walk-expression
        (lambda (recurse node)
          (let ((kind     (architecture.builder-protocol:node-kind* node))
@@ -146,48 +153,60 @@
              (list* kind (first (funcall recurse))))
             (:rule-invocation
              (let* ((rule      (getf initargs :rule))
-                    (reference (format nil "~~[[~(~A~)][~~~:*~(~A~)~~]] ~~" rule)))
+                    (grammar   (getf initargs :grammar))
+                    (reference (format nil "~~[[rule-~(~A~):~(~A~)][~~~@[~(~A~):~]~(~A~)~~]] ~~"
+                                       (or grammar grammar-name) rule grammar rule)))
                (list* reference (first (funcall recurse)))))
             (:as-list
              (list* 'list (second (first (funcall recurse)))))
             (:repetition
              (destructuring-bind (min max sub) (funcall recurse)
                (cond ((and (eql min 0) (eql max 1))
-                       (list '? sub))
+                      (list '? sub))
                      ((and (eql min 1) (null max))
-                       (list '+ sub))
+                      (list '+ sub))
                      ((null min)
-                       (list '* sub))
+                      (list '* sub))
                      ((null max)
-                       (list '* sub min))
+                      (list '* sub min))
                      (t
-                       (list '* sub min max)))))
+                      (list '* sub min max)))))
             (t
              (list* (class-name (class-of node)) (funcall recurse))))))
        (parser.packrat.bootstrap:parse expression)))
 
     (defun describe-grammar-class (name)
-      (let* ((class        (find-class name))
-             (meta-grammar (case name
-                             (parser.packrat.grammar.base::base-grammar
-                              (parser.packrat.grammar:find-grammar 'parser.packrat.grammar.base::meta-grammar))
-                             (parser.packrat.grammar.sequence::sequence-grammar
-                              (parser.packrat.grammar:find-grammar 'parser.packrat.grammar.sequence::meta-grammar))
-                             (parser.packrat.grammar.sexp::sexp-grammar
-                              (parser.packrat.grammar:find-grammar 'parser.packrat.grammar.sexp::meta-grammar))))
-             (meta-rules   (parser.packrat.grammar:rules meta-grammar)))
+      (let* ((class             (find-class name))
+             (meta-grammar-name (case name
+                                  (parser.packrat.grammar.base::base-grammar
+                                   'parser.packrat.grammar.base::meta-grammar)
+                                  (parser.packrat.grammar.sequence::sequence-grammar
+                                   'parser.packrat.grammar.sequence::meta-grammar)
+                                  (t
+                                   (let* ((initargs (c2mop:class-default-initargs class))
+                                          (initarg  (find :meta-grammar initargs :key #'first)))
+                                     (when initarg
+                                       (funcall (third initarg)))))))
+             (meta-grammar      (when meta-grammar-name
+                                  (parser.packrat.grammar:find-grammar meta-grammar-name)))
+             (meta-rules        (when meta-grammar
+                                  (parser.packrat.grammar:rules meta-grammar))))
         (let ((*print-right-margin* most-positive-fixnum))
-          (format t "+ =~(~A~)= Grammar Class~2%~
-                     ~3@T~A~2%~
-                     ~:{~3@T+ <<~(~a~)>> ~~~:*~A ::= ~A~~~2%~}"
-                  name (documentation class t)
-                  (map 'list (lambda (rule)
-                               (list (parser.packrat.grammar:name rule)
-                                     (print-expression-ast
-                                      (parser.packrat.grammar:expression rule))))
-                       (sort meta-rules #'string< :key #'parser.packrat.grammar:name)))))
+          (format t "+ <<grammar-~(~A~)>> =~:*~(~A~)= Grammar Class~2%~
+                     ~3@T~:[/not documented/~;~:*~A~]~
+                     ~@[~2%~:{~3@T+ <<rule-~(~A~):~(~A~)>> ~~~:*~A ::= ~A~~~2%~}~]"
+                  name
+                  (documentation class t)
+                  (when meta-rules
+                    (map 'list (lambda (rule)
+                                 (list name
+                                       (parser.packrat.grammar:name rule)
+                                       (print-expression-ast
+                                        (parser.packrat.grammar:expression rule) name)))
+                         (sort meta-rules #'string< :key #'parser.packrat.grammar:name))))))
       (values))
   #+END_SRC
+
 
   #+BEGIN_SRC lisp :exports results :results output verbatim raw
     (describe-grammar-class 'parser.packrat.grammar.base::base-grammar)
@@ -195,60 +214,94 @@
     (describe-grammar-class 'parser.packrat.grammar.sequence::sequence-grammar)
 
     (describe-grammar-class 'parser.packrat.grammar.sexp::sexp-grammar)
+
+    (describe-grammar-class 'parser.packrat.grammar.string::simple-string-grammar)
+
+    (describe-grammar-class 'parser.packrat.grammar.stream::stream-grammar)
   #+END_SRC
 
   #+RESULTS:
-  + =base-grammar= Grammar Class
+  + <<grammar-base-grammar>> =base-grammar= Grammar Class
 
-     NIL
+     /not documented/
 
-     + <<and-expression>> ~AND-EXPRESSION ::= (LIST 'AND (* (~[[expression][~expression~]] ~)))~
+     + <<rule-base-grammar:and-expression>> ~AND-EXPRESSION ::= (AND «anything» (LIST 'AND (* (~[[rule-base-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION)))))~
 
-     + <<anything-expression>> ~ANYTHING-EXPRESSION ::= (OR ANY 'ANY)~
+     + <<rule-base-grammar:anything-expression>> ~ANYTHING-EXPRESSION ::= (OR ANY 'ANY)~
 
-     + <<compose-expression>> ~COMPOSE-EXPRESSION ::= (LIST 'COMPOSE (* (~[[expression][~expression~]] ~)))~
+     + <<rule-base-grammar:compose-expression>> ~COMPOSE-EXPRESSION ::= (AND «anything» (LIST COMPOSE (* (~[[rule-base-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION)))))~
 
-     + <<constant-expression>> ~CONSTANT-EXPRESSION ::= (OR (LIST 'QUOTE «anything») (GUARD «anything» (TYPEP '(NOT (OR CONS (AND SYMBOL (NOT KEYWORD)))))))~
+     + <<rule-base-grammar:constant-expression>> ~CONSTANT-EXPRESSION ::= (AND «anything» (OR (LIST 'QUOTE «anything») (GUARD «anything» (TYPEP '(NOT (OR CONS (AND SYMBOL (NOT KEYWORD))))))))~
 
-     + <<expression>> ~EXPRESSION ::= (OR (~[[predicate-expression][~predicate-expression~]] ~) (~[[anything-expression][~anything-expression~]] ~) (~[[constant-expression][~constant-expression~]] ~) (~[[set-expression][~set-expression~]] ~) (~[[push-expression][~push-expression~]] ~) (~[[not-expression][~not-expression~]] ~) (~[[and-expression][~and-expression~]] ~) (~[[or-expression][~or-expression~]] ~) (~[[compose-expression][~compose-expression~]] ~) (~[[transform-expression][~transform-expression~]] ~) (~[[rule-invocation-expression][~rule-invocation-expression~]] ~) (~[[next-rule-invocation-expression][~next-rule-invocation-expression~]] ~))~
+     + <<rule-base-grammar:expression>> ~EXPRESSION ::= (OR (~[[rule-base-grammar:predicate-expression][~predicate-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-base-grammar:anything-expression][~anything-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-base-grammar:position-expression][~position-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-base-grammar:constant-expression][~constant-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-base-grammar:set-expression][~set-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-base-grammar:push-expression][~push-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-base-grammar:must-expression][~must-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-base-grammar:not-expression][~not-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-base-grammar:and-expression][~and-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-base-grammar:or-expression][~or-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-base-grammar:compose-expression][~compose-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-base-grammar:transform-expression][~transform-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-base-grammar:value-expression][~value-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-base-grammar:next-rule-invocation-expression][~next-rule-invocation-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-base-grammar:rule-invocation-expression][~rule-invocation-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)))~
 
-     + <<function-name-or-partial-application>> ~FUNCTION-NAME-OR-PARTIAL-APPLICATION ::= (OR (GUARD «anything» SYMBOLP) (LIST (GUARD «anything» SYMBOLP) (REST-EXPRESSION «anything»)))~
+     + <<rule-base-grammar:expression!>> ~EXPRESSION! ::= (MUST-EXPRESSION (~[[rule-base-grammar:expression][~expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)))~
 
-     + <<next-rule-invocation-expression>> ~NEXT-RULE-INVOCATION-EXPRESSION ::= (LIST (OR NEXT-RULE 'NEXT-RULE) (* (~[[expression][~expression~]] ~)))~
+     + <<rule-base-grammar:function-name-or-partial-application>> ~FUNCTION-NAME-OR-PARTIAL-APPLICATION ::= (OR (GUARD «anything» SYMBOLP) (LIST (GUARD «anything» SYMBOLP) (REST-EXPRESSION «anything»)))~
 
-     + <<not-expression>> ~NOT-EXPRESSION ::= (LIST 'NOT (~[[expression][~expression~]] ~))~
+     + <<rule-base-grammar:function-name-or-partial-application!>> ~FUNCTION-NAME-OR-PARTIAL-APPLICATION! ::= (MUST-EXPRESSION (~[[rule-base-grammar:function-name-or-partial-application][~function-name-or-partial-application~]] ~))~
 
-     + <<or-expression>> ~OR-EXPRESSION ::= (LIST 'OR (* (~[[expression][~expression~]] ~)))~
+     + <<rule-base-grammar:grammar-name>> ~GRAMMAR-NAME ::= (GUARD «anything» SYMBOLP)~
 
-     + <<predicate-expression>> ~PREDICATE-EXPRESSION ::= (LIST GUARD (? (~[[expression][~expression~]] ~)) (REST-EXPRESSION (~[[function-name-or-partial-application][~function-name-or-partial-application~]] ~)))~
+     + <<rule-base-grammar:grammar-name!>> ~GRAMMAR-NAME! ::= (MUST-EXPRESSION (~[[rule-base-grammar:grammar-name][~grammar-name~]] ~))~
 
-     + <<push-expression>> ~PUSH-EXPRESSION ::= (LIST (OR <<- '<<-) (~[[variable-name][~variable-name~]] ~) (? (~[[expression][~expression~]] ~)))~
+     + <<rule-base-grammar:implicit-list>> ~IMPLICIT-LIST ::= (AND «anything» (LIST (+ (~[[rule-base-grammar:variable-name!][~variable-name!~]] ~))))~
 
-     + <<rule-invocation-expression>> ~RULE-INVOCATION-EXPRESSION ::= (LIST (OR (GUARD «anything» SYMBOLP) (LIST (GUARD «anything» SYMBOLP) (GUARD «anything» SYMBOLP))) (* (~[[expression][~expression~]] ~)))~
+     + <<rule-base-grammar:must-expression>> ~MUST-EXPRESSION ::= (AND «anything» (LIST (OR MUST 'MUST) (~[[rule-base-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (? (GUARD «anything» STRINGP))))~
 
-     + <<set-expression>> ~SET-EXPRESSION ::= (OR (~[[variable-name][~variable-name~]] ~) (LIST (OR <- '<-) (~[[variable-name][~variable-name~]] ~) (? (~[[expression][~expression~]] ~))))~
+     + <<rule-base-grammar:next-rule-invocation-expression>> ~NEXT-RULE-INVOCATION-EXPRESSION ::= (AND «anything» (LIST (OR NEXT-RULE 'NEXT-RULE) (* (~[[rule-base-grammar:expression!][~expression!~]] ~ VALUE))))~
 
-     + <<transform-expression>> ~TRANSFORM-EXPRESSION ::= (LIST TRANSFORM (~[[expression][~expression~]] ~) (REST-EXPRESSION «anything»))~
+     + <<rule-base-grammar:not-expression>> ~NOT-EXPRESSION ::= (AND «anything» (LIST 'NOT (~[[rule-base-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION))))~
 
-     + <<variable-name>> ~VARIABLE-NAME ::= (GUARD «anything» (TYPEP '(AND SYMBOL (NOT (OR KEYWORD NULL)))))~
+     + <<rule-base-grammar:or-expression>> ~OR-EXPRESSION ::= (AND «anything» (LIST 'OR (* (~[[rule-base-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION)))))~
 
-  + =sequence-grammar= Grammar Class
+     + <<rule-base-grammar:position-expression>> ~POSITION-EXPRESSION ::= 'POSITION~
 
-     NIL
+     + <<rule-base-grammar:predicate-expression>> ~PREDICATE-EXPRESSION ::= (AND «anything» (LIST (OR GUARD 'GUARD) (OR (SEQUENCE-EXPRESSION ((~[[rule-base-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-base-grammar:function-name-or-partial-application!][~function-name-or-partial-application!~]] ~))) (~[[rule-base-grammar:function-name-or-partial-application!][~function-name-or-partial-application!~]] ~))))~
 
-     + <<+-expression>> ~+-EXPRESSION ::= (LIST '+ «anything»)~
+     + <<rule-base-grammar:push-expression>> ~PUSH-EXPRESSION ::= (OR (~[[rule-base-grammar:push-expression/simple][~push-expression/simple~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-base-grammar:push-expression/compose][~push-expression/compose~]] ~ (VARIABLE-REFERENCE-EXPRESSION)))~
 
-     + <<?-expression>> ~?-EXPRESSION ::= (LIST '? «anything»)~
+     + <<rule-base-grammar:push-expression/compose>> ~PUSH-EXPRESSION/COMPOSE ::= (AND «anything» (LIST '<<- (OR (~[[rule-base-grammar:implicit-list][~implicit-list~]] ~ PUSH) (~[[rule-base-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION))) (* (~[[rule-base-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION)))))~
 
-     + <<bounds-expression>> ~BOUNDS-EXPRESSION ::= (LIST 'BOUNDS (LIST (GUARD «anything» SYMBOLP) (GUARD «anything» SYMBOLP)) (REST-EXPRESSION «anything»))~
+     + <<rule-base-grammar:push-expression/simple>> ~PUSH-EXPRESSION/SIMPLE ::= (AND «anything» (LIST (OR <<- '<<-) (AND (NOT LIST (REST-EXPRESSION «anything»)) (~[[rule-base-grammar:variable-name!][~variable-name!~]] ~)) (? (~[[rule-base-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION)))))~
 
-     + <<expression>> ~EXPRESSION ::= (OR (~[[anything-expression][~anything-expression~]] ~) (~[[constant-expression][~constant-expression~]] ~) (~[[repetition-expression][~repetition-expression~]] ~) (~[[sequence-expression][~sequence-expression~]] ~) (~[[?-expression][~?-expression~]] ~) (~[[+-expression][~+-expression~]] ~) (~[[bounds-expression][~bounds-expression~]] ~))~
+     + <<rule-base-grammar:rule-invocation-expression>> ~RULE-INVOCATION-EXPRESSION ::= (AND «anything» (LIST (OR (LIST (~[[rule-base-grammar:rule-name!][~rule-name!~]] ~) (~[[rule-base-grammar:grammar-name!][~grammar-name!~]] ~)) (~[[rule-base-grammar:rule-name][~rule-name~]] ~)) (* (~[[rule-base-grammar:expression!][~expression!~]] ~ VALUE))))~
 
-     + <<repetition-expression>> ~REPETITION-EXPRESSION ::= (LIST '* (~[[expression][~expression~]] ~) (? (~[[expression][~expression~]] ~)) (? (~[[expression][~expression~]] ~)))~
+     + <<rule-base-grammar:rule-name>> ~RULE-NAME ::= (GUARD «anything» SYMBOLP)~
 
-     + <<sequence-expression>> ~SEQUENCE-EXPRESSION ::= (LIST (OR SEQ 'SEQ) (* (~[[expression][~expression~]] ~)))~
+     + <<rule-base-grammar:rule-name!>> ~RULE-NAME! ::= (MUST-EXPRESSION (~[[rule-base-grammar:rule-name][~rule-name~]] ~))~
 
-  + =sexp-grammar= Grammar Class
+     + <<rule-base-grammar:set-expression>> ~SET-EXPRESSION ::= (OR (~[[rule-base-grammar:set-expression/simple][~set-expression/simple~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-base-grammar:set-expression/compose][~set-expression/compose~]] ~ (VARIABLE-REFERENCE-EXPRESSION)))~
+
+     + <<rule-base-grammar:set-expression/compose>> ~SET-EXPRESSION/COMPOSE ::= (AND «anything» (LIST '<- (OR (~[[rule-base-grammar:implicit-list][~implicit-list~]] ~ SET) (~[[rule-base-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION))) (* (~[[rule-base-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION)))))~
+
+     + <<rule-base-grammar:set-expression/simple>> ~SET-EXPRESSION/SIMPLE ::= (AND «anything» (OR (~[[rule-base-grammar:variable-name][~variable-name~]] ~) (LIST (OR <- '<-) (AND (NOT LIST (REST-EXPRESSION «anything»)) (~[[rule-base-grammar:variable-name!][~variable-name!~]] ~)) (? (~[[rule-base-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION))))))~
+
+     + <<rule-base-grammar:transform-expression>> ~TRANSFORM-EXPRESSION ::= (AND «anything» (LIST (OR TRANSFORM 'TRANSFORM) (~[[rule-base-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (REST-EXPRESSION «anything»)))~
+
+     + <<rule-base-grammar:value-expression>> ~VALUE-EXPRESSION ::= (LIST 'VALUE (LIST «anything») «anything»)~
+
+     + <<rule-base-grammar:variable-name>> ~VARIABLE-NAME ::= (GUARD «anything» (TYPEP '(AND SYMBOL (NOT (OR KEYWORD NULL)))))~
+
+     + <<rule-base-grammar:variable-name!>> ~VARIABLE-NAME! ::= (MUST-EXPRESSION (~[[rule-base-grammar:variable-name][~variable-name~]] ~))~
+
+  + <<grammar-sequence-grammar>> =sequence-grammar= Grammar Class
+
+     /not documented/
+
+     + <<rule-sequence-grammar:+-expression>> ~+-EXPRESSION ::= (LIST '+ «anything»)~
+
+     + <<rule-sequence-grammar:?-expression>> ~?-EXPRESSION ::= (LIST '? «anything»)~
+
+     + <<rule-sequence-grammar:bounds-expression>> ~BOUNDS-EXPRESSION ::= (LIST 'BOUNDS (LIST (MUST-EXPRESSION (GUARD «anything» SYMBOLP)) (MUST-EXPRESSION (GUARD «anything» SYMBOLP))) (REST-EXPRESSION «anything»))~
+
+     + <<rule-sequence-grammar:expression>> ~EXPRESSION ::= (OR (~[[rule-sequence-grammar:repetition-expression][~repetition-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-sequence-grammar:sequence-expression][~sequence-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-sequence-grammar:?-expression][~?-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-sequence-grammar:+-expression][~+-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-sequence-grammar:bounds-expression][~bounds-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)))~
+
+     + <<rule-sequence-grammar:repetition-expression>> ~REPETITION-EXPRESSION ::= (LIST '* (~[[rule-sequence-grammar:expression][~expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (* (SEQUENCE-EXPRESSION ((~[[rule-sequence-grammar:expression][~expression~]] ~ VALUE) (* (~[[rule-sequence-grammar:expression][~expression~]] ~ VALUE))))))~
+
+     + <<rule-sequence-grammar:sequence-expression>> ~SEQUENCE-EXPRESSION ::= (AND «anything» (LIST (OR SEQ 'SEQ) (* (~[[rule-sequence-grammar:expression][~expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)))))~
+
+  + <<grammar-sexp-grammar>> =sexp-grammar= Grammar Class
 
      A grammar class for matching Lisp objects.
 
@@ -260,24 +313,34 @@
       switch to sequence-based processing using the `as-list' and
       `as-vector' constructs.
 
-     + <<cons-expression>> ~CONS-EXPRESSION ::= (LIST 'CONS «anything» «anything»)~
+     + <<rule-sexp-grammar:cons-expression>> ~CONS-EXPRESSION ::= (LIST 'CONS «anything» «anything»)~
 
-     + <<expression>> ~EXPRESSION ::= (OR (~[[anything-expression][~anything-expression~]] ~) (~[[constant-expression][~constant-expression~]] ~) (~[[transform-expression][~transform-expression~]] ~) (~[[repetition-expression][~repetition-expression~]] ~) (~[[sequence-expression][~sequence-expression~]] ~) (~[[structure-expression][~structure-expression~]] ~) (~[[list-elements-expression][~list-elements-expression~]] ~) (~[[rest-expression][~rest-expression~]] ~) (~[[vector-elements-expression][~vector-elements-expression~]] ~) (~[[list-expression][~list-expression~]] ~) (~[[list*-expression][~list*-expression~]] ~) (~[[vector-expression][~vector-expression~]] ~) (~[[vector*-expression][~vector*-expression~]] ~) (~[[cons-expression][~cons-expression~]] ~) (~[[value-expression][~value-expression~]] ~))~
+     + <<rule-sexp-grammar:expression>> ~EXPRESSION ::= (OR (~[[rule-sexp-grammar:structure-expression][~structure-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-sexp-grammar:list-elements-expression][~list-elements-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-sexp-grammar:rest-expression][~rest-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-sexp-grammar:vector-elements-expression][~vector-elements-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-sexp-grammar:list-expression][~list-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-sexp-grammar:list*-expression][~list*-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-sexp-grammar:vector-expression][~vector-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-sexp-grammar:vector*-expression][~vector*-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-sexp-grammar:cons-expression][~cons-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-sexp-grammar:value-expression][~value-expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-meta-grammar:expression][~meta-grammar:expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-meta-grammar:expression][~meta-grammar:expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)))~
 
-     + <<list*-expression>> ~LIST*-EXPRESSION ::= (LIST 'LIST* (* (AND (SEQUENCE-EXPRESSION («anything» «anything»)) «anything»)) «anything»)~
+     + <<rule-sexp-grammar:list*-expression>> ~LIST*-EXPRESSION ::= (LIST 'LIST* (* (AND (SEQUENCE-EXPRESSION («anything» «anything»)) «anything»)) «anything»)~
 
-     + <<list-elements-expression>> ~LIST-ELEMENTS-EXPRESSION ::= (LIST 'LIST-ELEMENTS (~[[expression][~expression~]] ~))~
+     + <<rule-sexp-grammar:list-elements-expression>> ~LIST-ELEMENTS-EXPRESSION ::= (AND «anything» (LIST 'LIST-ELEMENTS (~[[rule-sexp-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION))))~
 
-     + <<list-expression>> ~LIST-EXPRESSION ::= (LIST 'LIST (REST-EXPRESSION «anything»))~
+     + <<rule-sexp-grammar:list-expression>> ~LIST-EXPRESSION ::= (LIST 'LIST (REST-EXPRESSION «anything»))~
 
-     + <<rest-expression>> ~REST-EXPRESSION ::= (LIST 'REST (~[[expression][~expression~]] ~))~
+     + <<rule-sexp-grammar:rest-expression>> ~REST-EXPRESSION ::= (AND «anything» (LIST 'REST (~[[rule-sexp-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION))))~
 
-     + <<structure-expression>> ~STRUCTURE-EXPRESSION ::= (LIST 'STRUCTURE (~[[expression][~expression~]] ~) (* (LIST «anything» (~[[expression][~expression~]] ~))))~
+     + <<rule-sexp-grammar:structure-expression>> ~STRUCTURE-EXPRESSION ::= (AND «anything» (LIST 'STRUCTURE (~[[rule-sexp-grammar:expression!][~expression!~]] ~ VALUE) (* (AND (LIST (REST-EXPRESSION «anything»)) (MUST-EXPRESSION (LIST «anything» (~[[rule-sexp-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION))))))))~
 
-     + <<value-expression>> ~VALUE-EXPRESSION ::= (LIST 'VALUE (LIST (GUARD «anything» SYMBOLP) (~[[expression][~expression~]] ~)))~
+     + <<rule-sexp-grammar:value-expression>> ~VALUE-EXPRESSION ::= (LIST 'VALUE (LIST (~[[rule-sexp-grammar:variable-name!][~variable-name!~]] ~)) (~[[rule-sexp-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION)))~
 
-     + <<vector*-expression>> ~VECTOR*-EXPRESSION ::= (LIST 'VECTOR* (REST-EXPRESSION «anything»))~
+     + <<rule-sexp-grammar:vector*-expression>> ~VECTOR*-EXPRESSION ::= (LIST 'VECTOR* (REST-EXPRESSION «anything»))~
 
-     + <<vector-elements-expression>> ~VECTOR-ELEMENTS-EXPRESSION ::= (LIST 'VECTOR-ELEMENTS (~[[expression][~expression~]] ~))~
+     + <<rule-sexp-grammar:vector-elements-expression>> ~VECTOR-ELEMENTS-EXPRESSION ::= (AND «anything» (LIST 'VECTOR-ELEMENTS (~[[rule-sexp-grammar:expression!][~expression!~]] ~ (VARIABLE-REFERENCE-EXPRESSION))))~
 
-     + <<vector-expression>> ~VECTOR-EXPRESSION ::= (LIST 'VECTOR (REST-EXPRESSION «anything»))~
+     + <<rule-sexp-grammar:vector-expression>> ~VECTOR-EXPRESSION ::= (LIST 'VECTOR (REST-EXPRESSION «anything»))~
+
+  + <<grammar-simple-string-grammar>> =simple-string-grammar= Grammar Class
+
+     /not documented/
+
+     + <<rule-simple-string-grammar:expression>> ~EXPRESSION ::= (OR (~[[rule-meta-grammar:expression][~meta-grammar:expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)) (~[[rule-meta-grammar:expression][~meta-grammar:expression~]] ~ (VARIABLE-REFERENCE-EXPRESSION)))~
+
+  + <<grammar-stream-grammar>> =stream-grammar= Grammar Class
+
+     /not documented/
