@@ -7,14 +7,15 @@
 (cl:defpackage #:parser.packrat.grammar.stream
   (:use
    #:cl
-   #:alexandria
-   #:let-plus
-
-   #:parser.packrat.compiler)
+   #:let-plus)
 
   (:local-nicknames
+   (#:a       #:alexandria)
+
    (#:exp     #:parser.packrat.expression)
    (#:env     #:parser.packrat.environment)
+   (#:c       #:parser.packrat.compiler)
+
    (#:grammar #:parser.packrat.grammar)
    (#:base    #:parser.packrat.grammar.base)
    (#:seq     #:parser.packrat.grammar.sequence)))

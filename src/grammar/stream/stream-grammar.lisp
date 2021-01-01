@@ -11,11 +11,10 @@
 
 (defmethod grammar:default-environment ((grammar    stream-grammar)
                                         (expression t))
-  (make-instance 'stream-environment
-                 :position              'position
-                 :stream                'stream
-                 :access-function       'access
-                 :check-bounds-function 'check-bounds))
+  (make-instance 'stream-environment :position              'position
+                                     :stream                'stream
+                                     :access-function       'access
+                                     :check-bounds-function 'check-bounds))
 
 (defmethod grammar:parse ((grammar    stream-grammar)
                           (expression function)
