@@ -15,7 +15,8 @@
   (or (call-next-method name grammar :if-does-not-exist nil)
       (when recursive?
         (some (lambda (used)
-                (grammar:find-rule name used :if-does-not-exist nil))
+                (grammar:find-rule name used :recursive?        t
+                                             :if-does-not-exist nil))
               (grammar:dependencies grammar)))))
 
 (declaim (inline %make-context))
