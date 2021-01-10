@@ -1,6 +1,6 @@
 ;;;; protocol.lisp --- Protocol provided by the grammar module.
 ;;;;
-;;;; Copyright (C) 2017, 2018, 2019, 2020 Jan Moringen
+;;;; Copyright (C) 2017, 2018, 2019, 2020, 2021 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -118,7 +118,7 @@
                                    &key (rule-class (find-class 'rule))
                                    &allow-other-keys)
   (let ((initargs (list* :name name (remove-from-plist args :rule-class))))
-    (if (typep rule rule-class)
+    (if (eq (class-of rule) rule-class)
         (apply #'reinitialize-instance rule initargs)
         (apply #'change-class rule rule-class initargs))))
 
