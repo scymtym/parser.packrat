@@ -133,8 +133,12 @@
          (function-form (expand-expression
                          grammar name parameters expression
                          (when environment (eval environment)))))
-    `(grammar:ensure-rule ',name (grammar:find-grammar ',grammar-name)
-                          :rule-class 'grammar::rule
-                          ,@(when environment `(:environment ,environment))
-                          :expression ',expression
-                          :function   ,function-form)))
+    `(progn
+       (eval-when (:compile-toplevel)
+         (grammar:find-rule ',name (grammar:find-grammar ',grammar-name)
+                            :if-does-not-exist :forward-reference))
+       (grammar:ensure-rule ',name (grammar:find-grammar ',grammar-name)
+                            :rule-class 'grammar::rule
+                            ,@(when environment `(:environment ,environment))
+                            :expression ',expression
+                            :function   ,function-form))))
