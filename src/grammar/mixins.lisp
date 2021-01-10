@@ -15,8 +15,20 @@
 ;;; `dependencies-mixin'
 
 (defclass dependencies-mixin ()
-  ((%dependencies :reader   dependencies
+  ((%dependencies :accessor dependencies
+                  :initform '())
+   (%dependents   :accessor dependents
                   :initform '())))
+
+(defmethod shared-initialize :after ((instance   dependencies-mixin)
+                                     (slot-names t)
+                                     &key (dependencies '() dependencies-supplied?))
+  (when dependencies-supplied?
+    (let* ((old-dependencies (dependencies instance))
+           (added            (set-difference dependencies     old-dependencies))
+           (removed          (set-difference old-dependencies dependencies)))
+      (when removed (error "~@<Removing dependencies is not implemented.~@:>"))
+      (map nil (rcurry #'add-dependency instance) added))))
 
 ;;; `rule-storage-mixin'
 
