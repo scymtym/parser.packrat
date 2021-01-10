@@ -1,15 +1,13 @@
 (cl:in-package #:parser.packrat.grammar.base)
 
 (defclass base-grammar (grammar:named-mixin
+                        grammar::dependencies-mixin
                         grammar:rule-storage-mixin
                         grammar::meta-grammar-mixin
                         print-items:print-items-mixin)
   ((%cached? :initarg  :cached?
              :reader   cached?
-             :initform t)
-   (%use     :initarg :use
-             :reader  use
-             :initform '()))) ; TODO mixin for dependencies
+             :initform t)))
 
 (defmethod grammar:find-rule ((name symbol) (grammar base-grammar)
                               &key recursive? if-does-not-exist)
@@ -18,7 +16,7 @@
       (when recursive?
         (some (lambda (used)
                 (grammar:find-rule name used :if-does-not-exist nil))
-              (use grammar)))))
+              (grammar:dependencies grammar)))))
 
 (declaim (inline %make-context))
 (defstruct (context

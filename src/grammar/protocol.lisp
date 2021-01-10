@@ -12,7 +12,7 @@
 
 ;;; Dependency protocol
 ;;;
-;;; For querying and managing dependencies between rules. (and grammars?)
+;;; For querying and managing dependencies between rules.
 
 (defgeneric dependencies (thing))
 
@@ -81,9 +81,7 @@
     (:forward-reference
      (lambda (condition)
        (if (typep condition 'rule-missing-error)
-           (let ((rule (make-instance
-                        'forward-referenced-rule
-                        :name name)))
+           (let ((rule (make-instance 'forward-referenced-rule :name name)))
              (invoke-restart 'store-value rule))
            (error condition))))
     (t
@@ -202,15 +200,15 @@
                                            &allow-other-keys)
     (setf (find-grammar name)
           (apply #'make-instance grammar-class
-                 :name name
-                 :use  (resolve-used use)
+                 :name         name
+                 :dependencies (resolve-used use)
                  (remove-from-plist args :grammar-class :use))))
 
   (defmethod ensure-grammar-using-grammar ((grammar t) (name t)
                                            &rest args
                                            &key grammar-class use
                                            &allow-other-keys)
-    (let ((initargs (list* :name name
-                           :use  (resolve-used use)
+    (let ((initargs (list* :name          name
+                           :dependencies  (resolve-used use)
                            (remove-from-plist args :grammar-class :use))))
       (apply #'change-class grammar grammar-class initargs))))

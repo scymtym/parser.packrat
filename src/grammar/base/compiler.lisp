@@ -619,7 +619,7 @@
     (maybe-let `((,rule-var #+no (load-time-value
                              (grammar:find-rule ',rule-name (grammar:find-grammar ',grammar-name)
                                                 :if-does-not-exist :forward-reference))
-                            (grammar:find-rule ',rule-name (first (use (context-grammar ,parser.packrat.compiler::+context-var+)))
+                            (grammar:find-rule ',rule-name (first (grammar:dependencies (context-grammar ,parser.packrat.compiler::+context-var+)))
                                                ))
                  ,@(when arguments `((,arguments-var (list ,@argument-forms)))))
       ;; TODO wrong (when arguments `(declare (dynamic-extent ,arguments-var)))
