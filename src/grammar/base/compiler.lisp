@@ -461,21 +461,20 @@
 
 (defun emit-find-grammar-and-rule (grammar grammar-name rule-name
                                    context-var grammar-var rule-var)
-  (if grammar-name
-      `((,grammar-var (load-time-value (grammar:find-grammar ',grammar-name)))
-        (,rule-var    (load-time-value
-                       (grammar:find-rule ',rule-name (grammar:find-grammar ',grammar-name)
-                                          :if-does-not-exist :forward-reference))))
-      (let+ ((grammar-name (grammar:name grammar))
-             ((&with-gensyms context-grammar-var)))
-        `((,grammar-var         (load-time-value
-                                 (grammar:find-grammar ',grammar-name)))
-          (,context-grammar-var (context-grammar ,context-var))
-          (,rule-var            (if (eq ,context-grammar-var ,grammar-var)
-                                    (load-time-value
-                                     (grammar:find-rule ',rule-name (grammar:find-grammar ',grammar-name)
-                                                        :if-does-not-exist :forward-reference))
-                                    (grammar:find-rule ',rule-name ,context-grammar-var)))))))
+  (flet ((make-load-time-lookup (grammar-name)
+           `(load-time-value
+             (grammar:find-rule ',rule-name (grammar:find-grammar ',grammar-name)
+                                :if-does-not-exist :forward-reference))))
+    (if grammar-name
+        `((,rule-var ,(make-load-time-lookup grammar-name)))
+        (let+ ((grammar-name (grammar:name grammar))
+               ((&with-gensyms context-grammar-var)))
+          `((,grammar-var         (load-time-value
+                                   (grammar:find-grammar ',grammar-name)))
+            (,context-grammar-var (context-grammar ,context-var))
+            (,rule-var            (if (eq ,context-grammar-var ,grammar-var)
+                                      ,(make-load-time-lookup grammar-name)
+                                      (grammar:find-rule ',rule-name ,context-grammar-var))))))))
 
 ;; TODO make lookup-and-call/single-argument so we don't have
 ;; cons and copy-list for a single argument, rename {with ->
