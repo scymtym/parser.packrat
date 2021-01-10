@@ -58,8 +58,8 @@
                       :pathname   "src/grammar"
                       :depends-on ("expression")
                       :components ((:file      "package")
-                                   (:file      "conditions")
                                    (:file      "protocol")
+                                   (:file      "conditions")
                                    (:file      "mixins")
                                    (:file      "rule")))
 
