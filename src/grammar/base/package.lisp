@@ -27,7 +27,7 @@
   ;; Concrete syntax
   (:export
    #:guard
-   #:<- #:<<-
+   #:<- #:<<- #:<>-
    #:must
    #:next-rule)
 

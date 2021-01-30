@@ -1,6 +1,6 @@
 ;;;; package.lisp --- Meta-grammar rules for the base grammar module.
 ;;;;
-;;;; Copyright (C) 2017-2021 Jan Moringen
+;;;; Copyright (C) 2017-2022 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -25,6 +25,7 @@
 
         (set-expression context)
         (push-expression context)
+        (append-expression context)
 
         (must-expression context)
 
@@ -150,6 +151,30 @@
 (parser.packrat:defrule push-expression (context)
     (or (push-expression/simple  context)
         (push-expression/compose context)))
+
+(parser.packrat:defrule append-expression/simple (context)
+    (value (source)
+      (list '<>-
+            (and (not (list* :any)) (<- variable (variable-name!)))
+            (* (<- sub-expression (expression! context)) 0 1)))
+  (bp:node* (:append :variable variable :source source)
+    (1 :sub-expression (or sub-expression (bp:node* (:anything))))))
+
+(parser.packrat:defrule append-expression/compose (context)
+    (value (source)
+      (list '<>-
+            (<- append (or (implicit-list :append) (expression! context)))
+            (* (<<- sub-expressions (expression! context)))))
+  (when (eq context :value)
+    (:fail))
+  (if sub-expressions
+      (bp:node* (:compose :source source)
+        (* :sub-expression (append sub-expressions (list append))))
+      append))
+
+(parser.packrat:defrule append-expression (context)
+  (or (append-expression/simple  context)
+      (append-expression/compose context)))
 
 ;;; Must
 

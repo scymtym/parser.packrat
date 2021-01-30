@@ -93,14 +93,36 @@
   ())
 
 (defmethod print-items:print-items append ((object push-expression))
-  `(((:arrow (:after :variable) (:before :sub-expression)) " ←/+ ")))
+  `(((:arrow (:after :variable) (:before :sub-expression)) " ←/push ")))
+
+(exp:define-expression-class append (variable-write-mixin
+                                     print-items:print-items-mixin)
+  ((%tail-reference :accessor   %tail-reference
+                    :initform nil)))
+
+(defmethod exp:direct-variable-references ((expression append-expression)
+                                           &key filter)
+  (append
+   (let+ (((&flet make-tail-reference ()
+             (let ((variable (exp:variable expression)))
+               (make-instance 'variable-write-mixin
+                              :variable (let ((*package* (symbol-package variable)))
+                                          (symbolicate variable '#:-tail))))))
+          (tail-reference (or (%tail-reference expression)
+                              (setf (%tail-reference expression)
+                                    (make-tail-reference)))))
+     (exp:direct-variable-references tail-reference :filter filter))
+   (call-next-method)))
+
+(defmethod print-items:print-items append ((object append-expression))
+  `(((:arrow (:after :variable) (:before :sub-expression)) " ←/append ")))
 
 (exp:define-expression-class variable-reference (variable-reference-mixin
                                                  print-items:print-items-mixin)
   ((mode :allocation :class
          :initform :read)))
 
-(exp:define-expression-class variable-same (variable-write-mixin
+(exp:define-expression-class variable-same (variable-write-mixin ; TODO is this a write?
                                             print-items:print-items-mixin)
   ((mode :allocation :class
          :initform :same)))

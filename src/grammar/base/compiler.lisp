@@ -249,8 +249,7 @@
      failure-cont)))
 
 (defmethod compile-expression ((grammar      base-grammar)
-                               (environment  t ; env:value-environment
-                                )
+                               (environment  t)
                                (expression   push-expression)
                                (success-cont function)
                                (failure-cont function))
@@ -265,6 +264,37 @@
                (cons name t))) ; TODO hack. maybe make a new environment instead?)
        (maybe-progn
         `(push ,(value* new-environment) ,name)
+        (funcall success-cont new-environment)))
+     failure-cont)))
+
+(defmethod compile-expression ((grammar      base-grammar)
+                               (environment  t)
+                               (expression   append-expression)
+                               (success-cont function)
+                               (failure-cont function))
+  (let+ (((&accessors-r/o (variable exp:variable) sub-expression (tail-reference %tail-reference))
+          expression)
+         ((&accessors-r/o (tail-variable exp:variable)) tail-reference)
+         ((&optional (name variable) . already-bound?)
+          (env:lookup variable environment))
+         ((&optional (tail-name tail-variable) . &ign)
+          (env:lookup tail-variable environment))
+         ((&with-gensyms new-tail-var)))
+    (compile-expression
+     grammar environment sub-expression
+     (lambda (new-environment)
+       (unless already-bound?
+         (setf (env:lookup variable new-environment)
+               (cons name t)
+               (env:lookup tail-variable new-environment)
+               (cons tail-name t))) ; TODO hack. maybe make a new environment instead?)
+       (maybe-progn
+        `(let ((,new-tail-var (list ,(value* new-environment))))
+           (if (null ,tail-name)
+               (setf ,name      ,new-tail-var
+                     ,tail-name ,new-tail-var)
+               (setf (cdr ,tail-name) ,new-tail-var))
+           (setf ,tail-name ,new-tail-var))
         (funcall success-cont new-environment)))
      failure-cont)))
 

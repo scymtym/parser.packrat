@@ -1,6 +1,6 @@
 ;;;; base-grammar.lisp --- Unit tests for the base-grammar class.
 ;;;;
-;;;; Copyright (C) 2017-2019 Jan Moringen
+;;;; Copyright (C) 2017-2022 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -10,7 +10,6 @@
 
 (test base-grammar.smoke
   "Smoke test for `base-grammar' grammar class."
-
   (grammar-test (grammar 'mock-grammar)
     (rules-test (grammar)
       '((guard evenp)
@@ -18,6 +17,21 @@
         (0 (t   0))
         (1 (nil 1))
         (2 (t   2)))
+
+      '((<- foo 1)
+
+        (0 (nil 0))
+        (1 (t   1 1)))
+
+      '((<<- foo 1)
+
+        (0 (nil 0))
+        (1 (t   1 1)))
+
+      '((<>- foo 1)
+
+        (0 (nil 0))
+        (1 (t   1 1)))
 
       '((or 1 2)
 
