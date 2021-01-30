@@ -109,11 +109,14 @@
 ;;; Default behavior
 
 (defun coerce-rule-if-does-not-exist (value name)
-  (case value
-    (:forward-reference
+  (typecase value
+    ((or (eql :forward-reference) (cons (eql :forward-reference)))
      (lambda (condition)
        (if (typep condition 'rule-missing-error)
-           (let ((rule (make-instance 'forward-referenced-rule :name name)))
+           (let ((rule (apply #'make-instance 'forward-referenced-rule
+                              :name name
+                              (when (consp value)
+                                (rest value)))))
              (invoke-restart 'store-value rule))
            (error condition))))
     (t

@@ -137,7 +137,9 @@
     `(progn
        (eval-when (:compile-toplevel)
          (grammar:find-rule ',name (grammar:find-grammar ',grammar-name)
-                            :if-does-not-exist :forward-reference))
+                            :if-does-not-exist (list :forward-reference
+                                                     ,@(when environment
+                                                         `(:environment ,environment)))))
        (grammar:ensure-rule ',name (grammar:find-grammar ',grammar-name)
                             :rule-class 'grammar::rule
                             ,@(when environment `(:environment ,environment))
