@@ -45,6 +45,7 @@
                     `(structure 'cons (car ,car) (cdr ,cdr)))))
 
     (bounds  . ,(lambda (expression)
+                  (break "bounds")
                   (let+ ((((start end) &rest expressions) (rest expression)))
                     `(seq (<- ,start :position) ,@expressions (<- ,end :position)))))
 
@@ -61,7 +62,7 @@
               (make-instance 'base:terminal-expression :value expression)))))
 
     `(;; Predicate
-      ((cons (member guard :guard))
+      ((cons (eql guard))
        . ,(lambda (expression context recurse)
             (declare (ignore context))
             (destructuring-bind (sub-expression predicate)
@@ -121,7 +122,7 @@
             (declare (ignore context))
             (make-instance 'base::compose-expression
                            :sub-expressions (map 'list recurse (rest expression)))))
-      ((cons (eql :must))
+      ((cons (eql must))
        . ,(lambda (expression context recurse)
             (declare (ignore context))
             (make-instance 'base::must-expression
@@ -161,6 +162,7 @@
             (etypecase expression
               ;; magic variables
               ((eql :position)
+               (break)
                (make-instance 'parser.packrat.grammar.base::position-expression))
 
               ;; Value as sequence
@@ -181,16 +183,16 @@
                                 :sub-expression  (rec sub)
                                 :min-repetitions (when min (rec min :repetition-constraint))
                                 :max-repetitions (when max (rec max :repetition-constraint)))))
-              ((cons (member seq :seq))
+              ((cons (eql seq))
                (combinator 'seq:sequence-expression (rest expression)))
 
               ;; Variables
-              ((cons (member <- :<-))
+              ((cons (eql <-))
                (let+ (((variable &optional (sub-expression :any)) (rest expression)))
                  (make-instance 'base:set-expression
                                 :sub-expression (rec sub-expression)
                                 :variable       variable)))
-              ((cons (member <<- :<<-))
+              ((cons (eql <<-))
                (let+ (((variable &optional (sub-expression :any)) (rest expression)))
                  (make-instance 'base:push-expression
                                 :sub-expression (rec sub-expression)
@@ -204,7 +206,7 @@
                                 :code           code)))
 
               ; Invocation
-              ((cons (member next-rule :next-rule))
+              ((cons (eql next-rule))
                (let ((arguments (rest expression)))
                  (make-instance 'base:next-rule-invocation-expression
                                 :arguments (map-rec arguments :invoke))))
