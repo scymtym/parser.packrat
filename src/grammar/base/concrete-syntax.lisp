@@ -44,7 +44,7 @@
         (rule-invocation-expression context)))
 
 (parser.packrat:defrule expression! (context)
-    (:must (expression context) "must be an expression"))
+    (must (expression context) "must be an expression"))
 
 ;;; Predicate and anything
 
@@ -54,12 +54,13 @@
   (list* name arguments))
 
 (parser.packrat:defrule function-name-or-partial-application! ()
-    (:must (function-name-or-partial-application) "must be a function name or partial application"))
+    (must (function-name-or-partial-application) "must be a function name or partial application"))
 
 (parser.packrat:defrule predicate-expression (context)
     (list (or :guard 'guard)
-          (or (:seq (<- sub-expression (expression! context))
-                    (<- predicate (function-name-or-partial-application!)))
+          (or (parser.packrat.grammar.sequence:seq
+               (<- sub-expression (expression! context))
+               (<- predicate (function-name-or-partial-application!)))
               (<- predicate (function-name-or-partial-application!))))
   (bp:node* (:predicate :predicate predicate)
     (1 :sub-expression (or sub-expression (bp:node* (:anything))))))
@@ -83,7 +84,7 @@
     (guard (typep '(and symbol (not (or keyword null))))))
 
 (parser.packrat:defrule variable-name! ()
-    (:must (variable-name) "must be a variable name"))
+    (must (variable-name) "must be a variable name"))
 
 (parser.packrat:defrule implicit-list (action)
     (list (* (<<- variables (variable-name!)) 1))
@@ -187,13 +188,13 @@
     (guard symbolp))
 
 (parser.packrat:defrule rule-name! ()
-    (:must (rule-name) "must be a rule name"))
+    (must (rule-name) "must be a rule name"))
 
 (parser.packrat:defrule grammar-name ()
     (guard symbolp))
 
 (parser.packrat:defrule grammar-name! ()
-    (:must (grammar-name) "must be a grammar name"))
+    (must (grammar-name) "must be a grammar name"))
 
 (parser.packrat:defrule rule-invocation-expression (context)
     (list (or (list (<- rule-name    (rule-name!))

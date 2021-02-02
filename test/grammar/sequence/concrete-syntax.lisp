@@ -1,6 +1,6 @@
 ;;;; concrete-syntax.lisp --- Unit tests for the concrete syntax of the sequence grammar.
 ;;;;
-;;;; Copyright (C) 2017-2019 Jan Moringen
+;;;; Copyright (C) 2017-2021 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -24,16 +24,16 @@
             (* 3 1 2)
 
             ;; Sequence
-            (:seq)
-            (:seq 1)
-            (:seq 1 2)
+            (seq)
+            (seq 1)
+            (seq 1 2)
 
             ;; Zero or more
-            (parser.packrat.grammar.sequence::? 1)
+            (? 1)
 
             ;; One or more
             (+ :any)
             (+ 1)
 
             ;; Bounds
-            (parser.packrat.grammar.sequence::bounds (start end) 1)))))
+            (bounds (start end) 1)))))

@@ -1,6 +1,6 @@
 ;;;; sexp-grammar.lisp --- Unit tests for the sexp-grammar class.
 ;;;;
-;;;; Copyright (C) 2017-2019 Jan Moringen
+;;;; Copyright (C) 2017-2019, 2021 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -78,12 +78,12 @@
 
         (#1=((1) (2 3) ((1) 2 3)) (t #1# #1#)))
 
-      '((:guard symbolp)
+      '((guard symbolp)
 
         (1 (nil 1))
         (y (t   y y)))
 
-      '((:guard (typep 'symbol))
+      '((guard (typep 'symbol))
 
         (1 (nil 1))
         (y (t   y y))))))

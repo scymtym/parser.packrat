@@ -67,19 +67,19 @@
 
 (define-macro-rule list-expression
     (list* 'list element-expressions)
-  `(list-elements (:seq ,@element-expressions)))
+  `(list-elements (seq ,@element-expressions)))
 
 (define-macro-rule list*-expression
-    (list 'list* (* (and (:seq :any :any) (<<- element-expressions))) last)
-  `(list-elements (:seq ,@(nreverse element-expressions) (rest ,last))))
+    (list 'list* (* (and (seq :any :any) (<<- element-expressions))) last)
+  `(list-elements (seq ,@(nreverse element-expressions) (rest ,last))))
 
 (define-macro-rule vector-expression
     (list* 'vector element-expressions)
-  `(vector-elements (:seq ,@element-expressions)))
+  `(vector-elements (seq ,@element-expressions)))
 
 (define-macro-rule vector*-expression
     (list* 'vector* element-expressions)
-  `(vector-elements (:seq ,@element-expressions)))
+  `(vector-elements (seq ,@element-expressions)))
 
 ;;;
 

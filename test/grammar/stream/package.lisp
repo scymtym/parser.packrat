@@ -10,6 +10,9 @@
 
    #:fiveam)
 
+  (:import-from #:parser.packrat.grammar.sequence
+   #:seq)
+
   (:import-from #:parser.packrat.grammar.test
    #:grammar-test
    #:rules-test)

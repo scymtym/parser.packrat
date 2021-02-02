@@ -21,6 +21,9 @@
    #:<- #:<<-
    #:must)
 
+  (:import-from #:parser.packrat.grammar.sequence
+   #:seq)
+
   (:local-nicknames
    (#:bp      #:architecture.builder-protocol)
 

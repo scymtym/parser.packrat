@@ -1,6 +1,6 @@
 ;;;; package.lisp --- Package definition for tests for the grammar.sexp module.
 ;;;;
-;;;; Copyright (C) 2017-2019 Jan Moringen
+;;;; Copyright (C) 2017-2021 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -10,6 +10,12 @@
    #:let-plus
 
    #:fiveam)
+
+  (:import-from #:parser.packrat.grammar.base
+   #:guard)
+
+  (:import-from #:parser.packrat.grammar.sequence
+   #:seq)
 
   (:import-from #:parser.packrat.grammar.test
    #:grammar-test

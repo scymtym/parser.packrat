@@ -96,7 +96,7 @@
                   (parse-match-value-and-options value-and-options))
                  ((&values values-max clauses)
                   (loop :for (patterns . body) :in multiclauses
-                        :collect `((:seq ,@patterns) ,@body) :into clauses
+                        :collect `((seq ,@patterns) ,@body) :into clauses
                         :maximize (length patterns) :into values-max
                         :finally (return (values values-max clauses))))
                  (value-vars  (map-into (make-list values-max) #'gensym))
@@ -133,7 +133,7 @@
                        (multiple-value-match ((values a b c))
                          ((1 (list 2 x) 3) 2)
                          ((3)              4)))))
-#+test (:ce '(:seq 1 (list 2 x) 3)
+#+test (:ce '(seq 1 (list 2 x) 3)
         :grammar :sexp
         :environment  (make-instance 'parser.packrat.grammar.values::values-environment
                                      :values '(a b c))
