@@ -13,20 +13,43 @@
 ;;; Dependency protocol
 ;;;
 ;;; For querying and managing dependencies between rules.
+;;;
+;;;          dependent
+;;;        ◀─────────────
+;;;   user                used
+;;;        ─────────────▶
+;;;          dependency
 
 (defgeneric dependencies (thing))
 
 (defgeneric (setf dependencies) (new-value thing))
 
+(defgeneric map-dependencies (function used))
+
 (defgeneric dependents (thing))
 
 (defgeneric (setf dependents) (new-value thing))
+
+(defgeneric map-dependents (function used))
 
 (defgeneric add-dependency (used user))
 
 (defgeneric remove-dependency (used user))
 
 ;;; Default behavior
+
+(macrolet ((define (name reader)
+             `(defmethod ,name (function used)
+                (let ((seen (make-hash-table :test #'eq)))
+                  (labels ((visit (current)
+                             (unless (gethash current seen)
+                               (setf (gethash current seen) t)
+                               (funcall function current)
+                               (map nil #'visit (,reader current)))))
+                    (declare (dynamic-extent #'visit))
+                    (map nil #'visit (,reader used)))))))
+  (define map-dependents dependents)
+  (define map-depencies  dependencies))
 
 (defmethod add-dependency :before (used user)
   (when (find used (dependencies user) :test #'eq)
