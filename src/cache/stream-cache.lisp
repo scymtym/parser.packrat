@@ -1,3 +1,9 @@
+;;;; stream-cache.lisp --- A stream content cache for backtracking parsers.
+;;;;
+;;;; Copyright (C) 2018, 2019, 2020, 2021 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:in-package #:parser.packrat.cache)
 
 (defclass stream-cache ()

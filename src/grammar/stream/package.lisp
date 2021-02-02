@@ -1,3 +1,9 @@
+;;;; package.lisp --- Package definition for grammar.stream module.
+;;;;
+;;;; Copyright (C) 2017-2021 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:defpackage #:parser.packrat.grammar.stream
   (:use
    #:cl

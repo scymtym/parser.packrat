@@ -1,3 +1,9 @@
+;;;; compiler.lisp --- Expression compilation for the base grammar module.
+;;;;
+;;;; Copyright (C) 2017-2021 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:in-package #:parser.packrat.grammar.base)
 
 (defmethod compile-test ((grammar      base-grammar)

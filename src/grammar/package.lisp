@@ -1,3 +1,9 @@
+;;;; package.lisp --- Package definition for the grammar module.
+;;;;
+;;;; Copyright (C) 2017, 2018, 2019, 2020, 2021 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:defpackage #:parser.packrat.grammar
   (:use
    #:cl

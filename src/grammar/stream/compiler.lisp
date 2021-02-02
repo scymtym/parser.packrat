@@ -1,3 +1,9 @@
+;;;; compiler.lisp --- Expression compilation for grammar.stream module.
+;;;;
+;;;; Copyright (C) 2017-2021 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:in-package #:parser.packrat.grammar.stream)
 
 ;;; Expressions

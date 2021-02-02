@@ -1,3 +1,9 @@
+;;;; parse.lisp --- Bootstrap parser.
+;;;;
+;;;; Copyright (C) 2017-2021 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:in-package #:parser.packrat.bootstrap)
 
 ;;; Hook into expression parsing

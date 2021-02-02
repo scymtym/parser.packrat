@@ -1,3 +1,9 @@
+;;;; base-grammar.lisp --- Grammar class provided by the grammar.base module.
+;;;;
+;;;; Copyright (C) 2017, 2018, 2019, 2020 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:in-package #:parser.packrat.grammar.base)
 
 (defclass base-grammar (grammar:named-mixin

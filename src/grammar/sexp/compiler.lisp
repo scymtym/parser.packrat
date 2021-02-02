@@ -1,3 +1,9 @@
+;;;; compiler.lisp --- Expression compilation for the sexp grammar module.
+;;;;
+;;;; Copyright (C) 2017-2021 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:in-package #:parser.packrat.grammar.sexp)
 
 (defmethod compile-expression ((grammar      t)
