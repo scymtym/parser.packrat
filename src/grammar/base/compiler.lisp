@@ -348,10 +348,11 @@
                           :end      'endp)
            'value)
 
-(defun %uses-fail? (expression)
+(defun %uses? (name parameters expression)
   (catch 'used
     (sb-cltl2:macroexpand-all
-     `(macrolet ((:fail ()
+     `(macrolet ((,name (,@parameters)
+                   (declare (ignore ,@parameters))
                    (throw 'used t)))
         ,expression))
     nil))
@@ -395,28 +396,40 @@
              (append (when (%uses-position? expression)
                        (list (list 'cl-user::position (first (env:position-variables environment)))))
                      (restore-bindings environment))
-             expression)))
-
-
-         )
+             expression))))
     `(labels ((,transform-name ,(env:position-variables transform-environment)
                 (declare (ignorable ,@(env:position-variables transform-environment))) ; TODO hack
-                ,(if (%uses-fail? expression)
-                     `(let ((,value-var   nil)
-                            (,aborted-var nil))
-                        (block ,block-name
-                          (flet ((:fail ()
-                                   (setf ,aborted-var t)
-                                   (return-from ,block-name)))
-                            (declare (inline :fail)
-                                     (ignorable #':fail))
-                            (setf ,value-var ,(run-code transform-environment))))
-                        (if ,aborted-var
-                            ,(funcall failure-cont environment)
-                            ,(funcall success-cont transform-environment)))
-                     ;; CODE does not cause the match to fail.
-                     `(let ((,value-var ,(run-code transform-environment)))
-                        ,(funcall success-cont transform-environment)))))
+                ,(let ((uses-fail?  (%uses? :fail  '()        expression))
+                       (uses-fatal? (%uses? :fatal '(message) expression)))
+                   (if (or uses-fail? uses-fatal?)
+                       `(let ((,value-var   nil)
+                              (,aborted-var nil))
+                          (block ,block-name
+                            (flet (,@(when uses-fail?
+                                       `((:fail ()
+                                           (setf ,aborted-var t)
+                                           (return-from ,block-name))))
+                                   ,@(when uses-fatal?
+                                       `((:fatal (message)
+                                           (setf ,aborted-var message)
+                                           (return-from ,block-name)))))
+                              (declare (inline ,@(when uses-fail? '(:fail))
+                                               ,@(when uses-fatal? '(:fatal)))
+                                       (ignorable ,@(when uses-fail? '(#':fail))
+                                                  ,@(when uses-fatal? '(#':fatal))))
+                              (setf ,value-var ,(run-code transform-environment))))
+                          (cond ((null ,aborted-var)
+                                 ,(funcall success-cont transform-environment))
+                                ,@(when uses-fail?
+                                    `(((eq ,aborted-var t)
+                                       ,(funcall failure-cont environment))))
+                                ,@(when uses-fatal?
+                                    `((t
+                                       ,(funcall parser.packrat.compiler::*fatal-cont*
+                                                 environment aborted-var))))))
+                       ;; CODE does not cause the match to fail.
+                       `(let ((,value-var ,(run-code transform-environment)))
+                          ,(funcall success-cont transform-environment))))))
        ,(compile-expression
          grammar environment sub-expression
          (lambda (new-environment)
