@@ -33,21 +33,9 @@
                   (let ((rest (rest expression)))
                     `(list-elements (seq ,@(butlast rest) (rest ,(lastcar rest)))))))
 
-    (vector  . ,(lambda (expression)
-                  `(vector-elements (seq ,@(rest expression)))))
-
-    (vector* . ,(lambda (expression)
-                  (break "vector* is not implemented")
-                  `(vector-elements (seq ,@(rest expression)))))
-
     (cons    . ,(lambda (expression)
                   (let+ (((car cdr) (rest expression)))
                     `(structure 'cons (car ,car) (cdr ,cdr)))))
-
-    (bounds  . ,(lambda (expression)
-                  (break "bounds")
-                  (let+ ((((start end) &rest expressions) (rest expression)))
-                    `(seq (<- ,start :position) ,@expressions (<- ,end :position)))))
 
     (value   . ,(lambda (expression)
                   (let+ ((((object) expression) (rest expression)))
@@ -160,11 +148,6 @@
                            (rec expression context)))))
 
             (etypecase expression
-              ;; magic variables
-              ((eql :position)
-               (break)
-               (make-instance 'parser.packrat.grammar.base::position-expression))
-
               ;; Value as sequence
               ((cons (eql vector-elements))
                (make-instance 'parser.packrat.grammar.sexp::as-vector-expression
