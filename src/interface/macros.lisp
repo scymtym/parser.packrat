@@ -88,7 +88,7 @@
         ))))
 
 (defmacro in-grammar (grammar-name)
-  ; (check-type grammar grammar-designator)
+  ; TODO (check-type grammar grammar-designator)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (setf *grammar* (grammar:find-grammar ',grammar-name))))
 

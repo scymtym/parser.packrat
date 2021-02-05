@@ -209,13 +209,15 @@
 
 (parser.packrat:defrule rule-invocation-expression (context)
     (value (source)
-      (list (or (list (<- rule-name    (rule-name!))
-                      (<- grammar-name (grammar-name!)))
+      (list (or (list    (<- rule-name         (rule-name!))
+                         (<- grammar-name      (grammar-name!))
+                      (* (<- switch-to-grammar (grammar-name!)) 0 1))
                 (<- rule-name (rule-name)))
             (* (<<- arguments (expression! :value)))))
-  (bp:node* (:rule-invocation :grammar grammar-name
-                              :rule    rule-name
-                              :source  source)
+  (bp:node* (:rule-invocation :grammar           grammar-name
+                              :rule              rule-name
+                              :switch-to-grammar switch-to-grammar
+                              :source            source)
     (* :sub-expression (nreverse arguments))))
 
 (parser.packrat:defrule next-rule-invocation-expression (context)

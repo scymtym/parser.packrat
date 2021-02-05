@@ -508,7 +508,8 @@
 
 (defun emit-lookup-and-call
     (rule-name rule-var position-variables state-variables arguments-var
-     &key grammar-name grammar)
+     &key grammar-name grammar switch-to-grammar)
+  (when switch-to-grammar (break))
   (let* ((rule-key    (if grammar-name
                           `(,rule-name . ,grammar-name)
                           `,rule-name))
@@ -531,13 +532,14 @@
 
 (defun emit-call/no-cache
     (rule-name rule-var position-variables state-variables arguments-var
-     &key grammar-name grammar)
+     &key grammar-name grammar switch-to-grammar)
   (let ((rule-key (if grammar-name
                       `(,rule-name . ,grammar-name)
                       `,rule-name))
         (context  parser.packrat.compiler::+context-var+))
     (if t
-        `(progn
+        `(let (,@(when switch-to-grammar
+                   `((,context (grammar::make-context (grammar:find-grammar ',switch-to-grammar) nil nil)))))
            ,(emit-d-call rule-key context position-variables state-variables arguments-var :grammar grammar)
            (let ((*depth*     (+ *depth* 2))
                  (*old-state* (list ,@(remove-if (rcurry #'member position-variables) state-variables))))
@@ -550,7 +552,7 @@
                                (success-cont function)
                                (failure-cont function))
   (let+ (((&accessors-r/o cached?) grammar)
-         ((&accessors-r/o (grammar-name grammar) (rule-name rule) arguments) expression)
+         ((&accessors-r/o (grammar-name grammar) (rule-name rule) (switch-to-grammar-name switch-to-grammar) arguments) expression)
          (state-variables    (env:state-variables environment))
          (position-variables (env:position-variables environment))
          ((&with-gensyms grammar-var rule-var arguments-var success?-var value-var))
@@ -593,7 +595,10 @@
                          'emit-lookup-and-call
                          'emit-call/no-cache)
                      rule-name rule-var position-variables state-variables
-                     (when arguments arguments-var) :grammar-name grammar-name :grammar grammar)
+                     (when arguments arguments-var)
+                     :grammar-name      grammar-name
+                     :grammar           grammar
+                     :switch-to-grammar switch-to-grammar-name)
          ,(when t
             (emit-d-return rule-name parser.packrat.compiler::+context-var+
                            position-variables state-variables (when arguments arguments-var)

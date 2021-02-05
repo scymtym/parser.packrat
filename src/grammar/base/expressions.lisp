@@ -133,11 +133,14 @@
       (:close                nil        ")"                                      ((:after :arguments))))))
 
 (exp:define-expression-class rule-invocation (rule-invocation-base)
-  ((grammar :initform nil
-            :documentation
-            "Name of the grammar ")
-   (rule    :documentation
-            "Name of the rule")))
+  ((grammar           :initform nil
+                      :documentation
+                      "Name of the grammar ")
+   (rule              :documentation
+                      "Name of the rule")
+   (switch-to-grammar :initform nil ; TODO we could switch by default if GRAMMAR is not used?
+                      :documentation
+                      "Name of grammar to switch to")))
 
 (defmethod print-items:print-items append ((object rule-invocation-expression))
   `((:rule ,(rule object) "~A" ((:after :open)
