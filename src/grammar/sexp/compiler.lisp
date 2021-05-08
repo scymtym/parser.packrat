@@ -20,22 +20,25 @@
                           (&optional first-var                                &rest rest-vars)
                           slot-environment)
             (let+ (((&flet make-reader-args ()
-                      (cond
-                        ((not first-args)
-                         (list value))
-                        ((find :x first-args) ; TODO temp hack
-                         (substitute value :x first-args))
-                        (t
-                         (list* value first-args)))))
+                      (cond ((not first-args)
+                             (list value))
+                            ((find :x first-args) ; TODO temp hack
+                             (substitute value :x first-args))
+                            (t
+                             (list* value first-args)))))
                    ((&flet make-value-environment (value)
                       (env:environment-at slot-environment (list :value value)
                                           :class 'env:value-environment
                                           :state '()))))
               (if first-reader
-                  `(let ((,first-var (,first-reader ,@(make-reader-args))))
+                  `(let ((,first-var ,(base::compile-call grammar
+                                                          slot-environment
+                                                          expression
+                                                          first-reader
+                                                          (make-reader-args))
+                           #+old (,first-reader ,@(make-reader-args))))
                      ,(compile-expression
                        grammar
-                       #+old (env:environment-carrying environment first-var)
                        (make-value-environment first-var)
                        first-expression
                        (curry #'slot rest-readers rest-expressions rest-vars)
@@ -44,10 +47,12 @@
     (compile-expression
      grammar environment type
      (lambda (new-environment)
-       ; TODO (base::compile-test grammar environment expression 'typep value (list (env:value new-environment)))
-       `(if (typep ,value ,(env:value new-environment))
-            ,(slot readers sub-expressions slot-vars environment)
-            ,(funcall failure-cont environment)))
+       (base::compile-test
+        grammar environment expression 'typep value (list (env:value new-environment))
+        (lambda (environment)
+          (slot readers sub-expressions slot-vars environment))
+        (lambda (environment)
+          (funcall failure-cont environment))))
      failure-cont)))
 
 ;;; Casts

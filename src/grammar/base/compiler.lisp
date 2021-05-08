@@ -6,6 +6,13 @@
 
 (cl:in-package #:parser.packrat.grammar.base)
 
+(defmethod compile-call ((grammar      base-grammar)
+                         (environment  t)
+                         (expression   t)
+                         (function     t)
+                         (arguments    t))
+  `(,function ,@arguments))
+
 (defmethod compile-test ((grammar      base-grammar)
                          (environment  t)
                          (expression   t)
@@ -14,9 +21,11 @@
                          (arguments    t)
                          (success-cont function)
                          (failure-cont function))
-  `(if (,predicate ,value ,@arguments)
-       ,(funcall success-cont environment)
-       ,(funcall failure-cont environment)))
+  (let ((test (compile-call grammar environment expression
+                            predicate (list* value arguments))))
+   `(if ,test #+old (,predicate ,value ,@arguments)
+        ,(funcall success-cont environment)
+        ,(funcall failure-cont environment))))
 
 (defmethod compile-expression ((grammar      base-grammar)
                                (environment  env:value-environment)
