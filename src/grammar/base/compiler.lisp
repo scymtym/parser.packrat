@@ -108,24 +108,28 @@
                    (writes             (references-with-mode :write))
                    (assigned-variables (remove-duplicates writes :key #'exp:variable))
                    (assigned-names     (mapcar #'exp:variable assigned-variables))
-                   (temporary-names    (mapcar (compose #'gensym #'string) assigned-names)))
+                   (temporary-names    (mapcar (compose #'gensym #'string) assigned-names))
+                   (old-names          '()))
               (when assigned-names
                 (values
                  (apply #'env:environment-binding environment
                         (mappend (lambda (variable-name temporary-name)
-                                   (let ((kind (cdr (env:lookup variable-name environment))))
+                                   (let+ (((&optional old-name . kind)
+                                           (env:lookup variable-name environment)))
                                      (unless (eq kind :parameter)
                                        ;; (cons temporary-name nil) is required for e.g.
                                        ;; (or (:guard name symbolp)
                                        ;;     (:transform thing (error ...)))
                                        ;; but (cons temporary-name t) is required for other cases, e.g.
                                        ;; TODO add an example
+                                       (push (or old-name variable-name) old-names)
                                        (list variable-name (cons temporary-name kind)))))
                                  assigned-names temporary-names))
                  assigned-names
-                 temporary-names)))))
+                 temporary-names
+                 (nreverse old-names))))))
          ((&flet alternative (expression name next-name) ; TODO pass failing environment to next alternative?
-            (let+ (((&values assignment-environment assigned-names temporary-names)
+            (let+ (((&values assignment-environment assigned-names temporary-names old-names)
                     (assignments expression))
                    (environment (or assignment-environment environment)))
               `(,name ()
@@ -140,9 +144,9 @@
                         (let ((continue-environment
                                 (apply #'env:environment-binding
                                        success-environment
-                                       (mappend (lambda (name)
-                                                  (list name nil)) ; TODO use old value, not nil
-                                                assigned-names))))
+                                       (mappend (lambda (name old-name)
+                                                  (list name (cons old-name t)))
+                                                assigned-names old-names))))
                          (funcall success-cont continue-environment))))
                      (lambda (failure-environment)
                        (declare (ignore failure-environment))
@@ -270,7 +274,7 @@
                                (success-cont function)
                                (failure-cont function))
   (let+ ((variable (exp:variable expression))
-         ((&optional (name variable) . already-bound?)
+         ((&optional name . already-bound?)
           (env:lookup variable environment)))
     (unless already-bound?
       (error "~@<Unbound variable ~S.~@:>" variable))
