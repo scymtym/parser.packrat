@@ -1,6 +1,6 @@
 ;;;; compiler.lisp --- Expression compilation in the grammar.string module.
 ;;;;
-;;;; Copyright (C) 2017, 2018, 2019, 2020 Jan Moringen
+;;;; Copyright (C) 2017, 2018, 2019, 2020, 2021 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -45,6 +45,7 @@
                                (body        t))
   `(lambda (,c::+context-var+ ,@(env:state-variables environment) ,@parameters)
      (declare ; (optimize (speed 3) (debug 0) (safety 0))
+              (optimize (speed 1) (debug 1) (safety 1))
               (ignorable ,c::+context-var+)
               (type ,(seq:sequence-type grammar) ,(seq:sequence* environment))
               (type ,(seq:index-type grammar)    ,(seq:position* environment) ,(seq:end environment)))
