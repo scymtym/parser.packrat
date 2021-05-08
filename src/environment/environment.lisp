@@ -3,9 +3,9 @@
 ;;; `path-mixin'
 
 (defclass path-mixin ()
-  ((path-suffix :initarg  :path-suffix
-                :reader   path-suffix
-                :initform '())))
+  ((%path-suffix :initarg  :path-suffix
+                 :reader   path-suffix
+                 :initform '())))
 
 (defmethod path ((environment path-mixin))
   (append (path-suffix environment)
@@ -16,11 +16,11 @@
 
 (defclass environment (path-mixin
                        print-items:print-items-mixin)
-  ((parent   :initarg  :parent
-             :reader   parent
-             :initform nil)
-   (bindings :reader   %bindings
-             :initform (make-hash-table :test #'eq))))
+  ((%parent   :initarg  :parent
+              :reader   parent
+              :initform nil)
+   (%bindings :reader   %bindings
+              :initform (make-hash-table :test #'eq))))
 
 (defmethod print-items:print-items append ((object environment))
   `((:binding-count ,(hash-table-count (%bindings object)) "(~D)")
@@ -45,9 +45,9 @@
 
 (defclass value-environment (environment
                              print-items:print-items-mixin)
-  ((value :initarg :value
-          :type    symbol
-          :reader  value))
+  ((%value :initarg :value
+           :type    symbol
+           :reader  value))
   (:default-initargs
    :value (more-conditions:missing-required-initarg 'value-environment :value)))
 

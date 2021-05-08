@@ -93,8 +93,8 @@
 (defmethod environment-binding ((parent t) &rest bindings &key)
   (let ((environment (environment-at parent '()) ; (make-instance (class-of parent) :parent parent)
           ))
-    (loop :for (name value) :on bindings :by #'cddr :do
-       (setf (lookup name environment) value))
+    (loop :for (name value) :on bindings :by #'cddr
+          :do (setf (lookup name environment) value))
     environment))
 
 (defgeneric environment-at (base position &key class parent state)
