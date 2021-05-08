@@ -6,9 +6,9 @@
   environment allows treating a static sequence of variables as a
   sequence input for matching or parsing.
 
-  Since the sequence as aspect is completely static, no code or
-  runtime state is needed to handle it. Therefore, the generated code
-  just sequentially processes an ordered set of objects.
+  Since the sequence aspect is completely static, no code or runtime
+  state is needed to handle it. Therefore, the generated code just
+  sequentially processes an ordered set of objects.
 
 * Calling Convention
 
