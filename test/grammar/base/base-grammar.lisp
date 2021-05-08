@@ -43,4 +43,9 @@
 
         (0 (:fatal 0 "1"))
         (1 (t      1 1))
-        (2 (:fatal 2 "1"))))))
+        (2 (:fatal 2 "1")))
+
+      '((:compose (or 'nil name) (:transform :any name))
+
+        (nil  (t nil  nil))
+        (:foo (t :foo :foo))))))

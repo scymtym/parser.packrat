@@ -1,6 +1,6 @@
 ;;;; concrete-syntax.lisp --- Meta-grammar rules for the sequence grammar module.
 ;;;;
-;;;; Copyright (C) 2017, 2018, 2019, 2020 Jan Moringen
+;;;; Copyright (C) 2017, 2018, 2019, 2020, 2021 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -34,7 +34,7 @@
 
 (parser.packrat:defrule sequence-expression (context)
     (base::value (source)
-      (list (or :seq 'seq)
+      (list (or :seq 'seq) ; TODO remove keyword version
             (* (<<- element-expressions (base::expression context)))))
   (bp:node* (:sequence :source source)
     (* :sub-expression (nreverse element-expressions))))

@@ -40,6 +40,7 @@
           (lookup name parent)))))
 
 (defmethod (setf lookup) ((new-value t) (name t) (environment environment))
+  (when (null new-value) (break))
   (setf (gethash name (%bindings environment)) new-value))
 
 ;;; `value-environment'

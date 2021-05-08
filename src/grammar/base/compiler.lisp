@@ -432,6 +432,7 @@
 
          ((&flet restore-bindings (environment)
             (loop :for (variable . (name . already-bound?)) :in (env:bindings environment)
+                  :do (when (null name) (break))
                   :unless (eq variable name)
                   :collect `(,variable ,name))))
          ((&flet run-code (environment)
