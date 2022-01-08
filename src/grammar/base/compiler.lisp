@@ -363,7 +363,7 @@
 
 (defun %uses? (name parameters expression)
   (catch 'used
-    (sb-cltl2:macroexpand-all
+    (trivial-macroexpand-all:macroexpand-all
      `(macrolet ((,name (,@parameters)
                    (declare (ignore ,@parameters))
                    (throw 'used t)))
@@ -372,7 +372,7 @@
 
 (defun %uses-position? (expression)
   (catch 'used
-    (sb-cltl2:macroexpand-all
+    (trivial-macroexpand-all:macroexpand-all
      `(macrolet ((%used () (throw 'used t)))
         (symbol-macrolet ((cl-user::position (%used)))
           ,expression)))
