@@ -1,6 +1,6 @@
 ;;;; compiler.lisp --- Expression compilation for the base grammar module.
 ;;;;
-;;;; Copyright (C) 2017-2021 Jan Moringen
+;;;; Copyright (C) 2017-2022 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -619,9 +619,10 @@
          (case ,success?-var
            ((t)    ,(funcall success-cont continue-environment))
            ((nil)  ,(funcall failure-cont continue-environment))
-           (:fatal ,(funcall parser.packrat.compiler::*fatal-cont* continue-environment (if (member value-var (env:position-variables continue-environment))
-                                                                                            'message
-                                                                                            value-var))))))))
+           (:fatal ,(funcall parser.packrat.compiler::*fatal-cont* continue-environment
+                             (if (member value-var (env:position-variables continue-environment))
+                                 'message
+                                 value-var))))))))
 
 (defmethod compile-expression ((grammar      base-grammar)
                                (environment  t)
