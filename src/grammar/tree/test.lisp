@@ -3,28 +3,27 @@
 ;;; New test
 
 (parser.packrat:defgrammar tree-test
-  (:class parser.packrat.grammar.sexp:sexp-grammar))
+  (:class tree-grammar))
 
 (parser.packrat:in-grammar tree-test)
 
 (parser.packrat:defrule find-bindings (operator)
     (ancestors
      (* (or (list* operator
-                   (list (* (list (:<<- names)
-                                  (:<<- values (:transform value (class-of value))))))
+                   (list (* (list (parser.packrat.grammar.base:<<- names)
+                                  (parser.packrat.grammar.base:<<- values (:transform value (class-of value))))))
                    :any)
             :any)))
   (list names values))
 
 (parser.packrat:parse
- '(find-bindings 'let*)
+ '(find-bindings 'let)
  '(let ((a 1))
    (progn
      (let ((b (1+ (let ((c 2))
                     (values 'let (let ())))))
            (let 'let))
        (foo let)))))
-
 
 ;;; Test 1
 
@@ -34,8 +33,8 @@
  (compile nil `(lambda (value)
                  (let ((result))
                   ,(:ce (make-instance 'ancestors-expression
-                                       :sub-expression (:parse '(* (or (parser.packrat.bootstrap::<<- result 4)
-                                                                       parser.packrat.bootstrap::any))))
+                                       :sub-expression (:parse '(* (or (base:<<- result 4)
+                                                                       :any))))
                         :grammar :sexp
                         :environment `(:value :value ,'value))
                   result)))
@@ -79,3 +78,10 @@
     (funcall generator #'visit)))
 
 (test)
+
+(parser.packrat:parse
+ '(:transform (ancestors (* (base:<<- nodes :any))) nodes)
+ (make-node :id 1 :children (list (make-node :id 2 :children (list (make-node :id 4)
+                                                                   (make-node :id 5)
+                                                                   (make-node :id 6)))
+                                  (make-node :id 3))))
