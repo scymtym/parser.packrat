@@ -1,3 +1,9 @@
+;;;; package.lisp --- Package definition for the grammar.tree module.
+;;;;
+;;;; Copyright (C) 2018-2021 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:defpackage #:parser.packrat.grammar.tree
   (:use
    #:cl
@@ -7,8 +13,12 @@
    #:parser.packrat.compiler)
 
   (:local-nicknames
-   (#:exp #:parser.packrat.expression)
+   (#:exp  #:parser.packrat.expression)
 
-   (#:env #:parser.packrat.environment)
+   (#:env  #:parser.packrat.environment)
 
-   (#:seq #:parser.packrat.grammar.sequence)))
+   (#:base #:parser.packrat.grammar.base)
+   (#:seq  #:parser.packrat.grammar.sequence))
+
+  (:import-from #:parser.packrat.grammar.base
+   #:<-))

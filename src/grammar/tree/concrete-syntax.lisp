@@ -6,9 +6,9 @@
 (parser.packrat:in-grammar meta-grammar)
 
 (parser.packrat:defrule ancestors-expression (context)
-    (list 'ancestors (:<- sub-expression (parser.packrat.grammar.base::expression context)))
+    (list 'ancestors (<- sub-expression (base::expression context)))
   (make-instance 'ancestors-expression :sub-expression sub-expression))
 
 (parser.packrat:defrule children-expression (context)
-  (list 'children (:<- sub-expression (parser.packrat.grammar.base::expression context)))
+    (list 'children (<- sub-expression (base::expression context)))
   (make-instance 'children-expression :sub-expression sub-expression))

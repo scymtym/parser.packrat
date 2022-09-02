@@ -75,11 +75,11 @@
 (defmethod prepare-expression ((grammar     t)
                                (environment t)
                                (expression  ancestor-expression-mixin))
-  (let ((sub-expression (prepare-expression grammar
-                                            (c2mop:class-prototype
-                                             (c2mop:ensure-finalized
-                                              (find-class 'generator-environment)))
-                                            (exp:sub-expression expression))))
+  (let* ((environment    (c2mop:class-prototype
+                          (c2mop:ensure-finalized
+                           (find-class 'generator-environment))))
+         (sub-expression (prepare-expression
+                          grammar environment (exp:sub-expression expression))))
     (reinitialize-instance expression :sub-expression sub-expression)))
 
 ;;; Concrete syntax support
