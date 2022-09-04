@@ -182,9 +182,13 @@
     (value (source)
       (list (or :must 'must)
             (<- sub-expression (expression! context))
-            (* (guard message stringp) 0 1)))
+            (* (guard message stringp) 0 1)
+            ;; TODO (* (<- source (expression! context)) 0 1)
+            ))
   (bp:node* (:must :message message :source source)
-    (1 :sub-expression sub-expression)))
+    (1 :sub-expression sub-expression)
+    ;; (? :source source)
+    ))
 
 ;;; Logical connectives
 
