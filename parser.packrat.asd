@@ -142,15 +142,6 @@
                                    "grammar-sequence-concrete-syntax")
                       :components ((:file       "concrete-syntax")))
 
-                     (:module     "examples"
-                      :components (; (:static-file "sexp.lisp")
-                                   ; (:static-file "symbol-table.lisp")
-                                   ; (:static-file "left-recursion.lisp")
-                                   ;  (:static-file "function-terminals.lisp")
-                                   (:static-file "lambda-lists")
-                                   (:static-file "lambda-calculus")
-                                   ))
-
                      (:static-file "version-string.sexp")
                      (:static-file "README.org"))
 
