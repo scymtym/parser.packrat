@@ -23,9 +23,10 @@
               :initform (make-hash-table :test #'eq))))
 
 (defmethod print-items:print-items append ((object environment))
-  `((:binding-count ,(hash-table-count (%bindings object)) "(~D)")
-    (:depth         ,(depth object)                        " @~D"
-     ((:after :binding-count)))))
+  (let ((count (hash-table-count (%bindings object)))
+        (depth (depth object)))
+    `((:binding-count                          "(~D)" ,count)
+      ((:depth        (:after :binding-count)) " @~D" ,depth))))
 
 (defmethod direct-bindings ((environment environment))
   (when-let ((bindings (%bindings environment)))
@@ -52,6 +53,6 @@
    :value (more-conditions:missing-required-initarg 'value-environment :value)))
 
 (defmethod print-items:print-items append ((object value-environment))
-  `((:value ,(value object) " ~A" ((:after :depth)))))
+  `(((:value (:after :depth)) " ~A" ,(value object))))
 
 (define-state-methods value-environment (value) ())

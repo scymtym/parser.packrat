@@ -31,10 +31,10 @@
    "Environment for sequences in the sense of the `cl:sequence' type."))
 
 (defmethod print-items:print-items append ((object sequence-environment))
-  `((:position ,(position* object) "~A")
-    (:sequence ,(sequence* object) " in ~A"  ((:after  :position)))
-    (:end      ,(end       object) ":~A "    ((:after  :sequence)
-                                              (:before :binding-count)))))
+  `((:position "~A" ,(position* object))
+    ((:sequence (:after  :position)) " in ~A" ,(sequence* object))
+    ((:end (:after :sequence) (:before :binding-count))
+     ":~A " ,(end object))))
 
 (env:define-state-methods sequence-environment
   ((position* :position))
@@ -59,6 +59,6 @@
    "Environment for `list' inputs."))
 
 (defmethod print-items:print-items append ((object list-environment))
-  `((:tail ,(tail object) "~A")))
+  `((:tail "~A" ,(tail object))))
 
 (env:define-state-methods list-environment (tail) ())

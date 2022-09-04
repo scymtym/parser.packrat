@@ -34,7 +34,7 @@
   (reduce #'+ (expressions instance) :key (compose #'length #'cdr)))
 
 (defmethod print-items:print-items append ((object inline-cache))
-  `((:entry-count ,(entry-count object) "(~:D)")))
+  `((:entry-count "(~:D)" ,(entry-count object))))
 
 (defun initial-function (instance grammar expression input) ;; TODO locking
   (let+ (((&values key guard function) (make-rule-function grammar expression)))

@@ -27,9 +27,10 @@
                      :initform nil)))
 
 (defmethod print-items:print-items append ((object repetition-expression))
-  `((:min-repetitions ,(min-repetitions object) "~:[0~;~:*~D~]")
-    (:max-repetitions ,(max-repetitions object) "..~:[*~;~:*~D~]"
-                      ((:after :min-repetitions)))))
+  (let ((min (min-repetitions object))
+        (max (max-repetitions object)))
+    `((:min-repetitions                             "~:[0~;~:*~D~]"   ,min)
+      ((:max-repetitions (:after :min-repetitions)) "..~:[*~;~:*~D~]" ,max))))
 
 (defmethod bp:node-kind ((builder t)
                          (node    repetition-expression))

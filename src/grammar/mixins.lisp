@@ -10,7 +10,7 @@
    :name (more-conditions:missing-required-initarg 'named-mixin :name)))
 
 (defmethod print-items:print-items append ((object named-mixin))
-  `((:name ,(name object))))
+  `((:name "~A" ,(name object))))
 
 ;;; `dependencies-mixin'
 
@@ -38,7 +38,7 @@
 
 (defmethod print-items:print-items append ((object rule-storage-mixin))
   (let ((count (hash-table-count (%rules object))))
-    `((:rule-count ,count " ~D rule~:P" ((:after :name))))))
+    `(((:rule-count (:after :name)) " ~D rule~:P" ,count))))
 
 (defmethod rules ((grammar rule-storage-mixin))
   (hash-table-values (%rules grammar)))

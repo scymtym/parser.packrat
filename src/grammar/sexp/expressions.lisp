@@ -35,10 +35,9 @@
                                                     sub-items
                                                     '((:abbrev ".."))))))
                          readers sub-expressions)))
-    `((:type                 ,type*      "~A ")
-      (:sub-structures       ,sub-items  "~{~{~A:~/print-items:format-print-items/~}~^ ~}"
-                             ((:after :type)))
-      (:sub-expression-count nil         ""))))
+    `((:sub-expression-count            "") ; suppress
+      (:type                            "~A "                                             ,type*)
+      ((:sub-structures (:after :type)) "~{~{~A:~/print-items:format-print-items/~}~^ ~}" ,sub-items))))
 
 (defmethod bp:node-kind ((builder t) (node structure-expression))
   :structure)

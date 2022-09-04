@@ -7,10 +7,10 @@
 
 (defmethod print-items:print-items append ((object predicate-expression))
   (let ((predicate (ensure-list (predicate object))))
-    `((:open      nil        "(")
-      (:predicate ,predicate "~{~A~^ ~} " ((:after  :open)
-                                           (:before :sub-expression)))
-      (:close     nil        ")"          ((:after  :sub-expression))))))
+    `((:open "(")
+      ((:predicate (:after :open) (:before :sub-expression))
+       "~{~A~^ ~} " ,predicate)
+      ((:close (:after  :sub-expression)) ")"))))
 
 (exp:define-expression-class anything (exp::value-environment-needing-mixin)
   ())
@@ -20,7 +20,7 @@
   (exp:value))
 
 (defmethod print-items:print-items append ((object terminal-expression))
-  `((:value ,(exp:value object) "~S")))
+  `((:value "~S" ,(exp:value object))))
 
 ;;; Combinators
 
@@ -50,7 +50,7 @@
   (exp:value))
 
 (defmethod print-items:print-items append ((object constant-expression))
-  `((:value ,(exp:value object))))
+  `((:value "~A" ,(exp:value object))))
 
 ;;; Variables
 
@@ -86,14 +86,14 @@
   ())
 
 (defmethod print-items:print-items append ((object set-expression))
-  `((:arrow nil " ← " ((:after :variable) (:before :sub-expression)))))
+  `(((:arrow (:after :variable) (:before :sub-expression)) " ← ")))
 
 (exp:define-expression-class push (variable-write-mixin
                                    print-items:print-items-mixin)
   ())
 
 (defmethod print-items:print-items append ((object push-expression))
-  `((:arrow nil " ←+ " ((:after :variable) (:before :sub-expression)))))
+  `(((:arrow (:after :variable) (:before :sub-expression)) " ←/+ ")))
 
 (exp:define-expression-class variable-reference (variable-reference-mixin
                                                  print-items:print-items-mixin)
@@ -106,7 +106,7 @@
          :initform :same)))
 
 (defmethod print-items:print-items append ((object variable-same-expression))
-  `((:relation nil " ≡" ((:after :variable) (:before :sub-expression)))))
+  `(((:relation (:after :variable) (:before :sub-expression)) " ≡")))
 
 ;;; Position
 
@@ -127,10 +127,10 @@
 
 (defmethod print-items:print-items append ((object rule-invocation-base))
   (let ((arguments (map 'list #'print-items:print-items (arguments object))))
-    `((:sub-expression-count nil        "")
-      (:open                 nil        "(")
-      (:arguments            ,arguments "~{ ~/print-items:format-print-items/~}" ((:after :open)))
-      (:close                nil        ")"                                      ((:after :arguments))))))
+    `((:sub-expression-count            "") ; suppress inherited
+      (:open                            "(")
+      ((:arguments (:after :open))      "~{ ~/print-items:format-print-items/~}" ,arguments)
+      ((:close     (:after :arguments)) ")"))))
 
 (exp:define-expression-class rule-invocation (rule-invocation-base)
   ((grammar           :initform nil
@@ -143,11 +143,10 @@
                       "Name of grammar to switch to")))
 
 (defmethod print-items:print-items append ((object rule-invocation-expression))
-  `((:rule ,(rule object) "~A" ((:after :open)
-                                (:before :arguments)))))
+  `(((:rule (:after :open) (:before :arguments)) "~A" ,(rule object))))
 
 (exp:define-expression-class next-rule-invocation (rule-invocation-base)
   ())
 
 (defmethod print-items:print-items append ((object next-rule-invocation-expression))
-  `((:rule nil "next-rule" ((:after :open) (:before :arguments)))))
+  `(((:rule (:after :open) (:before :arguments)) "next-rule")))

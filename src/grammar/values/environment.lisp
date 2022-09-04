@@ -1,6 +1,6 @@
 ;;;; environment.lisp --- Values environment provided by the grammar.values module.
 ;;;;
-;;;; Copyright (C) 2017-2021 Jan Moringen
+;;;; Copyright (C) 2017-2022 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -30,13 +30,13 @@
   (let+ (((&accessors-r/o (values values*) value) object)
          (index (position value values)))
     (if index
-        `((:prefix  ,(subseq values 0 index)    "~{~A ~}")
-          (:current ,value                      "!~A"      ((:after  :prefix)))
-          (:suffix  ,(subseq values (1+ index)) "~{ ~A~} " ((:after  :current)
-                                                            (:before :binding-count))))
-        `((:values ,values "~{~A ~}")
-          (:end    nil     "! "      ((:after  :values)
-                                      (:before :binding-count)))))))
+        `((:prefix                      "~{~A ~}" ,(subseq values 0 index))
+          ((:current (:after  :prefix)) "!~A"     ,value)
+          ((:suffix (:after  :current) (:before :binding-count))
+           "~{ ~A~} " ,(subseq values (1+ index)) ()))
+        `((:values "~{~A ~}" ,values)
+          ((:end (:after :values) (:before :binding-count))
+           "! ")))))
 
 (env:define-state-methods values-environment (value) ((values* :values)))
 

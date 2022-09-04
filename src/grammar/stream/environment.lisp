@@ -1,6 +1,6 @@
 ;;;; environment.lisp --- Environment provided by grammar.stream module.
 ;;;;
-;;;; Copyright (C) 2017-2021 Jan Moringen
+;;;; Copyright (C) 2017-2022 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -23,8 +23,8 @@
                            :reader  access-function)))
 
 (defmethod print-items:print-items append ((object stream-environment))
-  `((:position ,(seq:position* object) "~A")
-    (:stream   ,(stream* object)       " in ~A" ((:after :value)))))
+  `((:position                 "~A"     ,(seq:position* object))
+    ((:stream (:after :value)) " in ~A" ,(stream* object))))
 
 (env:define-state-methods stream-environment
   ((seq:position* :position))

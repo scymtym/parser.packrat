@@ -13,7 +13,7 @@
                     :initform '())))
 
 (defmethod print-items:print-items append ((object sub-expression-mixin))
-  `((:sub-expression-count ,(length (sub-expressions object)) "(~D)")))
+  `((:sub-expression-count "(~D)" ,(length (sub-expressions object)))))
 
 (defmethod bp:node-relations ((builder t)
                               (node    sub-expression-mixin))
@@ -41,7 +41,7 @@
 
 (defmethod print-items:print-items append ((object single-sub-expression-mixin))
   (let ((sub-items (print-items:print-items (sub-expression object))))
-    `((:sub-expression ,sub-items "~/print-items:format-print-items/"))))
+    `((:sub-expression "~/print-items:format-print-items/" ,sub-items))))
 
 (defmethod bp:node-relations ((builder t)
                               (node    single-sub-expression-mixin))
