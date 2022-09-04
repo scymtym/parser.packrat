@@ -96,13 +96,15 @@
 
   #+BEGIN_SRC lisp :exports both :colnames '("input" "base" "success?" "consumed" "value")
     (list (list* #1="1234" #2=10 (multiple-value-list (parser.packrat:parse '((integer :integers) #2#) #1#)))
-          (list* #3="bee"  #4=16 (multiple-value-list (parser.packrat:parse '((integer :integers) #4#) #3#))))
+          (list* #3="bee"  #4=16 (multiple-value-list (parser.packrat:parse '((integer :integers) #4#) #3#)))
+          (list* #5="beef" #6=16 (multiple-value-list (parser.packrat:parse '((integer :integers) #6#) #5#))))
   #+END_SRC
 
   #+RESULTS:
   | input | base | success? | consumed | value |
   |-------+------+----------+----------+-------|
   | 1234  |   10 | T        |        4 |  1234 |
+  | bee   |   16 | T        |        3 |  3054 |
   | beef  |   16 | T        |        4 | 48879 |
 
 * STARTED Project Organization
