@@ -1,10 +1,15 @@
 ;;;; stream-cache.lisp --- A stream content cache for backtracking parsers.
 ;;;;
-;;;; Copyright (C) 2018, 2019, 2020, 2021 Jan Moringen
+;;;; Copyright (C) 2018-2022 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
 (cl:in-package #:parser.packrat.cache)
+
+;;; `stream-cache'
+;;;
+;;; Superclass for chunk caches for input from streams. Sub classes
+;;; handle streams with specific element types. The cache
 
 (defclass stream-cache ()
   ((%stream :initarg  :stream
@@ -53,6 +58,8 @@
               (aref chunk position-2))))))))
 
 ;;; `octet-vector-stream-cache'
+;;;
+;;; A chunk cache for parsing input in the form of an octet stream.
 
 (deftype octet-vector-chunk ()
   '(simple-array t 1))
@@ -71,6 +78,8 @@
   (make-instance 'octet-vector-stream-cache :stream stream))
 
 ;;; `string-stream-cache'
+;;;
+;;; A chunk cache for parsing input in the form of a string stream.
 
 (deftype string-chunk ()
   '(and (not (simple-array nil)) simple-string))
