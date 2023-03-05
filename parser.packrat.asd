@@ -187,9 +187,17 @@
                  :serial     t
                  :components ((:file       "package")
                               (:file       "concrete-syntax")
-                              (:file       "sexp-grammar"))))
+                              (:file       "sexp-grammar")))
+
+                (:module     "interface"
+                 :depends-on ("grammar")
+                 :pathname   "test/interface"
+                 :serial     t
+                 :components ((:file       "package")
+                              (:file       "inline-cache"))))
 
   :perform     (test-op (operation component)
+                 (uiop:symbol-call '#:parser.packrat.test                  '#:run-tests)
                  ;; (uiop:symbol-call '#:parser.packrat.grammar.test          '#:run-tests)
                  (uiop:symbol-call '#:parser.packrat.grammar.base.test     '#:run-tests)
                  (uiop:symbol-call '#:parser.packrat.grammar.sequence.test '#:run-tests)

@@ -117,8 +117,8 @@
          ((&ign rule-lambda-list &rest rule-body)
           (make-rule-lambda grammar new-expression)))
     (values
-     rule
-     `(expression-is-invocation? expression ',rule)
+     (cons rule count)
+     `(expression-is-invocation? expression ',rule ,count)
      `(lambda (expression input)
         ,@(unless names `((declare (ignore expression))))
         (let* (,@(when names
@@ -152,12 +152,13 @@
 (defun expressions-compatible? (new-expression old-expression)
   (equal old-expression new-expression))
 
-(defun expression-is-invocation? (new-expression rule)
+(defun expression-is-invocation? (new-expression rule argument-count)
   (and (consp new-expression)
        (let ((new-rule (first new-expression)))
          (etypecase new-rule
            (symbol (eq new-rule rule))
-           (cons   (eq (first new-rule) rule))))))
+           (cons   (eq (first new-rule) rule))))
+       (alexandria:length= argument-count (cdr new-expression))))
 
 (defun maybe-evaluate-quote (form)
   (if (and (consp form) (eq (first form) 'quote))
