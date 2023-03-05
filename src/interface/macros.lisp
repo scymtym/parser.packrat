@@ -94,11 +94,6 @@
 
 ;;; `defrule'
 
-(defmacro with-current-source-form ((&rest forms) &body body) ; TODO t-w-c-s-f
-  #-sbcl (declare (ignore forms))
-  #+sbcl `(sb-ext:with-current-source-form (,@forms) ,@body)
-  #-sbcl `(progn ,@body))
-
 (defun expand-expression (grammar name parameters expression environment)
   (let* ((ast      (handler-bind
                        ((grammar:expression-syntax-error

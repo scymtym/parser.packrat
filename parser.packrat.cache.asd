@@ -11,7 +11,8 @@
   :version          (:read-file-form "version-string.sexp")
   :depends-on       ("alexandria"
                      "let-plus"
-                     "more-conditions")
+                     "more-conditions"
+                     "trivial-with-current-source-form")
 
   :components       ((:module     "cache"
                       :pathname   "src/cache"
