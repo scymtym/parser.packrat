@@ -1,3 +1,9 @@
+;;;; macros.lisp --- Macros provided by the interface module.
+;;;;
+;;;; Copyright (C) 2018-2023 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:in-package #:parser.packrat)
 
 (defmacro defgrammar (name &body options)
@@ -73,7 +79,7 @@
           (:documentation
            (apply #'documentation value)))))
 
-    ;; MAKE-GRAMMAR signals an error at runtime if a used grammar
+    ;; ENSURE-GRAMMAR signals an error at runtime if a used grammar
     ;; cannot be found.
     `(eval-when (:compile-toplevel :load-toplevel :execute)
        (grammar:ensure-grammar
@@ -88,7 +94,10 @@
         ))))
 
 (defmacro in-grammar (grammar-name)
-  ; TODO (check-type grammar grammar-designator)
+  "Set the current grammar to the grammar designated by GRAMMAR-NAME.
+
+GRAMMAR-NAME is not evaluated."
+  ;; TODO (check-type grammar grammar-designator)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (setf *grammar* (grammar:find-grammar ',grammar-name))))
 

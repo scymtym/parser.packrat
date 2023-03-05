@@ -1,8 +1,15 @@
+;;;; inline-cache.lisp --- Inline cache for `parse' calls.
+;;;;
+;;;; Copyright (C) 2018-2023 Jan Moringen
+;;;;
+;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
+
 (cl:in-package #:parser.packrat)
 
 (defclass inline-cache (print-items:print-items-mixin
                         c2mop:funcallable-standard-object)
-  ((%expressions :accessor expressions
+  ((%expressions :type     list
+                 :accessor expressions
                  :initform '()
                  :documentation
                  "A two-level alist structure of the form
@@ -55,7 +62,7 @@
               (funcall ,function expression input))))
          ((&flet+ make-grammar-clause ((grammar . rule-functions))
             `((eq grammar ,grammar)
-              (cond ,@(map 'list #'make-rule-clause rule-functions)
+              (cond ,@(mapcar #'make-rule-clause rule-functions)
                     (t (miss)))))))
     `(lambda (grammar expression input)
        (flet ((miss ()
@@ -74,10 +81,9 @@
 
 (defun make-rule-lambda (grammar expression)
   ;; TODO we don't do anything with free variable at the moment
-  (let* ((environment    (grammar:default-environment grammar expression))
-         (free-variables (map 'list #'exp:variable
-                              (exp:variable-references
-                               expression :filter (of-type 'base:variable-reference-expression)))))
+  (let ((free-variables (map 'list #'exp:variable
+                             (exp:variable-references
+                              expression :filter (of-type 'base:variable-reference-expression)))))
     (values (parser.packrat.compiler:compile-rule
              grammar nil free-variables expression)
             free-variables)))
@@ -95,9 +101,7 @@
         :for variable :in variables
         :collect tail
         :collect `(,variable (first tail))
-        :collect `(,variable (if (and (consp ,variable) (eq (first ,variable) 'quote))
-                                 (second ,variable)
-                                 ,variable))))
+        :collect `(,variable (maybe-evaluate-quote ,variable))))
 
 (defun make-rule-form/invocation (grammar expression/parsed expression/raw)
   (declare (ignore expression/raw))
@@ -106,10 +110,10 @@
          (names          (map-into (make-list count) #'gensym))
          (new-expression (make-instance 'base:rule-invocation-expression
                                         :rule      rule
-                                        :arguments (map 'list (lambda (variable)
-                                                                (make-instance 'base:variable-reference-expression
-                                                                               :variable variable))
-                                                        names)))
+                                        :arguments (mapcar (lambda (variable)
+                                                             (make-instance 'base:variable-reference-expression
+                                                                            :variable variable))
+                                                           names)))
          ((&ign rule-lambda-list &rest rule-body)
           (make-rule-lambda grammar new-expression)))
     (values
@@ -125,7 +129,7 @@
 (defun simple-invocation? (expression)
   (and (typep expression 'base:rule-invocation-expression)
        (every (of-type '(or base:variable-reference-expression
-                         base:constant-expression))
+                            base:constant-expression))
               (base:arguments expression))))
 
 (defun make-rule-form (grammar expression)
@@ -142,7 +146,8 @@
 ;;; Runtime
 
 (declaim (inline expressions-compatible?
-                 expression-is-invocation?))
+                 expression-is-invocation?
+                 maybe-evaluate-quote))
 
 (defun expressions-compatible? (new-expression old-expression)
   (equal old-expression new-expression))
@@ -153,3 +158,8 @@
          (etypecase new-rule
            (symbol (eq new-rule rule))
            (cons   (eq (first new-rule) rule))))))
+
+(defun maybe-evaluate-quote (form)
+  (if (and (consp form) (eq (first form) 'quote))
+      (second form)
+      form))

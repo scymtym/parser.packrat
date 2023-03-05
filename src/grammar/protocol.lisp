@@ -1,6 +1,6 @@
 ;;;; protocol.lisp --- Protocol provided by the grammar module.
 ;;;;
-;;;; Copyright (C) 2017, 2018, 2019, 2020, 2021 Jan Moringen
+;;;; Copyright (C) 2017-2023 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -24,7 +24,7 @@
 
 (defgeneric (setf dependencies) (new-value thing))
 
-(defgeneric map-dependencies (function used))
+(defgeneric map-dependencies (function user))
 
 (defgeneric dependents (thing))
 
