@@ -239,24 +239,35 @@
   (let ((grammar (find-grammar name :if-does-not-exist nil)))
     (apply #'ensure-grammar-using-grammar grammar name args)))
 
-(flet ((resolve-used (names)
-         (map 'list #'find-grammar names)))
+(flet ((resolve-used (names if-does-not-exist)
+         (mapcan (lambda (name)
+                   (when-let ((used (find-grammar
+                                     name :if-does-not-exist if-does-not-exist)))
+                     (list used)))
+                 names)))
 
   (defmethod ensure-grammar-using-grammar ((grammar null) (name t)
                                            &rest args
-                                           &key grammar-class use
+                                           &key grammar-class
+                                                use
+                                                (if-used-does-not-exist #'error)
                                            &allow-other-keys)
     (setf (find-grammar name)
           (apply #'make-instance grammar-class
                  :name         name
-                 :dependencies (resolve-used use)
-                 (remove-from-plist args :grammar-class :use))))
+                 :dependencies (resolve-used use if-used-does-not-exist)
+                 (remove-from-plist
+                  args :grammar-class :use :if-used-does-not-exist))))
 
   (defmethod ensure-grammar-using-grammar ((grammar t) (name t)
                                            &rest args
-                                           &key grammar-class use
+                                           &key grammar-class
+                                                use
+                                                (if-used-does-not-exist #'error)
                                            &allow-other-keys)
-    (let ((initargs (list* :name          name
-                           :dependencies  (resolve-used use)
-                           (remove-from-plist args :grammar-class :use))))
+    (let* ((dependencies (resolve-used use if-used-does-not-exist))
+           (initargs     (list* :name          name
+                                :dependencies  dependencies
+                                (remove-from-plist
+                                 args :grammar-class :use :if-used-does-not-exist))))
       (apply #'change-class grammar grammar-class initargs))))

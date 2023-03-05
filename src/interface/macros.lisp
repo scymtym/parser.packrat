@@ -6,92 +6,114 @@
 
 (cl:in-package #:parser.packrat)
 
+(defun singleton-option (context name type)
+  (let (seen-value
+        (value-seen? nil))
+    (lambda (&optional (value nil value?))
+      (cond (value?
+             (when value-seen?
+               (error "~@<The ~A option ~A can be supplied only once.~@:>"
+                      context name))
+             (unless (typep value type)
+               (error "~@<The value ~S supplied for the ~A option ~A is ~
+                       not of the required type ~S.~@:>"
+                      value context name type))
+             (setf seen-value value value-seen? t))
+            (t
+             seen-value)))))
+
 (defmacro defgrammar (name &body options)
   "Define a new grammar named NAME.
 
-   syntactically similar to CL:DEFPACKAGE. OPTIONS can be any of the
-   following:
+Neither NAME nor any of the value expressions in OPTIONS are
+evaluated.
 
-   * (:CLASS CLASS-NAME)
+OPTIONS can be any of the following:
 
-     TODO
+* (:class CLASS-NAME)
 
-   * (:USE GRAMMAR-DESIGNATOR+)
+  If supplied, the new grammar will be an instance of the class named
+  CLASS-NAME.
 
-     Allow using rules defined in the grammar(s) designated by
-     GRAMMAR-DESIGNATOR+ in the grammar being defined.
+  If a grammar named NAME exists and is not an instance of the class
+  named CLASS-NAME, the class of the existing grammar will be changed.
 
-   * (:DOCUMENTATION STRING)
+* (:use GRAMMAR-DESIGNATOR+)
 
-     Install STRING as the documentation string of the grammar being
-     defined.
+  Allow using rules defined in the grammar(s) designated by
+  GRAMMAR-DESIGNATOR+ in the grammar being defined.
 
-   The :USE option can be supplied multiple times.
+  The :USE option can be supplied multiple times.
 
-   When used grammars are cannot be found at compile time, a full warning
-   is signaled. When used grammars are cannot be found at runtime, an
-   error is signaled.
+  When used grammars are cannot be found at compile time, a full
+  warning is signaled. When used grammars are cannot be found at
+  runtime, an error is signaled.
 
-   Depending on the grammar class (see :CLASS option), additional
-   options may be accepted. For example, sequence-based grammars
-   accept the following additional options:
+* (:documentation STRING)
 
-   * (:SEQUENCE-TYPE TYPE)
+  Install STRING as the documentation string of the grammar being
+  defined.
 
-     TODO
+Depending on the grammar class (see `:class' option), additional
+options may be accepted. For example, sequence-based grammars accept
+the following additional options:
 
-   * (:ELEMENT-TYPE TYPE)
+* (:sequence-type TYPE)
 
-     TODO
+  TODO
 
-   Grammars can be redefined in a similar way packages can: if the
-   redefinition would introduce an error (e.g. a used grammar cannot
-   be found), the previous definition is kept. When the redefinition
-   succeeds, existing rules are retained but may behave differently
-   since added/removed used grammars can cause nonterminals to become
-   defined or undefined."
+* (:element-type TYPE)
+
+  TODO
+
+Grammars can be redefined in a similar way packages can: if the
+redefinition would introduce an error (e.g. a used grammar cannot be
+found), the previous definition is retained. When the redefinition
+succeeds, existing rules are retained but may behave differently since
+added/removed used grammars can cause nonterminals to become defined
+or undefined."
   (check-type name grammar-designator)
 
-  (let+ (((&flet singleton-option (context name type)
-            (let ((value*))
-              (lambda (&optional (value nil value?))
-                (if value?
-                    (setf value* value)
-                    value*)))))
-         #+no (element-type (singleton-option
-                        'defgrammar :element-type '(not (or null keyword))))
-         (class         (singleton-option 'defgrammar :class '(not null)))
-         (use           '())
-         (cached?       (singleton-option 'defgrammar :cached? 'boolean))
-         (documentation (singleton-option 'defgrammar :documentation 'string)))
+  (let (#+no (element-type (singleton-option
+                             'defgrammar :element-type '(not (or null keyword))))
+        (class         (singleton-option 'defgrammar :class '(and symbol (not null))))
+        (use           '())
+        (cached?       (singleton-option 'defgrammar :cached? 'boolean))
+        (documentation (singleton-option 'defgrammar :documentation 'string)))
     ;; Build and check use list. If used grammars cannot be found,
     ;; still expand, but signal full warnings.
     (dolist (option options)
       (destructuring-bind (keyword &rest value) option
-        (ecase keyword
-          ; (:element-type (apply element-type value))
-          (:class (apply class value))
-          (:use
-           (dolist (used value)
-             (grammar:find-grammar used :if-does-not-exist #'warn)) ; TODO ensure?
-           (appendf use value))
-          (:cached? (apply cached? value))
-          (:documentation
-           (apply #'documentation value)))))
+        (with-current-source-form (value option)
+          (ecase keyword
+            ;; (:element-type (apply element-type value))
+            (:class (apply class value))
+            (:use
+             (dolist (used value)
+               (with-current-source-form (used value option)
+                 (grammar:find-grammar used :if-does-not-exist #'warn))) ; TODO ensure?
+             (appendf use value))
+            (:cached? (apply cached? value))
+            (:documentation (apply #'documentation value))))))
 
-    ;; ENSURE-GRAMMAR signals an error at runtime if a used grammar
-    ;; cannot be found.
-    `(eval-when (:compile-toplevel :load-toplevel :execute)
-       (grammar:ensure-grammar
-        ',name
-        #+no ,@(when (funcall element-type)
-                 `(:element-type ',(funcall element-type)))
-        ,@(when (funcall class)
-            `(:grammar-class ',(funcall class)))
-        :use     ',use
-        :cached? ',(funcall cached?)
-        ; :documentation ,(funcall documentation)
-        ))))
+    ;; ENSURE-GRAMMAR signals an error at load time or runtime if a
+    ;; used grammar cannot be found.
+    (flet ((expansion (&rest extra-options)
+             `(grammar:ensure-grammar
+               ',name
+               ,@(when-let ((grammar-class (funcall class)))
+                   `(:grammar-class ',grammar-class))
+               :cached? ',(funcall cached?)
+               :use     ',use
+               ,@extra-options)))
+      `(progn
+         (eval-when (:compile-toplevel)
+           ,(expansion :if-used-does-not-exist nil))
+         ,(expansion
+           ;; ,@(when (funcall element-type)
+           ;;    `(:element-type ',(funcall element-type)))
+           ;; :documentation ,(funcall documentation)
+           )))))
 
 (defmacro in-grammar (grammar-name)
   "Set the current grammar to the grammar designated by GRAMMAR-NAME.
