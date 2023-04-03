@@ -109,11 +109,11 @@
                                                     :parent element-environment)
                                 (env:value element-environment)))
               (new-tail        (tail new-environment)))
-         `(let ((,new-tail ,(or nil #+maybe-later to
-                                    (case amount
-                                      (1 `(cdr ,tail))
-                                      (2 `(cddr ,tail))
-                                      (t `(nthcdr ,amount ,tail))))))
+         `(let ((,new-tail ,(case amount
+                              (1 `(cdr ,tail))
+                              (2 `(cddr ,tail))
+                              (t `(nthcdr ,amount ,tail)))))
+            (declare (ignorable ,new-tail))
             ,(funcall success-cont new-environment))))
      failure-cont)))
 
@@ -186,29 +186,31 @@
                             (setf continue-environment (base::remove-value
                                                         (env:environment-at recursion-environment :fresh
                                                                             :parent new-environment)))
-                            (cond
-                              ((not max)
-                               (recurse new-environment))
-                              (max=1?    ; TODO
-                               (done new-environment nil))
-                              (t
-                               ;; TODO avoid emitting (1+ count) here and in RECURSE
-                               `(if (< (1+ ,count) ,(env:value max-new-environment)) ; TODO emit a local function for this as well?
-                                    ,(recurse new-environment)
-                                    ,(done new-environment nil)))))
+                            (cond ((not max)
+                                   (recurse new-environment))
+                                  (max=1?    ; TODO
+                                   (done new-environment nil))
+                                  (t
+                                   ;; TODO avoid emitting (1+ count) here and in RECURSE
+                                   `(if (< (1+ ,count) ,(env:value max-new-environment)) ; TODO emit a local function for this as well?
+                                        ,(recurse new-environment)
+                                        ,(done new-environment nil)))))
                           (lambda (failure-environment)
                             (declare (ignore failure-environment))
                             (done recursion-environment t))))
-                      (,done/no-check (,@(env:position-variables continue-environment))
-                        ,(funcall success-cont continue-environment))
+                      ,(let ((position-variables (env:position-variables continue-environment)))
+                         `(,done/no-check (,@position-variables)
+                            (declare (ignorable ,@position-variables))
+                            ,(funcall success-cont continue-environment)))
                       ,@(when min
-                          `((,done/check (,@(env:position-variables continue-environment)
-                                          ,count)
-                              ; (declare (type array-index position))
-                              (declare (type array-index ,count))
-                              (if (>= ,count ,(env:value min-new-environment))
-                                  (,done/no-check ,@(env:position-variables continue-environment))
-                                  ,(funcall failure-cont continue-environment))))))
+                          (let ((position-variables (env:position-variables continue-environment)))
+                            `((,done/check (,@position-variables ,count)
+                                ;; (declare (type array-index position))
+                                (declare (type array-index ,count)
+                                         (ignorable ,@position-variables))
+                                (if (>= ,count ,(env:value min-new-environment))
+                                    (,done/no-check ,@position-variables)
+                                    ,(funcall failure-cont continue-environment)))))))
                (,repeat ,@(env:position-variables environment  #+TODO max-new-environment) ,@(when count? '(0)))))))))))
 
 (defmethod compile-expression ((grammar      t)
