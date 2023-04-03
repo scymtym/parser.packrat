@@ -1,6 +1,6 @@
 ;;;; compiler.lisp --- Expression compilation for the sexp grammar module.
 ;;;;
-;;;; Copyright (C) 2017-2021 Jan Moringen
+;;;; Copyright (C) 2017-2023 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -112,6 +112,7 @@
                             :class 'env:value-environment
                             :state '())))
     `(let ((,tail-var ,(seq:tail environment)))
+       (declare (ignorable ,tail-var))
        ,(compile-expression
          grammar rest-environment (exp:sub-expression expression)
          (lambda (new-environment)
