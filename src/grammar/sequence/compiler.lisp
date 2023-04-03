@@ -1,6 +1,6 @@
 ;;;; compiler.lisp --- Expression compilation for the sequence grammar module.
 ;;;;
-;;;; Copyright (C) 2017-2021 Jan Moringen
+;;;; Copyright (C) 2017-2023 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -166,7 +166,7 @@
      min environment
      (lambda (min-new-environment)
        (compile-constraint
-        max min-new-environment
+        (if max=1? nil max) min-new-environment
         (lambda (max-new-environment)
           (let+ ((recursion-environment (env:environment-at environment :fresh)) ; TODO should somehow use max-new-environment as parent
                  ((&flet recurse (environment)
@@ -174,8 +174,8 @@
                               ,@(when count? `((1+ ,count))))))
                  ((&flet done (environment check?)
                     `(,(if (and min check?) done/check done/no-check)
-                       ,@(env:position-variables environment)
-                       ,@(when (and min check?) `(,count))))))
+                      ,@(env:position-variables environment)
+                      ,@(when (and min check?) `(,count))))))
             `(labels ((,repeat (,@(env:position-variables recursion-environment)
                                 ,@(when count? `(,count)))
                         ; (declare (type array-index position)) ; TODO depends on the sequence
