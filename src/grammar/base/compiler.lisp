@@ -417,6 +417,7 @@
                    (if (or uses-fail? uses-fatal?)
                        `(let ((,value-var   nil)
                               (,aborted-var nil))
+                          (declare (ignorable ,value-var))
                           (block ,block-name
                             (flet (,@(when uses-fail?
                                        `((:fail ()
@@ -442,6 +443,7 @@
                                                  environment aborted-var))))))
                        ;; CODE does not cause the match to fail.
                        `(let ((,value-var ,(run-code transform-environment)))
+                          (declare (ignorable ,value-var))
                           ,(funcall success-cont transform-environment))))))
        ,(compile-expression
          grammar environment sub-expression
