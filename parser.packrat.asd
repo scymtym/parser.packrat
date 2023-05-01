@@ -9,7 +9,7 @@
   :source-control   (:git "https://github.com/scymtym/parser.packrat.git")
 
   :version          (:read-file-form "version-string.sexp")
-  :depends-on       ((:require "sb-cltl2")
+  :depends-on       ("trivial-macroexpand-all"
 
                      "closer-mop"
                      "alexandria"
@@ -153,7 +153,7 @@
   :description "Unit tests for the parser.packrat system."
 
   :version     (:read-file-form "version-string.sexp")
-  :depends-on  ((:require "sb-cltl2")
+  :depends-on  ("trivial-macroexpand-all"
 
                 (:version "fiveam"         "1.4")
 
