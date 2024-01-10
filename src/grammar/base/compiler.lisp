@@ -1,6 +1,6 @@
 ;;;; compiler.lisp --- Expression compilation for the base grammar module.
 ;;;;
-;;;; Copyright (C) 2017-2022 Jan Moringen
+;;;; Copyright (C) 2017-2023 Jan Moringen
 ;;;;
 ;;;; Author: Jan Moringen <jmoringe@techfak.uni-bielefeld.de>
 
@@ -569,7 +569,7 @@
     `(values-list
       (or ,cache-place
           ,(maybe-let (when arguments-var `((,arguments-var (copy-list ,arguments-var))))
-             (emit-d-call rule-key context position-variables state-variables arguments-var :grammar grammar)
+             (emit-debug-call rule-key context position-variables state-variables arguments-var :grammar grammar)
              `(let ((*depth* (+ *depth* 2))
                     (*old-state* (list ,@ (remove-if (rcurry #'member position-variables) state-variables))))
                 (setf ,cache-place
@@ -579,14 +579,11 @@
 (defun emit-call/no-cache
     (rule-name rule-var position-variables state-variables arguments-var
      &key grammar-name grammar switch-to-grammar)
-  (let ((rule-key (if grammar-name
-                      `(,rule-name . ,grammar-name)
-                      `,rule-name))
-        (context  parser.packrat.compiler::+context-var+))
+  (let ((context  parser.packrat.compiler::+context-var+))
     (if t
         `(let (,@(when switch-to-grammar
                    `((,context (grammar::make-context (grammar:find-grammar ',switch-to-grammar) nil nil)))))
-           ,(emit-d-call rule-key context position-variables state-variables arguments-var :grammar grammar)
+           ,(emit-debug-call grammar-name rule-name context position-variables state-variables arguments-var)
            (let ((*depth*     (+ *depth* 2))
                  (*old-state* (list ,@(remove-if (rcurry #'member position-variables) state-variables))))
              ,(emit-call rule-var context state-variables arguments-var)))
@@ -646,9 +643,9 @@
                      :grammar           grammar
                      :switch-to-grammar switch-to-grammar-name)
          ,(when t
-            (emit-d-return rule-name parser.packrat.compiler::+context-var+
-                           position-variables state-variables (when arguments arguments-var)
-                           success?-var (env:position-variables continue-environment) value-var))
+            (emit-debug-return grammar-name rule-name parser.packrat.compiler::+context-var+
+                               position-variables state-variables (when arguments arguments-var)
+                               success?-var (env:position-variables continue-environment) value-var))
          (case ,success?-var
            ((t)    ,(funcall success-cont continue-environment))
            ((nil)  ,(funcall failure-cont continue-environment))
@@ -712,9 +709,9 @@
                      rule-name rule-var position-variables state-variables
                      (when arguments arguments-var)
                      :grammar grammar)
-         ,(emit-d-return rule-name parser.packrat.compiler::+context-var+
-                         position-variables state-variables (when arguments arguments-var)
-                         success?-var (env:position-variables continue-environment) value-var)
+         ,(emit-debug-return grammar-name rule-name parser.packrat.compiler::+context-var+
+                             position-variables state-variables (when arguments arguments-var)
+                             success?-var (env:position-variables continue-environment) value-var)
          (case ,success?-var
            ((t)    ,(funcall success-cont continue-environment))
            ((nil)  ,(funcall failure-cont continue-environment))
